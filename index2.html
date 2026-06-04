@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>サロン・ド・ノーブル | 40代からの本気の肌質改善｜ハーブピーリング専門サロン｜枚方・樟葉</title>
+<meta name="description" content="サロン歴30年・累計42,000人施術・リピート率90%。美容医療に頼らず、根本から肌を変える肌質改善ハーブピーリング専門サロン。シミ・シワ・毛穴・ニキビにお悩みの40代女性へ。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Shippori+Mincho:wght@500;600&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ── リセット・ベース ── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  /* カラーパレット（ノーブル：ダークモカ×ベージュ×シャンパンゴールド） */
+  --main:#2C2520;--main-mid:#3F352D;--main-light:#5A4D42;
+  --accent:#C9A86C;--accent-light:#E0C896;--accent-dim:rgba(201,168,108,0.22);
+  --gold:#B8924A;--gold-deep:#8B6F36;
+  --white:#FFFFFF;--off-white:#F5EFE5;--cream:#FAF5EC;
+  --text:#2A2520;--text-light:#5C5045;--text-muted:#9E8E7E;
+  --danger:#B85C5C;--success:#06C755;
+  /* フォント */
+  --font-display:'Cormorant Garamond', serif;
+  --font-serif:'Shippori Mincho', serif;
+  --font-body:'Noto Sans JP', sans-serif;
+  /* レイアウト */
+  --content-width:480px;
+  --sidebar-left:220px;
+  --sidebar-right:260px;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-body);font-size:15px;line-height:1.75;color:var(--text);background:var(--main);overflow-x:hidden}
+
+/* ── 背景テクスチャ ── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(201,168,108,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(184,146,74,0.18) 0%, transparent 50%),
+    linear-gradient(180deg, var(--main) 0%, var(--main-mid) 50%, var(--main) 100%);
+  pointer-events:none;
+}
+
+/* ── 3カラム構成 ── */
+.lp-wrapper{display:flex;justify-content:center;min-height:100vh;position:relative}
+
+/* ── 左サイドバー ── */
+.sb-left{
+  position:fixed;left:0;top:0;width:var(--sidebar-left);height:100vh;
+  padding:40px 24px;z-index:20;
+  display:flex;flex-direction:column;
+  border-right:1px solid rgba(201,168,108,0.12);
+}
+.sb-left .logo{
+  font-family:var(--font-display);font-size:26px;letter-spacing:2px;
+  color:var(--accent);margin-bottom:4px;line-height:1.2;
+}
+.sb-left .logo-sub{font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-bottom:40px}
+.sb-left nav{display:flex;flex-direction:column;gap:2px}
+.sb-left nav a{
+  display:flex;align-items:center;gap:8px;
+  color:rgba(255,255,255,0.5);text-decoration:none;font-size:12px;
+  padding:10px 12px;border-radius:6px;
+  transition:all 0.3s;letter-spacing:0.5px;position:relative;
+}
+.sb-left nav a::before{
+  content:'';width:3px;height:0;background:var(--accent);border-radius:2px;
+  transition:height 0.3s;position:absolute;left:0;top:50%;transform:translateY(-50%);
+}
+.sb-left nav a:hover,
+.sb-left nav a.active{color:var(--accent-light);background:rgba(201,168,108,0.08)}
+.sb-left nav a.active::before{height:16px}
+
+/* ── 右サイドバー ── */
+.sb-right{
+  position:fixed;right:0;top:0;width:var(--sidebar-right);height:100vh;
+  padding:40px 24px;z-index:20;
+  display:flex;flex-direction:column;align-items:center;gap:20px;
+  border-left:1px solid rgba(201,168,108,0.12);
+}
+.price-card{
+  background:rgba(255,255,255,0.04);backdrop-filter:blur(20px);
+  border:1px solid rgba(201,168,108,0.2);border-radius:16px;
+  padding:24px;text-align:center;width:100%;
+}
+.price-card .tag{
+  display:inline-block;background:var(--gold-deep);color:#fff;
+  font-size:10px;font-weight:700;padding:3px 12px;border-radius:20px;
+  margin-bottom:12px;letter-spacing:1px;
+}
+.price-card .amount{
+  font-family:var(--font-display);font-size:56px;color:#fff;
+  letter-spacing:2px;line-height:1;
+}
+.price-card .amount .yen{font-size:20px;vertical-align:super;opacity:0.7}
+.price-card .amount .tax{font-size:11px;opacity:0.5;font-family:var(--font-body);letter-spacing:0}
+.price-card .campaign-text{font-size:10px;color:var(--accent);margin-top:8px;letter-spacing:1px}
+
+.sb-cta{
+  display:block;width:100%;padding:16px;
+  background:linear-gradient(135deg, #06C755, #04A847);
+  color:#fff;text-align:center;text-decoration:none;
+  font-size:14px;font-weight:700;border-radius:50px;
+  transition:all 0.3s;box-shadow:0 4px 20px rgba(6,199,85,0.3);
+  animation:ctaPulse 2.5s ease-in-out infinite;
+}
+.sb-cta:hover{transform:translateY(-2px);box-shadow:0 6px 30px rgba(6,199,85,0.4)}
+
+@keyframes ctaPulse{
+  0%,100%{box-shadow:0 4px 20px rgba(6,199,85,0.3)}
+  50%{box-shadow:0 4px 30px rgba(6,199,85,0.5)}
+}
+
+/* ── 中央コンテンツ ── */
+.main{
+  max-width:var(--content-width);width:100%;margin:0 auto;
+  background:var(--cream);position:relative;z-index:5;
+  box-shadow:0 0 80px rgba(0,0,0,0.4);
+}
+
+/* ── セクション共通 ── */
+.sec{padding:56px 24px}
+.sec--dark{background:var(--main);color:#fff}
+.sec--navy{background:var(--main-mid);color:#fff}
+.sec--light{background:var(--off-white)}
+.sec-label{
+  font-family:var(--font-serif);font-size:13px;color:var(--gold-deep);
+  text-align:center;letter-spacing:3px;margin-bottom:6px;
+}
+.sec--dark .sec-label{color:var(--accent-light)}
+.sec-title{
+  text-align:center;font-size:22px;font-weight:700;margin-bottom:32px;
+  letter-spacing:1px;
+}
+.sec-title::after{
+  content:'';display:block;width:32px;height:1px;
+  background:var(--accent);margin:16px auto 0;
+}
+.sec--dark .sec-title::after{background:var(--accent-light)}
+
+/* ── スクロールアニメーション ── */
+.reveal{opacity:0;transform:translateY(30px);transition:all 0.7s cubic-bezier(0.22,1,0.36,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ── ファーストビュー ── */
+.hero{padding:0;position:relative;overflow:hidden}
+.hero-visual{
+  width:100%;height:480px;position:relative;
+  display:flex;align-items:flex-end;justify-content:center;
+  overflow:hidden;
+}
+.hero-visual img.hero-bg{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;
+}
+.hero-visual::before{
+  content:'';position:absolute;inset:0;z-index:2;
+  background:
+    linear-gradient(180deg, rgba(44,37,32,0.25) 0%, rgba(44,37,32,0.1) 40%, rgba(44,37,32,0.88) 100%);
+}
+.hero-visual .hero-overlay-text{
+  position:relative;z-index:3;text-align:center;padding:32px 20px;
+}
+.hero-visual .hero-overlay-text .eyebrow{
+  font-family:var(--font-serif);font-size:13px;color:var(--accent-light);
+  letter-spacing:5px;margin-bottom:10px;opacity:0.9;
+}
+.hero-visual .hero-overlay-text h2{
+  font-family:var(--font-display);font-size:54px;color:#fff;
+  letter-spacing:4px;line-height:1.05;font-weight:500;
+  text-shadow:0 2px 20px rgba(0,0,0,0.4);
+}
+.hero-visual .hero-overlay-text .sub{
+  font-size:12px;color:rgba(255,255,255,0.75);margin-top:14px;letter-spacing:3px;
+}
+.hero-body{padding:36px 24px;text-align:center;background:var(--cream)}
+.hero-catch{font-size:26px;font-weight:900;line-height:1.5;margin-bottom:16px;letter-spacing:0.5px;color:var(--main)}
+.hero-catch .em{
+  background:linear-gradient(transparent 60%, var(--accent-dim) 60%);
+  padding:0 4px;color:var(--gold-deep);
+}
+.hero-sub{font-size:13px;color:var(--text-light);margin-bottom:28px;line-height:1.9}
+
+/* 信頼バッジ */
+.badges{display:flex;justify-content:center;gap:12px;margin-bottom:28px}
+.badge{
+  width:118px;height:118px;border-radius:50%;
+  border:2px solid var(--accent);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;font-size:12px;font-weight:700;color:var(--main);
+  line-height:1.25;background:rgba(201,168,108,0.08);
+  box-shadow:0 4px 14px rgba(184,146,74,0.18);
+  transition:all 0.3s;
+}
+.badge:hover{background:var(--accent-dim);transform:scale(1.05)}
+.badge .num{font-family:var(--font-display);font-size:42px;font-weight:600;color:var(--gold-deep);letter-spacing:1px;line-height:1;margin:2px 0}
+
+/* ── CTAブロック ── */
+.cta-block{padding:36px 24px;text-align:center;background:var(--main);position:relative;overflow:hidden}
+.cta-block::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at center, rgba(201,168,108,0.08) 0%, transparent 70%);
+}
+.cta-block *{position:relative}
+.cta-original{font-size:13px;color:rgba(255,255,255,0.5);text-decoration:line-through}
+.cta-price{
+  font-family:var(--font-display);font-size:52px;color:#fff;
+  letter-spacing:2px;line-height:1;margin:8px 0;
+}
+.cta-price .yen{font-size:18px;opacity:0.6;vertical-align:super}
+.cta-price .tax{font-size:11px;opacity:0.4;font-family:var(--font-body);letter-spacing:0}
+
+/* ── キャンペーンバナー＋オファー強化 ── */
+.campaign-banner{
+  background:linear-gradient(135deg,var(--accent),var(--gold-deep));
+  color:#fff;padding:14px 18px;border-radius:8px;
+  margin:0 auto 20px;max-width:340px;
+  box-shadow:0 6px 18px rgba(184,146,74,0.35);
+  position:relative;z-index:1;
+}
+.campaign-tag{
+  display:inline-block;font-size:10px;letter-spacing:3px;
+  background:rgba(255,255,255,0.18);padding:3px 10px;border-radius:99px;
+  margin-bottom:8px;font-weight:700;
+}
+.campaign-title{
+  font-family:var(--font-display);font-size:20px;font-weight:600;
+  letter-spacing:1px;line-height:1.4;margin-bottom:8px;
+}
+.campaign-sub{font-size:11.5px;line-height:1.7;opacity:0.95;}
+.offer-box{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:10px;padding:18px 16px;margin:0 auto 16px;
+  max-width:300px;position:relative;z-index:1;
+}
+.offer-original-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding-bottom:10px;border-bottom:1px dashed rgba(255,255,255,0.2);
+}
+.offer-original-label{font-size:12px;color:rgba(255,255,255,0.6);letter-spacing:1px}
+.offer-original-price{font-size:18px;color:rgba(255,255,255,0.55);text-decoration:line-through;font-family:var(--font-display)}
+.offer-discount{
+  display:inline-block;background:#e74c3c;color:#fff;
+  font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;
+  margin:10px 0 4px;letter-spacing:1px;
+}
+.offer-special-label{font-size:11px;color:var(--accent);letter-spacing:2px;font-weight:700;margin-top:4px}
+.cta-btn{
+  display:block;max-width:320px;margin:20px auto 0;padding:16px 32px;
+  background:linear-gradient(135deg, #06C755, #04A847);
+  color:#fff;text-align:center;text-decoration:none;
+  font-size:15px;font-weight:700;border-radius:50px;
+  transition:all 0.3s;box-shadow:0 4px 24px rgba(6,199,85,0.35);
+  animation:ctaPulse 2.5s ease-in-out infinite;
+}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(6,199,85,0.5)}
+.cta-btn svg{display:inline;vertical-align:middle;margin-right:6px}
+.cta-note{font-size:10px;color:rgba(255,255,255,0.4);margin-top:10px;letter-spacing:0.5px}
+
+/* ── 悩み共感 ── */
+.pain-intro{
+  text-align:center;font-size:18px;font-weight:700;margin-bottom:28px;
+  color:rgba(255,255,255,0.95);line-height:1.6;
+}
+.pain-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+.pain-list li{
+  padding:14px 16px;background:rgba(255,255,255,0.05);
+  border-radius:10px;font-size:13px;color:rgba(255,255,255,0.82);
+  display:flex;align-items:center;gap:10px;
+  border-left:3px solid var(--accent);transition:all 0.3s;
+}
+.pain-list li:hover{background:rgba(255,255,255,0.09);transform:translateX(4px)}
+.pain-resolve{
+  text-align:center;margin-top:36px;font-size:18px;font-weight:700;color:#fff;
+}
+.pain-resolve .hl{
+  display:inline-block;color:var(--accent);font-size:22px;
+  border-bottom:2px solid var(--accent);padding-bottom:2px;
+}
+
+/* ── オーナー挨拶 ── */
+.owner-photo{
+  width:100%;aspect-ratio:4/5;background:linear-gradient(135deg, var(--accent-dim) 0%, var(--off-white) 100%);
+  border-radius:12px;margin-bottom:24px;
+  overflow:hidden;
+}
+.owner-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.owner-text{font-size:14px;margin-bottom:14px;line-height:1.9;color:var(--text)}
+.owner-text strong{color:var(--gold-deep);font-weight:700}
+.owner-quote{
+  font-family:var(--font-serif);font-size:18px;font-weight:600;
+  color:var(--main);text-align:center;margin-top:24px;
+  padding:20px;border-top:1px solid var(--accent-dim);border-bottom:1px solid var(--accent-dim);
+  letter-spacing:1px;line-height:1.6;
+}
+
+/* ── ハーブピーリング2タイプ ── */
+.type-grid{display:flex;flex-direction:column;gap:16px;margin-top:24px}
+.type-card{
+  background:#fff;border:1px solid rgba(184,146,74,0.15);border-radius:14px;
+  padding:24px 20px;box-shadow:0 4px 16px rgba(184,146,74,0.08);
+}
+.type-card .type-label{
+  display:inline-block;font-family:var(--font-display);font-size:11px;
+  color:#fff;background:var(--gold-deep);padding:4px 14px;border-radius:20px;
+  letter-spacing:2px;margin-bottom:12px;
+}
+.type-card .type-label.hard{background:var(--main)}
+.type-card .type-name{font-size:17px;font-weight:700;color:var(--main);margin-bottom:10px;letter-spacing:0.5px}
+.type-card .type-desc{font-size:13px;color:var(--text-light);line-height:1.85;margin-bottom:12px}
+.type-card .type-target{display:flex;flex-wrap:wrap;gap:6px}
+.type-card .type-target span{
+  font-size:11px;color:var(--gold-deep);background:var(--accent-dim);
+  padding:4px 10px;border-radius:12px;letter-spacing:0.5px;
+}
+
+/* ── ビフォーアフター ── */
+.ba-card{margin-bottom:36px}
+.ba-num{
+  font-family:var(--font-display);font-size:56px;color:rgba(184,146,74,0.2);
+  line-height:1;margin-bottom:4px;
+}
+.ba-photo-wrap{
+  position:relative;border-radius:10px;overflow:hidden;margin-bottom:14px;
+  box-shadow:0 4px 20px rgba(184,146,74,0.15);
+}
+.ba-photo-wrap img{width:100%;height:auto;display:block}
+.ba-photo-wrap .label-before,
+.ba-photo-wrap .label-after{
+  position:absolute;top:10px;
+  background:rgba(44,37,32,0.85);backdrop-filter:blur(4px);
+  color:#fff;font-size:10px;font-weight:700;padding:4px 12px;
+  border-radius:20px;letter-spacing:2px;font-family:var(--font-display);
+}
+.ba-photo-wrap .label-before{left:10px}
+.ba-photo-wrap .label-after{right:10px;background:var(--gold-deep)}
+.ba-comment{font-size:13px;text-align:center;font-weight:500;line-height:1.6;color:var(--text)}
+.ba-meta{font-size:11px;color:var(--text-muted);text-align:center;margin-top:4px}
+
+/* ── お客様の声 ── */
+.v-card{
+  background:#fff;border-radius:14px;padding:22px;margin-bottom:14px;
+  box-shadow:0 2px 12px rgba(184,146,74,0.06);border:1px solid rgba(184,146,74,0.06);
+  transition:all 0.3s;
+}
+.v-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(184,146,74,0.12)}
+.v-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.v-avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg, var(--accent), var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:14px;font-weight:700;font-family:var(--font-display);letter-spacing:1px;
+}
+.v-name{font-size:13px;font-weight:700;color:var(--main)}
+.v-meta{font-size:10px;color:var(--text-muted)}
+.v-text{font-size:13px;line-height:1.85}
+.v-text b{color:var(--gold-deep);font-weight:700}
+.g-badge{
+  text-align:center;margin-top:32px;padding:24px;
+  background:rgba(201,168,108,0.08);border-radius:16px;border:1px solid var(--accent-dim);
+}
+.g-badge .g-label{font-size:11px;color:var(--text-muted);letter-spacing:2px;margin-bottom:8px}
+.g-badge .g-score{font-family:var(--font-display);font-size:60px;color:var(--main);letter-spacing:3px}
+.g-badge .g-stars{color:var(--accent);font-size:18px;letter-spacing:3px}
+
+/* ── 選ばれる理由 ── */
+.r-item{margin-bottom:40px}
+.r-num{font-family:var(--font-display);font-size:52px;color:rgba(184,146,74,0.18);line-height:1}
+.r-heading{font-size:18px;font-weight:700;margin-bottom:12px;letter-spacing:0.5px;color:var(--main)}
+.r-img{
+  width:100%;aspect-ratio:16/9;border-radius:10px;margin-bottom:14px;
+  background:linear-gradient(135deg, var(--accent-dim) 0%, var(--off-white) 100%);
+  overflow:hidden;box-shadow:0 4px 16px rgba(184,146,74,0.12);
+}
+.r-img img{width:100%;height:100%;object-fit:cover;display:block}
+.r-text{font-size:13px;color:var(--text-light);line-height:1.85}
+
+/* ── 比較表 ── */
+.cmp{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(184,146,74,0.1)}
+.cmp th,.cmp td{padding:14px 10px;text-align:center;vertical-align:middle}
+.cmp thead th{
+  font-weight:700;font-size:13px;padding:16px 10px;
+  background:var(--main);color:#fff;
+}
+.cmp thead th:first-child{background:var(--main-mid)}
+.cmp thead th:last-child{background:var(--accent);color:var(--main)}
+.cmp tbody td{border-bottom:1px solid rgba(0,0,0,0.06);background:#fff}
+.cmp .gen{color:var(--text-muted);background:rgba(0,0,0,0.02)!important}
+.cmp .ours{color:var(--gold-deep);font-weight:700;background:rgba(201,168,108,0.1)!important}
+.cmp tbody tr:last-child td{border-bottom:none}
+
+/* ── 施術の流れ ── */
+.fl-item{display:flex;gap:16px;margin-bottom:12px;align-items:flex-start;position:relative}
+.fl-line{
+  position:absolute;left:19px;top:44px;width:2px;bottom:-12px;
+  background:linear-gradient(180deg, var(--accent) 0%, transparent 100%);
+}
+.fl-num{
+  flex-shrink:0;width:40px;height:40px;
+  background:linear-gradient(135deg, var(--gold-deep), var(--main));
+  color:var(--accent-light);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:16px;letter-spacing:1px;
+  position:relative;z-index:2;
+}
+.fl-body{flex:1;padding-bottom:16px}
+.fl-title{font-size:15px;font-weight:700;margin-bottom:2px;color:var(--main)}
+.fl-time{
+  display:inline-block;font-size:10px;color:var(--gold-deep);
+  background:var(--accent-dim);padding:2px 8px;border-radius:10px;
+  margin-bottom:4px;letter-spacing:0.5px;
+}
+.fl-desc{font-size:12px;color:var(--text-light)}
+
+/* ── 料金 ── */
+.m-card{
+  background:#fff;border:1px solid rgba(184,146,74,0.08);border-radius:14px;
+  padding:28px 20px;margin-bottom:14px;text-align:center;
+  transition:all 0.3s;position:relative;overflow:hidden;
+}
+.m-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(184,146,74,0.15)}
+.m-card.rec{border:2px solid var(--accent)}
+.m-card.rec::before{
+  content:'RECOMMENDED';position:absolute;top:14px;right:-32px;
+  background:var(--accent);color:var(--main);font-family:var(--font-display);
+  font-size:10px;letter-spacing:2px;padding:4px 40px;
+  transform:rotate(45deg);
+}
+.m-name{font-size:15px;font-weight:700;margin-bottom:4px;color:var(--main)}
+.m-desc{font-size:11px;color:var(--text-muted);margin-bottom:14px}
+.m-orig{font-size:12px;color:var(--text-muted);text-decoration:line-through}
+.m-price{font-family:var(--font-display);font-size:40px;color:var(--gold-deep);letter-spacing:2px}
+.m-price .yen{font-size:16px}
+
+/* ── FAQ ── */
+.faq-item{border-bottom:1px solid rgba(184,146,74,0.1);overflow:hidden}
+.faq-q{
+  display:flex;align-items:center;gap:12px;padding:18px 0;cursor:pointer;
+  font-size:13px;font-weight:500;transition:color 0.2s;user-select:none;color:var(--text)
+}
+.faq-q:hover{color:var(--gold-deep)}
+.faq-q .qi{
+  flex-shrink:0;width:26px;height:26px;
+  background:var(--main);color:var(--accent);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;font-family:var(--font-display);letter-spacing:1px;
+}
+.faq-q .arr{
+  margin-left:auto;color:var(--text-muted);font-size:12px;
+  transition:transform 0.35s cubic-bezier(0.22,1,0.36,1);
+}
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height 0.4s cubic-bezier(0.22,1,0.36,1), padding 0.4s;
+  padding:0 0 0 38px;font-size:13px;color:var(--text-light);line-height:1.85;
+}
+.faq-item.open .faq-a{max-height:240px;padding-bottom:18px}
+.faq-item.open .arr{transform:rotate(180deg)}
+
+/* ── 店舗情報 ── */
+.shop-tbl{width:100%;font-size:13px}
+.shop-tbl tr{border-bottom:1px solid rgba(184,146,74,0.08)}
+.shop-tbl th{
+  width:28%;padding:14px 0;font-weight:700;text-align:left;
+  vertical-align:top;color:var(--main);font-size:12px;letter-spacing:0.5px;
+}
+.shop-tbl td{padding:14px 0;color:var(--text-light)}
+.map-box{
+  width:100%;height:240px;background:linear-gradient(135deg, var(--accent-dim), var(--off-white));
+  border-radius:12px;margin-top:24px;overflow:hidden;
+}
+.map-box iframe{width:100%;height:100%;border:0;display:block}
+.map-link{
+  display:block;text-align:center;margin-top:12px;padding:14px;
+  border:1px solid rgba(184,146,74,0.15);border-radius:10px;
+  color:var(--text);text-decoration:none;font-size:13px;font-weight:500;
+  transition:all 0.2s;letter-spacing:0.5px;
+}
+.map-link:hover{background:var(--accent-dim);border-color:var(--accent)}
+
+/* ── SNSリンク ── */
+.sns-row{display:flex;gap:10px;margin-top:20px}
+.sns-row a{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px;border:1px solid rgba(184,146,74,0.2);border-radius:10px;
+  color:var(--text);text-decoration:none;font-size:12px;font-weight:500;
+  transition:all 0.2s;
+}
+.sns-row a:hover{background:var(--accent-dim);border-color:var(--accent)}
+
+/* ── クロージング ── */
+.closing{text-align:center}
+.closing .msg{
+  font-size:20px;font-weight:700;margin-bottom:20px;
+  line-height:1.6;color:#fff;
+}
+.closing .msg .em{color:var(--accent)}
+.closing .txt{font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:28px;line-height:1.85}
+
+/* ── フッター ── */
+.footer{
+  text-align:center;padding:24px;font-size:10px;
+  color:var(--text-muted);background:var(--off-white);
+  letter-spacing:1px;
+}
+
+/* ── フローティングCTA（スマホ用） ── */
+.float-cta{
+  display:none;position:fixed;bottom:0;left:0;width:100%;z-index:100;
+  padding:10px 16px;
+  background:linear-gradient(180deg, rgba(44,37,32,0) 0%, rgba(44,37,32,0.95) 40%);
+  padding-top:24px;
+}
+.float-cta a{
+  display:block;padding:15px;
+  background:linear-gradient(135deg, #06C755, #04A847);
+  color:#fff;text-align:center;text-decoration:none;
+  font-size:15px;font-weight:700;border-radius:50px;
+  box-shadow:0 4px 20px rgba(6,199,85,0.35);
+}
+
+/* ── レスポンシブ ── */
+@media(max-width:960px){
+  .sb-left,.sb-right{display:none}
+  .float-cta{display:block}
+  .main{max-width:100%;box-shadow:none}
+  .footer{padding-bottom:80px}
+}
+</style>
+</head>
+<body>
+
+<div class="lp-wrapper">
+
+<!-- 左サイドバー -->
+<aside class="sb-left">
+  <div class="logo">Salon de<br>Noble</div>
+  <div class="logo-sub">HERB PEELING SALON</div>
+  <nav>
+    <a href="#top" class="active">トップ</a>
+    <a href="#pain">こんなお悩みありませんか？</a>
+    <a href="#solution">オーナーのこだわり</a>
+    <a href="#herb">ハーブピーリングとは</a>
+    <a href="#ba">ビフォーアフター</a>
+    <a href="#voice">お客様の声</a>
+    <a href="#reason">選ばれる理由</a>
+    <a href="#compare">他店との違い</a>
+    <a href="#flow">施術の流れ</a>
+    <a href="#menu">料金</a>
+    <a href="#faq">よくある質問</a>
+    <a href="#shop">店舗情報・アクセス</a>
+    <a href="#closing">最後に</a>
+  </nav>
+</aside>
+
+<!-- 右サイドバー -->
+<aside class="sb-right">
+  <div class="price-card">
+    <span class="tag">期間限定 初回67%OFF</span>
+    <div class="amount"><span class="yen">&yen;</span>5,500<span class="tax">(税込)</span></div>
+    <div class="campaign-text">初回カウンセリング込み120分</div>
+  </div>
+  <a href="https://lin.ee/Na0OhDg" class="sb-cta">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+    LINEで予約する
+  </a>
+</aside>
+
+<!-- 中央コンテンツ -->
+<main class="main">
+
+  <!-- [1] ファーストビュー -->
+  <section class="hero" id="top">
+    <div class="hero-fv-image">
+      <img src="images/fv.png" alt="サロン・ド・ノーブル｜40代からの本気の肌質改善" style="width:100%;display:block;">
+    </div>
+  </section>
+
+  <!-- CTA（FV直後） -->
+  <div class="cta-block">
+    <img src="images/offer.png" alt="サロン30周年・感謝キャンペーン｜初回限定 特別価格 ¥5,500" style="width:100%;display:block;">
+    <div style="padding:16px 20px 24px;text-align:center;">
+      <a href="https://lin.ee/Na0OhDg" class="cta-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+        LINEで予約する
+      </a>
+      <p class="cta-note">初回カウンセリング込み120分 / 30名様限定</p>
+    </div>
+  </div>
+
+  <!-- [2] 悩み共感 -->
+  <section class="sec sec--dark reveal" id="pain">
+    <p class="pain-intro">40代を過ぎて、<br>こんなお悩みありませんか？</p>
+    <ul class="pain-list">
+      <li>◆ 美容医療は怖くて、なかなか踏み出せない</li>
+      <li>◆ シミが年々増えて、ファンデでも隠せなくなった</li>
+      <li>◆ 毛穴のたるみ・開きが気になる</li>
+      <li>◆ すっぴんに自信が持てなくなってきた</li>
+      <li>◆ 化粧品を変えても、肌悩みが減らない</li>
+      <li>◆ 年齢を理由に、肌を諦めかけている</li>
+    </ul>
+    <p class="pain-resolve">その肌悩み、根本から<br><span class="hl">サロン・ド・ノーブルが応えます</span></p>
+  </section>
+
+  <!-- [3] オーナー挨拶 / コンセプト -->
+  <section class="sec reveal" id="solution">
+    <div class="sec-label">Concept</div>
+    <h2 class="sec-title">オーナーのこだわり</h2>
+    <div class="owner-photo"><img src="images/owner.webp" alt="サロン・ド・ノーブル オーナーエステティシャン"></div>
+    <p class="owner-text">サロン・ド・ノーブルへようこそ。私はこの仕事に<strong>30年</strong>携わり、<strong>累計42,000人</strong>のお客様の肌と真摯に向き合ってきました。</p>
+    <p class="owner-text">「年齢のせいだから」「もう手遅れだから」——そう諦めかけたお客様が、<strong>肌質改善ハーブピーリング</strong>と出会い、鏡を見るのが楽しくなる瞬間を、何度も見届けてきました。美容医療に頼らずとも、正しいアプローチを続ければ、肌は確実に応えてくれます。</p>
+    <p class="owner-text">当サロンが大切にしているのは、施術だけではありません。<strong>ホームケアまで伴走</strong>し、お客様一人ひとりが理想の肌に辿り着くまでを支えること。それが、10年・20年と通い続けてくださる方々を生んだ理由だと信じています。</p>
+    <div class="owner-quote">「年齢を理由に、<br>肌を諦めないでください。」</div>
+  </section>
+
+  <!-- [4] ハーブピーリングとは（独自セクション） -->
+  <section class="sec sec--light reveal" id="herb">
+    <div class="sec-label">Herb Peeling</div>
+    <h2 class="sec-title">日本人の肌のための<br>国産ハーブピーリング</h2>
+    <p style="font-size:13px;color:var(--text-light);line-height:1.9;text-align:center;margin-bottom:8px">
+      痛みが少なく、ダウンタイムが短い。<br>
+      日本人の肌に合わせて開発された国産ハーブを使い、<br>
+      <strong style="color:var(--gold-deep)">即効性</strong>と<strong style="color:var(--gold-deep)">肌質改善</strong>を両立する施術です。
+    </p>
+    <div class="type-grid">
+      <div class="type-card">
+        <span class="type-label">SOFT TYPE</span>
+        <div class="type-name">ソフトタイプ｜剥離なし</div>
+        <p class="type-desc">敏感肌・ニキビ肌の方にも安心してお受けいただける、優しいタイプ。肌質改善の入口に。</p>
+        <div class="type-target">
+          <span>ニキビ</span><span>ニキビ跡</span><span>敏感肌</span><span>肌質改善</span>
+        </div>
+      </div>
+      <div class="type-card">
+        <span class="type-label hard">HARD TYPE</span>
+        <div class="type-name">ハードタイプ｜剥離あり</div>
+        <p class="type-desc">シミ・シワ・クレーターの本格改善向け。部分的な剥離を伴い、肌の生まれ変わりを促します。</p>
+        <div class="type-target">
+          <span>シミ</span><span>シワ</span><span>クレーター</span><span>本格改善</span>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:24px;line-height:1.8">
+      ※ お肌の状態に合わせて、ハーブの種類・濃度を調整いたします。<br>カウンセリングで最適なプランをご提案します。
+    </p>
+  </section>
+
+  <!-- [5] ビフォーアフター -->
+  <section class="sec reveal" id="ba">
+    <div class="sec-label">Before &amp; After</div>
+    <h2 class="sec-title">改善事例</h2>
+
+    <div class="ba-card">
+      <div class="ba-num">01</div>
+      <div class="ba-photo-wrap">
+        <img src="images/ba-01.webp" alt="ビフォーアフター事例1：シミ・そばかす改善">
+        <span class="label-before">BEFORE</span>
+        <span class="label-after">AFTER</span>
+      </div>
+      <p class="ba-comment">5〜7回でシミ・そばかすが薄くなり、肌全体のトーンがアップ。</p>
+      <p class="ba-meta">40代女性 / ハードタイプ</p>
+    </div>
+
+    <div class="ba-card">
+      <div class="ba-num">02</div>
+      <div class="ba-photo-wrap">
+        <img src="images/ba-02.webp" alt="ビフォーアフター事例2：毛穴引き締め">
+        <span class="label-before">BEFORE</span>
+        <span class="label-after">AFTER</span>
+      </div>
+      <p class="ba-comment">3回で肌トーンUP、毛穴が引き締まり、ファンデののりが変わりました。</p>
+      <p class="ba-meta">40代女性 / ソフトタイプ</p>
+    </div>
+  </section>
+
+  <!-- CTA（中間） -->
+  <div class="cta-block">
+    <img src="images/offer.png" alt="サロン30周年・感謝キャンペーン｜初回限定 特別価格 ¥5,500" style="width:100%;display:block;">
+    <div style="padding:16px 20px 24px;text-align:center;">
+      <a href="https://lin.ee/Na0OhDg" class="cta-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+        LINEで予約する
+      </a>
+      <p class="cta-note">初回カウンセリング込み120分 / 30名様限定</p>
+    </div>
+  </div>
+
+  <!-- [6] お客様の声 -->
+  <section class="sec reveal" id="voice">
+    <div class="sec-label">Voice</div>
+    <h2 class="sec-title">お客様の声</h2>
+
+    <div class="v-card">
+      <div class="v-head">
+        <div class="v-avatar">NM</div>
+        <div><div class="v-name">N.M様</div><div class="v-meta">40代女性</div></div>
+      </div>
+      <p class="v-text">回数を重ねるごとに<b>肌のトーンが上がり、顎下のザラつきも改善</b>。先日は20代の女性から肌を褒められて、本当に嬉しかったです。</p>
+    </div>
+
+    <div class="v-card">
+      <div class="v-head">
+        <div class="v-avatar">KS</div>
+        <div><div class="v-name">K.S様</div><div class="v-meta">40代女性</div></div>
+      </div>
+      <p class="v-text"><b>施術後すぐに肌がピカピカに</b>。長年気になっていた吹き出物跡も薄くなってきて、安心して通えています。</p>
+    </div>
+
+    <div class="v-card">
+      <div class="v-head">
+        <div class="v-avatar">SE</div>
+        <div><div class="v-name">S.E様</div><div class="v-meta">30代女性</div></div>
+      </div>
+      <p class="v-text"><b>毛穴が目立たなくなり、肌がモチモチに</b>。フェイスラインまでスッキリして、メイクの時間が短くなりました。</p>
+    </div>
+
+    <div class="v-card">
+      <div class="v-head">
+        <div class="v-avatar">SN</div>
+        <div><div class="v-name">S.N様</div><div class="v-meta">40代女性</div></div>
+      </div>
+      <p class="v-text"><b>ハリ・ツヤ・トーンアップを実感</b>。化粧品の浸透も明らかに良くなって、毎日のスキンケアが楽しみになりました。</p>
+    </div>
+
+  </section>
+
+  <!-- [7] 選ばれる理由 -->
+  <section class="sec sec--light reveal" id="reason">
+    <div class="sec-label">Reason</div>
+    <h2 class="sec-title">サロン・ド・ノーブルが<br>選ばれる4つの理由</h2>
+
+    <div class="r-item">
+      <div class="r-num">01</div>
+      <h3 class="r-heading">サロン歴30年・累計42,000人の確かな実績</h3>
+      <div class="r-img"><img src="images/reason-01.webp" alt="30年の実績"></div>
+      <p class="r-text">30年にわたり地域の女性の肌悩みに向き合い続けてきました。累計42,000人の施術データから導き出された、結果重視のメソッドをご提供します。</p>
+    </div>
+
+    <div class="r-item">
+      <div class="r-num">02</div>
+      <h3 class="r-heading">肌質改善専門｜国産ハーブの即効性</h3>
+      <div class="r-img"><img src="images/reason-02.webp" alt="国産ハーブピーリング"></div>
+      <p class="r-text">日本人の肌のために開発された国産ハーブを採用。痛みが少なくダウンタイムも短いのに、シミ・シワ・毛穴・ニキビへ確かにアプローチします。</p>
+    </div>
+
+    <div class="r-item">
+      <div class="r-num">03</div>
+      <h3 class="r-heading">敏感肌・美容医療が苦手な方にも安心</h3>
+      <div class="r-img"><img src="images/reason-03.webp" alt="敏感肌対応"></div>
+      <p class="r-text">ソフトタイプ・ハードタイプの2種から、お肌の状態に合わせて調整します。敏感肌・アトピー肌の方、美容医療が怖い方にも安心してお受けいただけます。</p>
+    </div>
+
+    <div class="r-item">
+      <div class="r-num">04</div>
+      <h3 class="r-heading">ホームケアまで伴走するアフターサポート</h3>
+      <div class="r-img"><img src="images/reason-04.webp" alt="ホームケアサポート"></div>
+      <p class="r-text">「施術しっぱなし」では肌は変わりません。日常のスキンケア・ご自宅でのケア方法まで丁寧にアドバイス。10年・20年通い続けてくださる方が多い理由です。</p>
+    </div>
+  </section>
+
+  <!-- [8] 比較表 -->
+  <section class="sec reveal" id="compare">
+    <div class="sec-label">Comparison</div>
+    <h2 class="sec-title">他店・美容医療との違い</h2>
+    <table class="cmp">
+      <thead><tr><th>比較項目</th><th>一般エステ・医療</th><th>ノーブル</th></tr></thead>
+      <tbody>
+        <tr><td>専門分野</td><td class="gen">幅広く対応</td><td class="ours">肌質改善特化</td></tr>
+        <tr><td>使用ハーブ</td><td class="gen">輸入品中心</td><td class="ours">日本人向け国産</td></tr>
+        <tr><td>痛み・刺激</td><td class="gen">強い場合あり</td><td class="ours">少ない・調整可</td></tr>
+        <tr><td>ダウンタイム</td><td class="gen">長い</td><td class="ours">短い</td></tr>
+        <tr><td>敏感肌対応</td><td class="gen">不可な場合あり</td><td class="ours">対応可</td></tr>
+        <tr><td>ホームケア</td><td class="gen">なし</td><td class="ours">伴走サポート</td></tr>
+        <tr><td>サロン歴</td><td class="gen">数年</td><td class="ours">30年・42,000人</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- [9] 施術の流れ -->
+  <section class="sec sec--light reveal" id="flow">
+    <div class="sec-label">Flow</div>
+    <h2 class="sec-title">初回施術の流れ</h2>
+
+    <div class="fl-item"><div class="fl-line"></div>
+      <div class="fl-num">01</div>
+      <div class="fl-body">
+        <div class="fl-title">ご予約・ご来店</div>
+        <span class="fl-time">10分</span>
+        <div class="fl-desc">LINEまたはHot Pepper Beautyから24時間ご予約可能。半個室の落ち着いた空間でお寛ぎください。</div>
+      </div>
+    </div>
+    <div class="fl-item"><div class="fl-line"></div>
+      <div class="fl-num">02</div>
+      <div class="fl-body">
+        <div class="fl-title">カウンセリング・肌診断</div>
+        <span class="fl-time">30分</span>
+        <div class="fl-desc">お肌の状態・ご希望・生活習慣を丁寧にヒアリング。ソフト/ハードタイプの選定と最適な施術プランをご提案します。</div>
+      </div>
+    </div>
+    <div class="fl-item"><div class="fl-line"></div>
+      <div class="fl-num">03</div>
+      <div class="fl-body">
+        <div class="fl-title">ハーブピーリング施術</div>
+        <span class="fl-time">60分</span>
+        <div class="fl-desc">クレンジング・国産ハーブピーリング・鎮静パックまで。お肌の状態に合わせ濃度を調整します。</div>
+      </div>
+    </div>
+    <div class="fl-item">
+      <div class="fl-num">04</div>
+      <div class="fl-body">
+        <div class="fl-title">ホームケアアドバイス</div>
+        <span class="fl-time">20分</span>
+        <div class="fl-desc">施術後の変化をご確認の上、ご自宅でのスキンケア・生活アドバイスを伴走サポート。次回のご予約もこちらで承ります。</div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- CTA（料金後） -->
+  <div class="cta-block">
+    <img src="images/offer.png" alt="サロン30周年・感謝キャンペーン｜初回限定 特別価格 ¥5,500" style="width:100%;display:block;">
+    <div style="padding:16px 20px 24px;text-align:center;">
+      <a href="https://lin.ee/Na0OhDg" class="cta-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+        LINEで予約する
+      </a>
+      <p class="cta-note">初回カウンセリング込み120分 / 30名様限定</p>
+    </div>
+  </div>
+
+  <!-- [11] FAQ -->
+  <section class="sec sec--light reveal" id="faq">
+    <div class="sec-label">FAQ</div>
+    <h2 class="sec-title">よくある質問</h2>
+
+    <div class="faq-item">
+      <div class="faq-q"><span class="qi">Q</span><span>痛みはありますか？</span><span class="arr">▼</span></div>
+      <div class="faq-a">個人差がございます。ソフトタイプは軽いチクチク感程度、ハードタイプは比較的刺激を感じやすいですが、お肌の状態に合わせて調整可能ですのでご安心ください。</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span class="qi">Q</span><span>剥離しますか？</span><span class="arr">▼</span></div>
+      <div class="faq-a">個人差がございます。主にハードタイプで部分的な剥離が起こります。ソフトタイプは基本的に剥離なしでお受けいただけます。</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span class="qi">Q</span><span>敏感肌やアトピー肌でも受けられますか？</span><span class="arr">▼</span></div>
+      <div class="faq-a">可能です。お肌の状態に合わせてハーブの種類・濃度を調整いたします。事前カウンセリングで丁寧に確認しますので、安心してご相談ください。</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span class="qi">Q</span><span>メイクして帰れますか？</span><span class="arr">▼</span></div>
+      <div class="faq-a">効果を最大限に高めるため、施術当日のメイクはお控えいただき、翌日からの再開を推奨しています。お時間に余裕を持ってご来店ください。</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span class="qi">Q</span><span>何回くらい通えば変化を感じられますか？</span><span class="arr">▼</span></div>
+      <div class="faq-a">5〜7回ほどで変化を実感される方が多くいらっしゃいます。お肌の状態・目指すゴールに合わせて、最適な通院プランをご提案いたします。</div>
+    </div>
+  </section>
+
+  <!-- [12] 店舗情報 -->
+  <section class="sec reveal" id="shop">
+    <div class="sec-label">Information</div>
+    <h2 class="sec-title">店舗情報・アクセス</h2>
+
+    <table class="shop-tbl">
+      <tr><th>店名</th><td>サロン・ド・ノーブル<br>（salondenoble）</td></tr>
+      <tr><th>住所</th><td>大阪府枚方市南楠葉1-1-27<br>ノーブルエクシアビル</td></tr>
+      <tr><th>アクセス</th><td>京阪本線「樟葉駅」徒歩7分</td></tr>
+      <tr><th>営業時間</th><td>10:00 〜 18:00</td></tr>
+      <tr><th>定休日</th><td>火曜日</td></tr>
+      <tr><th>駐車場</th><td>あり</td></tr>
+      <tr><th>施術ルーム</th><td>半個室 / ベッド2台</td></tr>
+      <tr><th>お支払い</th><td>現金・各種クレジットカード・電子決済 全対応</td></tr>
+    </table>
+
+    <div class="map-box">
+      <iframe src="https://www.google.com/maps?q=%E5%A4%A7%E9%98%AA%E5%BA%9C%E6%9E%9A%E6%96%B9%E5%B8%82%E5%8D%97%E6%A5%A0%E8%91%891-1-27&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+    <a href="https://maps.google.com/?q=大阪府枚方市南楠葉1-1-27" class="map-link" target="_blank" rel="noopener">Google Mapで見る ↗</a>
+
+    <div class="sns-row">
+      <a href="https://www.instagram.com/salondenoble_facial" target="_blank" rel="noopener">📷 Instagram</a>
+      <a href="https://lin.ee/Na0OhDg" target="_blank" rel="noopener">💬 公式LINE</a>
+    </div>
+  </section>
+
+  <!-- [13] クロージング -->
+  <section class="sec sec--dark closing reveal" id="closing">
+    <div class="sec-label">Message</div>
+    <p class="msg">年齢を理由に、<br><span class="em">肌を諦めないでください。</span></p>
+    <p class="txt">「もう年だから」と諦める前に、<br>まずは肌質改善ハーブピーリングを体感してください。<br>30年・42,000人の経験で、<br>あなたの理想の肌へ伴走いたします。</p>
+    <a href="https://lin.ee/Na0OhDg" class="cta-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+      LINEで予約する
+    </a>
+  </section>
+
+  <footer class="footer">&copy; 2026 Salon de Noble All Rights Reserved.</footer>
+
+</main>
+</div>
+
+<!-- フローティングCTA（スマホ用） -->
+<div class="float-cta">
+  <a href="https://lin.ee/Na0OhDg">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+    LINEで予約する
+  </a>
+</div>
+
+<script>
+// スクロールアニメーション
+const reveals = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }});
+}, { threshold: 0.15 });
+reveals.forEach(el => io.observe(el));
+
+// FAQアコーディオン
+document.querySelectorAll('.faq-q').forEach(q => {
+  q.addEventListener('click', () => q.parentElement.classList.toggle('open'));
+});
+
+// ナビ アクティブ状態
+const navLinks = document.querySelectorAll('.sb-left nav a');
+const sections = [];
+navLinks.forEach(a => {
+  const id = a.getAttribute('href').slice(1);
+  const el = document.getElementById(id);
+  if (el) sections.push({ el, a });
+});
+window.addEventListener('scroll', () => {
+  const y = window.scrollY + 200;
+  let current = sections[0];
+  sections.forEach(s => { if (s.el.offsetTop <= y) current = s; });
+  navLinks.forEach(a => a.classList.remove('active'));
+  if (current) current.a.classList.add('active');
+}, { passive: true });
+</script>
+</body>
+</html>
