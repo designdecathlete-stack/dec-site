@@ -257,12 +257,16 @@ body::before{
 .cta-btn svg{display:inline;vertical-align:middle;margin-right:6px}
 .cta-note{font-size:10.5px;color:var(--text-muted);margin-top:14px;letter-spacing:0.5px;line-height:1.7}
 .tamachi-offer{
-  max-width:340px;margin:0 auto 22px;
-}
-.tamachi-offer img{
-  display:block;width:100%;height:auto;border-radius:10px;
+  max-width:340px;margin:0 auto 22px;padding:20px 16px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(250,246,241,0.86) 100%);
+  border:1px solid rgba(184,149,103,0.36);border-radius:10px;
   box-shadow:0 12px 34px rgba(45,40,38,0.10);
 }
+.tamachi-open{font-family:var(--font-serif);font-size:18px;font-weight:700;color:var(--accent-deep);letter-spacing:1px;line-height:1.35}
+.tamachi-campaign-title{font-family:var(--font-serif);font-size:24px;font-weight:700;color:var(--text);letter-spacing:1.5px;line-height:1.35;margin-top:6px}
+.tamachi-free{display:block;font-family:var(--font-body);font-size:42px;font-weight:800;color:var(--danger);letter-spacing:0;line-height:1.05;margin:8px 0 6px}
+.tamachi-limit{display:inline-flex;align-items:center;justify-content:center;margin:10px auto 8px;padding:5px 14px;border-radius:999px;background:var(--danger);color:#fff;font-size:12px;font-weight:700;letter-spacing:1px}
+.tamachi-offer p{font-size:14px;line-height:1.85;color:var(--text);font-weight:600;letter-spacing:0.3px;margin:0}
 
 
 /* ── 悩み共感（ソフト・ベージュ背景） ── */
@@ -627,7 +631,11 @@ body::before{
 
   <div class="cta-block">
     <div class="tamachi-offer">
-      <img src="images/offer.png" alt="7月中旬オープン オープニングキャンペーン 20名限定 0円で体験">
+      <div class="tamachi-open">7月中旬オープン</div>
+      <div class="tamachi-campaign-title">オープニングキャンペーン</div>
+      <div class="tamachi-free">0円で体験</div>
+      <div class="tamachi-limit">20名限定</div>
+      <p>今LINE登録いただくと<br>優先的にご予約いただけます</p>
     </div>
     <a href="https://lin.ee/zU39HFP" class="cta-btn" target="_blank" rel="noopener">LINE登録で優先予約</a>
     <p class="cta-note">オープン前の先行LINE登録受付中</p>
