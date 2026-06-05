@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resole 田町店（リソーレ） | 自律神経×ピラティス×栄養で整えるパーソナルピラティス</title>
+<meta name="description" content="神田・小川町エリアのResole 田町店。自律神経測定、ピラティス、栄養指導で、姿勢・不調・ボディラインを根本から整えるマンツーマンピラティス。初回無料体験。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700;900&family=Noto+Serif+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── リセット・ベース ── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  /* カラーパレット（Resole 田町店：清潔感×40代女性向け）
+     ライト基調 / シャンパンゴールド・セージグリーンのアクセント */
+  --main:#FAF6F1;            /* ウォームクリーム（body bg） */
+  --main-mid:#F0E8DC;        /* ソフトシャンパン（淡色セクション） */
+  --main-light:#FFFFFF;
+  --accent:#B89567;          /* シャンパンゴールド */
+  --accent-deep:#9A7A4E;     /* 濃いゴールド（テキスト・強調） */
+  --accent-light:#D4BC95;
+  --accent-dim:rgba(184,149,103,0.14);
+  --sage:#8AA39B;            /* セージグリーン（サブアクセント） */
+  --sage-dim:rgba(138,163,155,0.12);
+  --white:#FFFFFF;
+  --off-white:#FCFAF6;
+  --cream:#FFFFFF;
+  --text:#2D2826;            /* 温かみのあるダークチャコール */
+  --text-light:#5C5450;
+  --text-muted:#A09891;
+  --line:rgba(45,40,38,0.08);
+  --danger:#B8736B;          /* ソフトテラコッタ */
+  --success:#06C755;
+  /* フォント */
+  --font-display:'Cormorant Garamond', serif;
+  --font-serif:'Noto Serif JP', serif;
+  --font-body:'Noto Sans JP', sans-serif;
+  /* レイアウト */
+  --content-width:480px;
+  --sidebar-left:220px;
+  --sidebar-right:260px;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-body);font-size:15px;line-height:1.85;color:var(--text);background:var(--main);overflow-x:hidden;font-weight:400}
+
+/* ── 背景：朝のやわらかな光 ── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse at 20% 25%, rgba(184,149,103,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 75%, rgba(138,163,155,0.06) 0%, transparent 50%),
+    linear-gradient(180deg, #FAF6F1 0%, #F4EDE3 50%, #FAF6F1 100%);
+  pointer-events:none;
+}
+
+/* ── 3カラム構成 ── */
+.lp-wrapper{display:flex;justify-content:center;min-height:100vh;position:relative}
+
+/* ── 左サイドバー ── */
+.sb-left{
+  position:fixed;left:0;top:0;width:var(--sidebar-left);height:100vh;
+  padding:48px 24px;z-index:20;
+  display:flex;flex-direction:column;
+  border-right:1px solid var(--line);
+  background:rgba(252,250,246,0.6);backdrop-filter:blur(10px);
+}
+.sb-left .logo{
+  font-family:var(--font-display);font-size:32px;letter-spacing:4px;
+  color:var(--accent-deep);margin-bottom:4px;font-weight:500;
+}
+.sb-left .logo-sub{font-size:9px;color:var(--text-muted);letter-spacing:2px;margin-bottom:48px}
+.sb-left nav{display:flex;flex-direction:column;gap:2px}
+.sb-left nav a{
+  display:flex;align-items:center;gap:8px;
+  color:var(--text-light);text-decoration:none;font-size:11.5px;
+  padding:10px 12px;border-radius:6px;
+  transition:all 0.3s;letter-spacing:0.5px;position:relative;font-weight:500;
+}
+.sb-left nav a::before{
+  content:'';width:3px;height:0;background:var(--accent);border-radius:2px;
+  transition:height 0.3s;position:absolute;left:0;top:50%;transform:translateY(-50%);
+}
+.sb-left nav a:hover,
+.sb-left nav a.active{color:var(--accent-deep);background:var(--accent-dim)}
+.sb-left nav a.active::before{height:16px}
+
+/* ── 右サイドバー ── */
+.sb-right{
+  position:fixed;right:0;top:0;width:var(--sidebar-right);height:100vh;
+  padding:48px 24px;z-index:20;
+  display:flex;flex-direction:column;align-items:center;gap:20px;
+  border-left:1px solid var(--line);
+  background:rgba(252,250,246,0.6);backdrop-filter:blur(10px);
+}
+.price-card{
+  background:#fff;
+  border:1px solid var(--accent-dim);border-radius:16px;
+  padding:24px;text-align:center;width:100%;
+  box-shadow:0 4px 24px rgba(184,149,103,0.08);
+}
+.price-card .tag{
+  display:inline-block;background:var(--accent);color:#fff;
+  font-size:10px;font-weight:700;padding:4px 14px;border-radius:20px;
+  margin-bottom:14px;letter-spacing:1.5px;font-family:var(--font-body);
+}
+.price-card .amount{
+  font-family:var(--font-body);font-size:44px;color:var(--text);
+  letter-spacing:0;line-height:1;font-weight:700;
+}
+.price-card .amount .yen{font-size:20px;vertical-align:super;opacity:0.55;color:var(--accent-deep)}
+.price-card .amount .tax{font-size:11px;opacity:0.5;font-family:var(--font-body);letter-spacing:0;color:var(--text-muted)}
+.price-card .campaign-text{font-size:10.5px;color:var(--accent-deep);margin-top:12px;letter-spacing:0.5px;line-height:1.6;font-weight:500}
+.sb-cta{
+  display:block;width:100%;padding:16px;
+  background:linear-gradient(135deg, #06C755, #04A847);
+  color:#fff;text-align:center;text-decoration:none;
+  font-size:14px;font-weight:700;border-radius:50px;
+  transition:all 0.3s;box-shadow:0 4px 20px rgba(6,199,85,0.3);
+  animation:ctaPulse 2.5s ease-in-out infinite;
+}
+.sb-cta:hover{transform:translateY(-2px);box-shadow:0 6px 30px rgba(6,199,85,0.4)}
+
+@keyframes ctaPulse{
+  0%,100%{box-shadow:0 4px 20px rgba(6,199,85,0.3)}
+  50%{box-shadow:0 4px 30px rgba(6,199,85,0.5)}
+}
+
+/* ── 中央コンテンツ ── */
+.main{
+  max-width:var(--content-width);width:100%;margin:0 auto;
+  background:var(--cream);position:relative;z-index:5;
+  box-shadow:0 0 100px rgba(45,40,38,0.06);
+}
+
+/* ── セクション共通 ── */
+.sec{padding:64px 28px}
+.sec--soft{background:var(--main-mid);color:var(--text)}
+.sec--light{background:var(--off-white)}
+.sec-label{
+  font-family:var(--font-serif);font-size:12px;color:var(--accent-deep);
+  text-align:center;letter-spacing:4px;margin-bottom:8px;font-weight:500;
+}
+.sec-title{
+  text-align:center;font-family:var(--font-serif);font-size:24px;font-weight:600;margin-bottom:40px;
+  letter-spacing:1.5px;color:var(--text);line-height:1.5;
+}
+.sec-title::after{
+  content:'';display:block;width:36px;height:1px;
+  background:var(--accent);margin:20px auto 0;
+}
+
+/* ── スクロールアニメーション ── */
+.reveal{opacity:0;transform:translateY(30px);transition:all 0.8s cubic-bezier(0.22,1,0.36,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ── ファーストビュー ── */
+.hero{padding:0;position:relative;overflow:hidden}
+.hero-visual{
+  width:100%;height:460px;position:relative;
+  background:linear-gradient(180deg, #FFFFFF 0%, #FCFAF6 50%, #F4EDE3 100%);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.hero-img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center;
+  z-index:0;
+}
+.hero-visual.fv-bg{
+  height:auto;
+  aspect-ratio:941 / 1672;
+  background-image:var(--fv-image);
+  background-size:cover;
+  background-position:center top;
+  background-repeat:no-repeat;
+}
+.hero-visual.fv-bg::before,
+.hero-visual.fv-bg::after{display:none}
+/* 朝のやわらかな光の差し込み */
+.hero-visual::before{
+  content:'';position:absolute;inset:0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.64) 0%, rgba(252,250,246,0.42) 42%, rgba(250,246,241,0.78) 100%),
+    radial-gradient(circle at 50% 88%, rgba(212,188,149,0.42) 0%, rgba(245,225,190,0.20) 25%, transparent 55%),
+    radial-gradient(circle at 30% 25%, rgba(184,149,103,0.10) 0%, transparent 45%);
+  z-index:1;
+}
+/* 太陽のような光のオーブ */
+.hero-visual::after{
+  content:'';position:absolute;left:50%;bottom:-80px;
+  width:320px;height:320px;border-radius:50%;
+  background:radial-gradient(circle, rgba(255,235,200,0.7) 0%, rgba(212,188,149,0.35) 35%, transparent 70%);
+  transform:translateX(-50%);
+  filter:blur(28px);
+  z-index:1;
+}
+.hero-visual .hero-overlay-text{
+  position:relative;z-index:2;text-align:center;padding:20px;
+}
+.hero-visual .hero-overlay-text .eyebrow{
+  font-family:var(--font-serif);font-size:13px;color:var(--accent-deep);
+  letter-spacing:6px;margin-bottom:16px;font-weight:500;
+}
+.hero-visual .hero-overlay-text h2{
+  font-family:var(--font-display);font-size:76px;color:var(--text);
+  letter-spacing:6px;line-height:1;font-weight:500;
+}
+.hero-visual .hero-overlay-text .sub{
+  font-size:11px;color:var(--text-light);margin-top:20px;letter-spacing:4px;
+  font-family:var(--font-serif);font-weight:400;
+}
+.hero-body{padding:48px 28px 32px;text-align:center;background:var(--cream)}
+.hero-catch{font-family:var(--font-serif);font-size:22px;font-weight:600;line-height:1.7;margin-bottom:22px;letter-spacing:1px;color:var(--text)}
+.hero-catch .em{
+  background:linear-gradient(transparent 62%, var(--accent-dim) 62%);
+  padding:0 4px;color:var(--accent-deep);
+}
+.hero-sub{font-size:13.5px;color:var(--text-light);margin-bottom:32px;line-height:2;font-weight:400}
+
+/* 信頼バッジ */
+.badges{display:flex;justify-content:center;gap:12px;margin-bottom:32px}
+.badge{
+  width:100px;height:100px;border-radius:50%;
+  border:1px solid var(--accent);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;font-size:10px;font-weight:500;color:var(--text-light);
+  line-height:1.4;background:rgba(255,255,255,0.7);
+  transition:all 0.3s;letter-spacing:0.5px;
+}
+.badge:hover{background:var(--accent-dim);transform:scale(1.05)}
+.badge .num{font-family:var(--font-display);font-size:24px;color:var(--accent-deep);letter-spacing:1px;font-weight:600;margin:2px 0}
+
+/* ── CTAブロック（ライト基調） ── */
+.cta-block{padding:44px 28px;text-align:center;background:linear-gradient(180deg, var(--main-mid) 0%, var(--main) 100%);position:relative;overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cta-block::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at center, rgba(212,188,149,0.18) 0%, transparent 70%);
+}
+.cta-block *{position:relative}
+.cta-original{font-size:12.5px;color:var(--text-muted);text-decoration:line-through;letter-spacing:0.5px}
+.cta-price{
+  font-family:var(--font-body);font-size:56px;color:var(--text);
+  letter-spacing:0;line-height:1;margin:10px 0;font-weight:700;
+}
+.cta-price .yen{font-size:20px;opacity:0.55;vertical-align:super;color:var(--accent-deep)}
+.cta-price .tax{font-size:11px;opacity:0.5;font-family:var(--font-body);letter-spacing:0;color:var(--text-muted)}
+.cta-btn{
+  display:block;max-width:320px;margin:24px auto 0;padding:18px 32px;
+  background:linear-gradient(135deg, #06C755, #04A847);
+  color:#fff;text-align:center;text-decoration:none;
+  font-size:15px;font-weight:700;border-radius:50px;letter-spacing:0.5px;
+  transition:all 0.3s;box-shadow:0 4px 24px rgba(6,199,85,0.35);
+  animation:ctaPulse 2.5s ease-in-out infinite;
+}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(6,199,85,0.5)}
+.cta-btn svg{display:inline;vertical-align:middle;margin-right:6px}
+.cta-note{font-size:10.5px;color:var(--text-muted);margin-top:14px;letter-spacing:0.5px;line-height:1.7}
+
+/* ── 悩み共感（ソフト・ベージュ背景） ── */
+.pain-intro{
+  text-align:center;font-family:var(--font-serif);font-size:19px;font-weight:600;margin-bottom:32px;
+  color:var(--text);line-height:1.7;letter-spacing:0.5px;
+}
+.pain-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+.pain-list li{
+  padding:16px 18px;background:#fff;
+  border-radius:10px;font-size:13.5px;color:var(--text);
+  display:flex;align-items:center;gap:12px;font-weight:500;
+  border-left:3px solid var(--accent);transition:all 0.3s;
+  box-shadow:0 1px 4px rgba(45,40,38,0.03);
+}
+.pain-list li:hover{box-shadow:0 4px 12px rgba(184,149,103,0.12);transform:translateX(4px)}
+.pain-list li::before{
+  content:'✓';color:var(--accent-deep);font-weight:700;font-size:14px;
+}
+.pain-resolve{
+  text-align:center;margin-top:40px;font-family:var(--font-serif);font-size:17px;font-weight:500;color:var(--text);line-height:1.8;
+}
+.pain-resolve .hl{
+  display:inline-block;color:var(--accent-deep);font-size:22px;font-weight:600;
+  border-bottom:1px solid var(--accent);padding-bottom:4px;margin-top:10px;letter-spacing:1px;
+}
+
+/* ── オーナー挨拶 ── */
+.owner-photo{
+  width:100%;height:300px;
+  background:
+    linear-gradient(135deg, rgba(184,149,103,0.15) 0%, rgba(212,188,149,0.25) 100%),
+    linear-gradient(135deg, #ECE2D2 0%, #D4C5AE 100%);
+  border-radius:14px;margin-bottom:28px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);font-size:12px;letter-spacing:2px;
+  position:relative;overflow:hidden;
+}
+.owner-photo img{
+  width:100%;height:100%;display:block;
+  object-fit:cover;object-position:center;
+}
+.owner-photo::after{
+  content:'';position:absolute;inset:0;z-index:2;
+  background:linear-gradient(180deg, transparent 58%, rgba(45,40,38,0.24) 100%);
+  pointer-events:none;
+}
+.owner-text{font-size:14px;margin-bottom:16px;line-height:1.95;color:var(--text-light);font-weight:400}
+.owner-text strong{color:var(--text);font-weight:700}
+.owner-credentials{
+  margin:28px 0;padding:24px 24px;
+  background:var(--off-white);border:1px solid var(--accent-dim);border-radius:12px;
+}
+.owner-credentials .label{
+  font-family:var(--font-serif);font-size:11px;color:var(--accent-deep);
+  letter-spacing:3px;margin-bottom:12px;font-weight:600;text-align:center;
+}
+.owner-credentials .label::after{
+  content:'';display:block;width:24px;height:1px;background:var(--accent);margin:8px auto 0;
+}
+.owner-credentials ul{list-style:none;padding:0}
+.owner-credentials li{
+  font-size:12px;color:var(--text-light);padding:4px 0;
+  display:flex;align-items:flex-start;gap:8px;line-height:1.7;
+}
+.owner-credentials li::before{
+  content:'◆';color:var(--accent);font-size:8px;flex-shrink:0;margin-top:6px;
+}
+.owner-quote{
+  font-family:var(--font-serif);font-size:18px;font-weight:500;
+  color:var(--accent-deep);text-align:center;margin-top:28px;
+  padding:28px 20px;border-top:1px solid var(--accent-dim);border-bottom:1px solid var(--accent-dim);
+  letter-spacing:1.5px;line-height:1.8;
+}
+
+/* ── ビフォーアフター ── */
+.ba-card{margin-bottom:44px}
+.ba-num{
+  font-family:var(--font-display);font-size:60px;color:rgba(184,149,103,0.22);
+  line-height:1;margin-bottom:6px;font-weight:500;
+}
+.ba-photos{display:flex;gap:8px;margin-bottom:16px;position:relative}
+.ba-photo{flex:1;position:relative;border-radius:10px;overflow:hidden}
+.ba-photo .img{
+  width:100%;height:180px;
+  background:linear-gradient(135deg, #F0E8DC, #E0D2BC);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:var(--text-muted);letter-spacing:2px;font-family:var(--font-serif);
+}
+.ba-photo .img.after{
+  background:linear-gradient(135deg, #F5E8D4, #E8D5B8);
+}
+.ba-photo .label{
+  position:absolute;top:10px;left:10px;
+  background:rgba(255,255,255,0.92);backdrop-filter:blur(4px);
+  color:var(--text);font-size:10px;font-weight:700;padding:4px 12px;
+  border-radius:20px;letter-spacing:1.5px;
+}
+.ba-arrow{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;
+  width:32px;height:32px;background:#fff;border:2px solid var(--accent);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--accent-deep);font-size:11px;font-weight:900;
+  box-shadow:0 2px 12px rgba(184,149,103,0.25);
+}
+.ba-comment{font-size:14px;text-align:center;font-weight:500;line-height:1.7;color:var(--text);font-family:var(--font-serif)}
+.ba-comment strong{color:var(--accent-deep);font-size:18px;font-weight:700;letter-spacing:0.5px}
+.ba-meta{font-size:11px;color:var(--text-muted);text-align:center;margin-top:6px;letter-spacing:1px}
+
+/* ── お客様の声 ── */
+.v-card{
+  background:#fff;border-radius:14px;padding:24px;margin-bottom:14px;
+  box-shadow:0 2px 12px rgba(45,40,38,0.04);border:1px solid var(--line);
+  transition:all 0.3s;
+}
+.v-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(45,40,38,0.08)}
+.v-head{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.v-avatar{
+  width:46px;height:46px;border-radius:50%;
+  background:linear-gradient(135deg, var(--accent-light), var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:14px;font-weight:600;font-family:var(--font-display);letter-spacing:1px;
+}
+.v-name{font-size:13px;font-weight:700;color:var(--text)}
+.v-meta{font-size:10.5px;color:var(--text-muted);margin-top:2px;letter-spacing:0.5px}
+.v-text{font-size:13px;line-height:1.9;color:var(--text-light)}
+.v-text b{color:var(--accent-deep);font-weight:700}
+.g-badge{
+  text-align:center;margin-top:36px;padding:28px;
+  background:var(--off-white);border-radius:16px;border:1px solid var(--accent-dim);
+}
+.g-badge .g-label{font-size:11px;color:var(--text-muted);letter-spacing:3px;margin-bottom:10px;font-family:var(--font-serif)}
+.g-badge .g-score{font-family:var(--font-display);font-size:64px;color:var(--text);letter-spacing:3px;font-weight:600}
+.g-badge .g-stars{color:var(--accent);font-size:20px;letter-spacing:4px}
+
+/* ── 選ばれる理由 ── */
+.r-item{margin-bottom:48px}
+.r-num{font-family:var(--font-display);font-size:56px;color:rgba(184,149,103,0.22);line-height:1;font-weight:500}
+.r-heading{font-family:var(--font-serif);font-size:19px;font-weight:600;margin-bottom:14px;letter-spacing:1px;line-height:1.6;color:var(--text)}
+.r-img{
+  width:100%;height:210px;border-radius:12px;margin-bottom:16px;
+  background:linear-gradient(135deg, #F0E8DC, #E0D2BC);
+  display:block;object-fit:cover;object-position:center;
+  color:var(--text-muted);font-size:11px;letter-spacing:2px;overflow:hidden;font-family:var(--font-serif);
+}
+.r-text{font-size:13.5px;color:var(--text-light);line-height:1.95}
+.r-text strong{color:var(--text);font-weight:700}
+
+/* ── 比較表 ── */
+.cmp{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(45,40,38,0.05)}
+.cmp th,.cmp td{padding:16px 10px;text-align:center;vertical-align:middle}
+.cmp thead th{
+  font-weight:700;font-size:13px;padding:18px 10px;
+  background:#fff;color:var(--text);border-bottom:1px solid var(--line);
+  font-family:var(--font-serif);letter-spacing:1px;
+}
+.cmp thead th:first-child{background:var(--off-white);color:var(--text-muted)}
+.cmp thead th:last-child{background:var(--accent);color:#fff;border-bottom:none}
+.cmp tbody td{border-bottom:1px solid var(--line);background:#fff}
+.cmp .gen{color:var(--text-muted);background:var(--off-white);font-weight:500}
+.cmp .ours{color:var(--accent-deep);font-weight:700;background:rgba(184,149,103,0.06)}
+.cmp tbody tr:last-child td{border-bottom:none}
+
+/* ── サービスの流れ ── */
+.fl-item{display:flex;gap:18px;margin-bottom:14px;align-items:flex-start;position:relative}
+.fl-line{
+  position:absolute;left:21px;top:46px;width:1.5px;bottom:-12px;
+  background:linear-gradient(180deg, var(--accent) 0%, transparent 100%);
+}
+.fl-num{
+  flex-shrink:0;width:42px;height:42px;
+  background:#fff;border:1.5px solid var(--accent);
+  color:var(--accent-deep);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:17px;letter-spacing:1px;font-weight:600;
+  position:relative;z-index:2;
+}
+.fl-body{flex:1;padding-bottom:20px}
+.fl-title{font-family:var(--font-serif);font-size:15.5px;font-weight:600;margin-bottom:5px;color:var(--text)}
+.fl-time{
+  display:inline-block;font-size:10px;color:var(--accent-deep);
+  background:var(--accent-dim);padding:3px 10px;border-radius:10px;
+  margin-bottom:6px;letter-spacing:1px;font-weight:500;
+}
+.fl-desc{font-size:12.5px;color:var(--text-light);line-height:1.8}
+
+/* ── 料金 ── */
+.m-card{
+  background:#fff;border:1px solid var(--line);border-radius:14px;
+  padding:28px 22px;margin-bottom:14px;text-align:center;
+  transition:all 0.3s;position:relative;overflow:hidden;
+}
+.m-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(45,40,38,0.08)}
+.m-card.rec{border:1.5px solid var(--accent);background:linear-gradient(180deg, #fff 0%, #FCFAF6 100%);box-shadow:0 4px 20px rgba(184,149,103,0.12)}
+.m-card.rec::before{
+  content:'RECOMMENDED';position:absolute;top:20px;right:-38px;
+  background:var(--accent);color:#fff;font-family:var(--font-display);
+  font-size:10px;letter-spacing:2px;padding:4px 40px;font-weight:600;
+  transform:rotate(45deg);
+}
+.m-name{font-family:var(--font-serif);font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text);letter-spacing:0.5px}
+.m-desc{font-size:11.5px;color:var(--text-muted);margin-bottom:18px;line-height:1.7}
+.m-orig{font-size:12px;color:var(--text-muted);text-decoration:line-through;letter-spacing:0.5px}
+.m-price{font-family:var(--font-body);font-size:42px;color:var(--danger);letter-spacing:0;line-height:1.1;font-weight:700}
+.m-price .yen{font-size:17px;opacity:0.7}
+.m-price-sub{font-size:10.5px;color:var(--text-muted);margin-top:6px;letter-spacing:0.5px}
+.m-card.std .m-price{color:var(--text);font-size:36px}
+
+.menu-group-title{
+  font-family:var(--font-serif);font-size:12px;color:var(--accent-deep);
+  text-align:center;letter-spacing:4px;margin:40px 0 16px;
+  font-weight:500;
+}
+.menu-group-title::before,
+.menu-group-title::after{content:'—';margin:0 8px;color:var(--accent);opacity:0.5}
+.menu-note{
+  margin-top:28px;padding:18px 20px;
+  background:var(--off-white);border:1px solid var(--accent-dim);border-radius:10px;
+  font-size:11.5px;color:var(--text-light);text-align:center;line-height:1.8;
+}
+.menu-note strong{color:var(--accent-deep);font-weight:700}
+
+/* ── FAQ ── */
+.faq-item{border-bottom:1px solid var(--line);overflow:hidden}
+.faq-q{
+  display:flex;align-items:center;gap:14px;padding:20px 0;cursor:pointer;
+  font-size:13.5px;font-weight:500;transition:color 0.2s;user-select:none;color:var(--text);
+}
+.faq-q:hover{color:var(--accent-deep)}
+.faq-q .qi{
+  flex-shrink:0;width:28px;height:28px;
+  background:var(--accent);color:#fff;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:600;font-family:var(--font-display);letter-spacing:1px;
+}
+.faq-q .arr{
+  margin-left:auto;color:var(--accent);font-size:12px;
+  transition:transform 0.35s cubic-bezier(0.22,1,0.36,1);
+}
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height 0.4s cubic-bezier(0.22,1,0.36,1), padding 0.4s;
+  padding:0 0 0 42px;font-size:13px;color:var(--text-light);line-height:1.9;
+}
+.faq-item.open .faq-a{max-height:320px;padding-bottom:20px}
+.faq-item.open .arr{transform:rotate(180deg)}
+
+/* ── 店舗情報 ── */
+.shop-tbl{width:100%;font-size:13px}
+.shop-tbl tr{border-bottom:1px solid var(--line)}
+.shop-tbl th{
+  width:28%;padding:16px 0;font-weight:600;text-align:left;
+  vertical-align:top;color:var(--accent-deep);font-size:11.5px;letter-spacing:1.5px;
+  font-family:var(--font-serif);
+}
+.shop-tbl td{padding:16px 0;color:var(--text);line-height:1.7}
+.shop-tbl td a{color:var(--accent-deep);text-decoration:none;font-weight:700}
+.map-box{
+  width:100%;height:240px;border-radius:12px;margin-top:28px;overflow:hidden;
+  background:var(--off-white);border:1px solid var(--line);
+}
+.map-box iframe{width:100%;height:100%;border:0;display:block}
+.map-link{
+  display:block;text-align:center;margin-top:14px;padding:16px;
+  border:1px solid var(--accent-dim);border-radius:10px;
+  color:var(--text);text-decoration:none;font-size:13px;font-weight:500;
+  transition:all 0.2s;letter-spacing:0.5px;background:#fff;
+}
+.map-link:hover{background:var(--accent-dim);border-color:var(--accent)}
+
+/* ── クロージング（ソフトベージュ） ── */
+.closing{text-align:center;background:linear-gradient(180deg, var(--main-mid) 0%, var(--main) 100%);position:relative;overflow:hidden}
+.closing::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 100%, rgba(212,188,149,0.25) 0%, transparent 60%);
+}
+.closing *{position:relative}
+.closing .msg{
+  font-family:var(--font-serif);font-size:22px;font-weight:600;margin-bottom:24px;
+  line-height:1.8;color:var(--text);letter-spacing:1px;
+}
+.closing .msg .em{color:var(--accent-deep)}
+.closing .txt{font-size:13.5px;color:var(--text-light);margin-bottom:32px;line-height:2;font-weight:400}
+
+/* ── フッター ── */
+.footer{
+  text-align:center;padding:28px;font-size:10px;
+  color:var(--text-muted);background:#fff;border-top:1px solid var(--line);
+  letter-spacing:2px;font-family:var(--font-serif);
+}
+
+/* ── フローティングCTA（スマホ用・ライト基調） ── */
+.float-cta{
+  display:none;position:fixed;bottom:0;left:0;width:100%;z-index:100;
+  padding:12px 16px;
+  background:linear-gradient(180deg, rgba(250,246,241,0) 0%, rgba(250,246,241,0.95) 40%);
+  padding-top:28px;
+}
+.float-cta a{
+  display:block;padding:16px;
+  background:linear-gradient(135deg, #06C755, #04A847);
+  color:#fff;text-align:center;text-decoration:none;
+  font-size:15px;font-weight:700;border-radius:50px;
+  box-shadow:0 4px 20px rgba(6,199,85,0.35);
+}
+
+/* ── レスポンシブ ── */
+@media(max-width:960px){
+  .sb-left,.sb-right{display:none}
+  .float-cta{display:block}
+  .main{max-width:100%;box-shadow:none}
+  .footer{padding-bottom:88px}
+}
+</style>
+</head>
+<body>
+
+<div class="lp-wrapper">
+
+<!-- 左サイドバー -->
+<aside class="sb-left">
+  <div class="logo">Resole 田町店</div>
+  <div class="logo-sub">PILATES / TAMACHI</div>
+  <nav>
+    <a href="#top" class="active">トップ</a>
+    <a href="#pain">こんなお悩みありませんか？</a>
+    <a href="#solution">コンセプト</a>
+    <a href="#ba">ビフォーアフター</a>
+    <a href="#voice">お客様の声</a>
+    <a href="#reason">選ばれる理由</a>
+    <a href="#compare">他店との違い</a>
+    <a href="#flow">サービスの流れ</a>
+    <a href="#menu">メニュー・料金</a>
+    <a href="#faq">よくある質問</a>
+    <a href="#shop">店舗情報・アクセス</a>
+    <a href="#closing">最後に</a>
+  </nav>
+</aside>
+
+<!-- 右サイドバー -->
+<aside class="sb-right">
+  <div class="price-card">
+    <span class="tag">初回無料体験</span>
+    <div class="amount">体験0円</div>
+    <div class="campaign-text"><span data-campaign-deadline></span><br>初回体験料 &yen;10,000 → &yen;0</div>
+  </div>
+  <a href="https://lin.ee/zU39HFP" class="sb-cta" target="_blank" rel="noopener">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+    初回無料体験を予約する
+  </a>
+</aside>
+
+<!-- 中央コンテンツ -->
+<main class="main">
+
+  <!-- ============================================
+       [1] ファーストビュー
+       ============================================ -->
+  <section class="hero" id="top">
+    <div class="hero-visual fv-bg" style="--fv-image:url('images/fv2.webp')" role="img" aria-label="Resole 田町店ピラティスのファーストビュー"></div>
+  </section>
+
+  <div class="cta-block">
+    <div class="cta-original">通常 初回体験 &yen;10,000</div>
+    <div class="cta-price">体験0円</div>
+    <a href="https://lin.ee/zU39HFP" class="cta-btn" target="_blank" rel="noopener">初回無料体験を予約する</a>
+    <p class="cta-note"><span data-campaign-deadline></span><br>初回体験料 &yen;10,000 → &yen;0</p>
+  </div>
+
+  <section class="sec sec--soft reveal" id="pain">
+    <div class="sec-label">Worries</div>
+    <p class="pain-intro">こんなお悩み、<br>ありませんか？</p>
+    <ul class="pain-list">
+      <li>食事制限しているのに、下半身だけ変わらない</li>
+      <li>猫背・反り腰・巻き肩で、姿勢が悪く見える</li>
+      <li>肩こり・腰痛・首こり・疲れやすさが続いている</li>
+      <li>ジムや筋トレが続かず、自分に合う方法が分からない</li>
+      <li>体重は減っても、見た目やボディラインが変わらない</li>
+      <li>睡眠の質や自律神経の乱れが気になっている</li>
+    </ul>
+    <p class="pain-resolve">
+      その原因は、努力不足ではなく<br>
+      <span class="hl">身体に合う順番を知らないだけかもしれません。</span>
+    </p>
+  </section>
+
+  <section class="sec reveal" id="solution">
+    <div class="sec-label">Concept</div>
+    <h2 class="sec-title">自律神経×ピラティス×栄養で<br>疲れにくく、美しく動ける身体へ</h2>
+    <div class="owner-photo"><img src="images/female-trainer-profile.webp" alt="女性トレーナーによるカウンセリング"></div>
+    <p class="owner-text">
+      Resole 田町店は、単に痩せることだけを目的にした場所ではありません。<strong>姿勢・自律神経・身体の使い方・不調・ボディライン</strong>を根本から整え、日常が楽になる身体づくりを大切にしています。
+    </p>
+    <p class="owner-text">
+      頑張っているのに変わらない方へ、まずお伝えしたいのは「あなたが悪いのではない」ということ。必要なのは、気合いではなく<strong>今の身体に合った順番</strong>です。
+    </p>
+    <p class="owner-text">
+      自律神経測定で疲労状態を見て、ピラティスで身体を整え、必要に応じて筋トレやムーブメントを重ねる。無理に追い込まず、納得しながら続けられる指導を行います。
+    </p>
+    <div class="owner-credentials">
+      <div class="label">SUPPORT</div>
+      <ul>
+        <li>基本は完全マンツーマン</li>
+        <li>マシンピラティス・マットピラティス対応</li>
+        <li>自律神経測定器を用いた客観評価</li>
+        <li>栄養療法ベースの食事指導</li>
+        <li>姿勢改善・不調改善・ボディメイクに対応</li>
+        <li>運動初心者・ジムが続かなかった方も歓迎</li>
+      </ul>
+    </div>
+    <div class="owner-quote">整えてから鍛える。<br>だから、身体は変わりやすくなる。</div>
+  </section>
+
+  <section class="sec sec--light reveal" id="ba">
+    <div class="sec-label">Before &amp; After</div>
+    <h2 class="sec-title">よくある変化</h2>
+    <div class="ba-card">
+      <div class="ba-num">01</div>
+      <div class="ba-photos">
+        <div class="ba-photo"><div class="img">Before</div><span class="label">Before</span></div>
+        <div class="ba-arrow">→</div>
+        <div class="ba-photo"><div class="img after">After</div><span class="label">After</span></div>
+      </div>
+      <p class="ba-comment"><strong>下半身スッキリ</strong> 前ももの張り・反り腰・ウエストラインの変化を実感。</p>
+      <p class="ba-meta">30代女性 / デスクワーク</p>
+    </div>
+    <div class="ba-card">
+      <div class="ba-num">02</div>
+      <div class="ba-photos">
+        <div class="ba-photo"><div class="img">Before</div><span class="label">Before</span></div>
+        <div class="ba-arrow">→</div>
+        <div class="ba-photo"><div class="img after">After</div><span class="label">After</span></div>
+      </div>
+      <p class="ba-comment"><strong>疲れにくい身体へ</strong> 呼吸・睡眠・日中の活動量が整いやすく。</p>
+      <p class="ba-meta">40代女性 / 会社員</p>
+    </div>
+    <div class="ba-card">
+      <div class="ba-num">03</div>
+      <div class="ba-photos">
+        <div class="ba-photo"><div class="img">Before</div><span class="label">Before</span></div>
+        <div class="ba-arrow">→</div>
+        <div class="ba-photo"><div class="img after">After</div><span class="label">After</span></div>
+      </div>
+      <p class="ba-comment"><strong>姿勢改善</strong> 猫背・巻き肩・ストレートネックの印象がすっきり。</p>
+      <p class="ba-meta">30代女性 / 美容・ボディメイク目的</p>
+    </div>
+  </section>
+
+  <div class="cta-block">
+    <a href="https://lin.ee/zU39HFP" class="cta-btn" target="_blank" rel="noopener">初回無料体験を予約する</a>
+  </div>
+
+  <section class="sec reveal" id="voice">
+    <div class="sec-label">Voice</div>
+    <h2 class="sec-title">お客様の声</h2>
+    <div class="v-card"><div class="v-head"><div class="v-avatar">30s</div><div><div class="v-name">30代女性</div><div class="v-meta">運動初心者</div></div></div><p class="v-text">「たった1ヶ月でも目に見える変化がありました。否定的なことを一切言われないので、とても楽しく通えています。」</p></div>
+    <div class="v-card"><div class="v-head"><div class="v-avatar">D.W</div><div><div class="v-name">30代女性</div><div class="v-meta">デスクワーク</div></div></div><p class="v-text">「自己流のダイエットとは全然違いました。身体や精神面まで寄り添ってくれて安心感があります。」</p></div>
+    <div class="v-card"><div class="v-head"><div class="v-avatar">40s</div><div><div class="v-name">40代女性</div><div class="v-meta">会社員</div></div></div><p class="v-text">「無理ない範囲で大丈夫ですよ、と言ってくれるので安心して続けられています。」</p></div>
+  </section>
+
+  <section class="sec sec--light reveal" id="reason">
+    <div class="sec-label">Reason</div>
+    <h2 class="sec-title">Resole 田町店が選ばれる<br>5つの理由</h2>
+    <div class="r-item"><div class="r-num">01</div><h3 class="r-heading">自律神経測定×栄養で<br>原因を客観的に見る</h3><img class="r-img" src="images/reason01-measurement.webp" alt="自律神経測定と栄養確認"><p class="r-text">疲労状態・栄養状態・身体の状態を総合的に見ながら、無理に追い込まない進め方を提案します。</p></div>
+    <div class="r-item"><div class="r-num">02</div><h3 class="r-heading">ピラティスで整えてから<br>必要に応じて鍛える</h3><img class="r-img" src="images/fv-female-trainer.webp" alt="女性トレーナーによるピラティス指導"><p class="r-text">使いすぎている筋肉を抑え、使えていない筋肉を活性化。脚が太くなりにくく、姿勢改善につながりやすい身体へ。</p></div>
+    <div class="r-item"><div class="r-num">03</div><h3 class="r-heading">不調改善と美容を<br>同時に目指せる</h3><img class="r-img" src="images/reason04-counseling.webp" alt="カウンセリング風景"><p class="r-text">姿勢、疲労感、呼吸、睡眠、ボディラインなどを総合的に見て、見た目だけでなく日常の楽さも大切にします。</p></div>
+    <div class="r-item"><div class="r-num">04</div><h3 class="r-heading">初心者でも続けやすい<br>やさしいマンツーマン</h3><img class="r-img" src="images/hero-gym.webp" alt="清潔感のあるスタジオ"><p class="r-text">運動が苦手な方、ジムが続かなかった方にも、今できることから無理なく進めます。</p></div>
+    <div class="r-item"><div class="r-num">05</div><h3 class="r-heading">具体的に褒める<br>納得感のある指導</h3><img class="r-img" src="images/female-feedback.webp" alt="女性トレーナーによるフィードバック"><p class="r-text">姿勢の改善、呼吸の変化、動作改善などを具体的に伝え、身体を理解しながら続けられるようサポートします。</p></div>
+  </section>
+
+  <section class="sec reveal" id="compare">
+    <div class="sec-label">Comparison</div>
+    <h2 class="sec-title">一般的なジムとの違い</h2>
+    <table class="cmp"><thead><tr><th>比較項目</th><th>一般的なジム</th><th>Resole 田町店</th></tr></thead><tbody>
+      <tr><td>進め方</td><td class="gen">筋トレ中心</td><td class="ours">測定→ピラティス→筋トレ→ムーブメント</td></tr>
+      <tr><td>評価</td><td class="gen">体重・見た目中心</td><td class="ours">自律神経・姿勢・身体の使い方</td></tr>
+      <tr><td>食事</td><td class="gen">カロリー制限中心</td><td class="ours">栄養状態に合わせて提案</td></tr>
+      <tr><td>雰囲気</td><td class="gen">頑張る・追い込む</td><td class="ours">無理なく、納得して続ける</td></tr>
+      <tr><td>目的</td><td class="gen">痩せる</td><td class="ours">不調・姿勢・ボディラインまで整える</td></tr>
+    </tbody></table>
+  </section>
+
+  <section class="sec sec--light reveal" id="flow">
+    <div class="sec-label">Flow</div><h2 class="sec-title">初回体験の流れ</h2>
+    <div class="fl-item"><div class="fl-line"></div><div class="fl-num">01</div><div class="fl-body"><div class="fl-title">LINEで予約</div><span class="fl-time">24時間受付</span><div class="fl-desc">希望日時とお悩みを送ってください。</div></div></div>
+    <div class="fl-item"><div class="fl-line"></div><div class="fl-num">02</div><div class="fl-body"><div class="fl-title">カウンセリング</div><span class="fl-time">約10分</span><div class="fl-desc">生活習慣、睡眠、食事、身体の悩みを確認します。</div></div></div>
+    <div class="fl-item"><div class="fl-line"></div><div class="fl-num">03</div><div class="fl-body"><div class="fl-title">自律神経測定・身体評価</div><span class="fl-time">約15分</span><div class="fl-desc">疲労状態と姿勢・動作を客観的に見ます。</div></div></div>
+    <div class="fl-item"><div class="fl-line"></div><div class="fl-num">04</div><div class="fl-body"><div class="fl-title">ピラティス体験</div><span class="fl-time">約20分</span><div class="fl-desc">今の身体に合う動きを体感します。</div></div></div>
+    <div class="fl-item"><div class="fl-num">05</div><div class="fl-body"><div class="fl-title">改善ポイント説明</div><span class="fl-time">約5分</span><div class="fl-desc">なぜ悩みが起きているか、今後の進め方を整理します。</div></div></div>
+  </section>
+
+  <section class="sec reveal" id="menu">
+    <div class="sec-label">Menu</div><h2 class="sec-title">メニュー・料金</h2>
+    <div class="m-card rec"><div class="m-name">初回体験コース</div><div class="m-desc">カウンセリング / 自律神経測定 / 身体評価 / 姿勢チェック / ピラティス体験 / 改善ポイント説明</div><div class="m-price">体験0円</div><div class="m-price-sub"><span data-campaign-deadline></span>／通常 初回体験 &yen;10,000 → &yen;0</div></div>
+    <div class="menu-group-title">Monthly Plan</div>
+    <div class="m-card std"><div class="m-name">月4回コース</div><div class="m-desc">週1ペースで身体を整え、習慣化したい方へ</div><div class="m-price"><span class="yen">&yen;</span>44,800</div><div class="m-price-sub">税込・月額</div></div>
+    <div class="m-card std"><div class="m-name">月6回コース</div><div class="m-desc">不調改善とボディラインをしっかり進めたい方へ</div><div class="m-price"><span class="yen">&yen;</span>73,200</div><div class="m-price-sub">税込・月額</div></div>
+    <div class="m-card std"><div class="m-name">月8回コース</div><div class="m-desc">短期集中で変化を出したい方へ</div><div class="m-price"><span class="yen">&yen;</span>97,600</div><div class="m-price-sub">税込・月額</div></div>
+  </section>
+
+  <div class="cta-block"><a href="https://lin.ee/zU39HFP" class="cta-btn" target="_blank" rel="noopener">初回無料体験を予約する</a></div>
+
+  <section class="sec sec--light reveal" id="faq">
+    <div class="sec-label">FAQ</div><h2 class="sec-title">よくある質問</h2>
+    <div class="faq-item"><div class="faq-q">Q. 運動初心者でも大丈夫ですか？</div><div class="faq-a">もちろん大丈夫です。通われている方の多くが運動初心者です。</div></div>
+    <div class="faq-item"><div class="faq-q">Q. 身体が硬くてもできますか？</div><div class="faq-a">問題ありません。身体が硬い方こそ改善しやすいケースがあります。</div></div>
+    <div class="faq-item"><div class="faq-q">Q. どれくらいで変化が出ますか？</div><div class="faq-a">早い方は初回でも変化を実感されます。見た目変化は2〜3ヶ月で感じる方が多いです。</div></div>
+    <div class="faq-item"><div class="faq-q">Q. 食事制限は厳しいですか？</div><div class="faq-a">極端な制限は行いません。身体状態に合わせて提案します。</div></div>
+    <div class="faq-item"><div class="faq-q">Q. 男性も通えますか？</div><div class="faq-a">はい、男性も利用可能です。</div></div>
+  </section>
+
+  <section class="sec reveal" id="shop">
+    <div class="sec-label">Access</div><h2 class="sec-title">店舗情報</h2>
+    <div class="shop-info"><dl><dt>サロン名</dt><dd>Resole 田町店（リソーレ）</dd><dt>エリア</dt><dd>東京都千代田区 神田エリア</dd><dt>最寄駅</dt><dd>神田駅 / 秋葉原駅 / 小川町駅 徒歩圏内</dd><dt>予約</dt><dd>LINE公式より受付</dd></dl></div>
+    <div class="map-box"><iframe src="https://www.google.com/maps?q=%E6%9D%B1%E4%BA%AC%E9%83%BD%E5%8D%83%E4%BB%A3%E7%94%B0%E5%8C%BA%E7%A5%9E%E7%94%B0%E9%A0%88%E7%94%B0%E7%94%BA1-12-9&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
+  </section>
+
+  <section class="sec closing reveal" id="closing">
+    <div class="sec-label">Message</div>
+    <h2 class="closing-title">もう自己流で<br>悩み続けなくて大丈夫です。</h2>
+    <p class="closing-text">まずは今の身体の状態を知ること。そして、あなたに合った順番で進めること。それだけで、身体は大きく変わることがあります。</p>
+    <a href="https://lin.ee/zU39HFP" class="cta-btn" target="_blank" rel="noopener">初回無料体験を予約する</a>
+  </section>
+
+</main>
+</div>
+
+<!-- フローティングCTA（スマホ用） -->
+<div class="float-cta">
+  <a href="https://lin.ee/zU39HFP" target="_blank" rel="noopener">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+    初回無料体験を予約する
+  </a>
+</div>
+
+<script>
+function updateCampaignDeadline() {
+  const deadline = new Date();
+  deadline.setDate(deadline.getDate() + 3);
+  const label = `キャンペーン${deadline.getMonth() + 1}月${deadline.getDate()}日まで`;
+  document.querySelectorAll('[data-campaign-deadline]').forEach((el) => {
+    el.textContent = label;
+  });
+}
+updateCampaignDeadline();
+
+// スクロールアニメーション
+const reveals = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }});
+}, { threshold: 0.15 });
+reveals.forEach(el => io.observe(el));
+
+// FAQアコーディオン
+document.querySelectorAll('.faq-q').forEach(q => {
+  q.addEventListener('click', () => q.parentElement.classList.toggle('open'));
+});
+
+// ナビ アクティブ状態
+const navLinks = document.querySelectorAll('.sb-left nav a');
+const sections = [];
+navLinks.forEach(a => {
+  const id = a.getAttribute('href').slice(1);
+  const el = document.getElementById(id);
+  if (el) sections.push({ el, a });
+});
+window.addEventListener('scroll', () => {
+  const y = window.scrollY + 200;
+  let current = sections[0];
+  sections.forEach(s => { if (s.el.offsetTop <= y) current = s; });
+  navLinks.forEach(a => a.classList.remove('active'));
+  if (current) current.a.classList.add('active');
+}, { passive: true });
+</script>
+</body>
+</html>
