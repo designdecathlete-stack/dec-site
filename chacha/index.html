@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="format-detection" content="telephone=no">
+<title>chacha eyelash&eyebrow 錦糸町店｜予約開放のご案内</title>
+<meta name="description" content="予約が取れない錦糸町の人気アイラッシュサロンchachaが、8月ついに予約開放。インフルエンサーも多数来店、他店で満足できなかった方が最後にたどり着くまつ毛サロン。LINE登録で優先予約＋特別キャンペーンをご案内。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Shippori+Mincho:wght@500;600&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ── リセット・ベース ── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  /* カラーパレット（chacha：アイボリーベージュ × ローズベージュ × テラコッタ） */
+  --main:#5E504A;--main-mid:#6E5E54;--main-light:#857367;
+  --accent:#C99686;--accent-light:#DBB6A8;--accent-dim:rgba(201,150,134,0.20);
+  --gold:#C8A46D;--gold-deep:#A86F5E;
+  --white:#FFFFFF;--off-white:#EBDDD0;--cream:#F6EDE4;
+  --text:#5E504A;--text-light:#7A6B61;--text-muted:#A8978D;
+  --danger:#B85C5C;
+  --cta:#06C755;--cta-deep:#04A847;
+  /* フォント */
+  --font-display:'Cormorant Garamond', serif;
+  --font-serif:'Shippori Mincho', serif;
+  --font-body:'Noto Sans JP', sans-serif;
+  /* レイアウト */
+  --content-width:480px;
+  --sidebar-left:220px;
+  --sidebar-right:260px;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-body);font-size:15px;line-height:1.75;color:var(--text);background:#EFE2D8;overflow-x:hidden}
+
+/* ── 背景：サロン内観写真 ── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:
+    linear-gradient(180deg, rgba(94,80,74,0.50) 0%, rgba(94,80,74,0.62) 100%),
+    url('images/hero.webp') center center / cover no-repeat;
+  pointer-events:none;
+}
+
+/* ── 3カラム構成 ── */
+.lp-wrapper{display:flex;justify-content:center;min-height:100vh;position:relative}
+
+/* ── 左サイドバー ── */
+.sb-left{
+  position:fixed;left:0;top:0;width:var(--sidebar-left);height:100vh;
+  padding:40px 24px;z-index:20;
+  display:flex;flex-direction:column;
+  background:linear-gradient(90deg, rgba(60,50,44,0.42) 0%, rgba(60,50,44,0.12) 100%);
+  border-right:1px solid rgba(255,255,255,0.12);
+}
+.sb-left .logo{
+  font-family:var(--font-display);font-size:30px;letter-spacing:2px;
+  color:#fff;margin-bottom:4px;line-height:1.2;text-shadow:0 1px 8px rgba(0,0,0,0.3);
+}
+.sb-left .logo-sub{font-size:10px;color:rgba(255,255,255,0.7);letter-spacing:1px;margin-bottom:40px}
+.sb-left nav{display:flex;flex-direction:column;gap:2px}
+.sb-left nav a{
+  display:flex;align-items:center;gap:8px;
+  color:rgba(255,255,255,0.82);text-decoration:none;font-size:12px;
+  padding:10px 12px;border-radius:6px;
+  transition:all 0.3s;letter-spacing:0.5px;position:relative;
+}
+.sb-left nav a::before{
+  content:'';width:3px;height:0;background:var(--accent);border-radius:2px;
+  transition:height 0.3s;position:absolute;left:0;top:50%;transform:translateY(-50%);
+}
+.sb-left nav a:hover,
+.sb-left nav a.active{color:var(--accent-light);background:rgba(255,255,255,0.12)}
+.sb-left nav a.active::before{height:16px}
+
+/* ── 右サイドバー ── */
+.sb-right{display:none}
+.price-card{
+  background:var(--main);
+  border:1px solid rgba(201,150,134,0.3);border-radius:16px;
+  padding:24px;text-align:center;width:100%;
+  box-shadow:0 8px 24px rgba(94,80,74,0.18);
+}
+.price-card .tag{
+  display:inline-block;background:var(--gold-deep);color:#fff;
+  font-size:10px;font-weight:700;padding:3px 12px;border-radius:20px;
+  margin-bottom:12px;letter-spacing:1px;
+}
+.price-card .amount{
+  font-family:var(--font-display);font-size:52px;color:#fff;
+  letter-spacing:2px;line-height:1;
+}
+.price-card .amount .yen{font-size:20px;vertical-align:super;opacity:0.7}
+.price-card .amount .tax{font-size:11px;opacity:0.5;font-family:var(--font-body);letter-spacing:0}
+.price-card .campaign-text{font-size:10px;color:var(--accent-light);margin-top:8px;letter-spacing:1px}
+.qr-box{
+  background:var(--main);border:1px solid rgba(201,150,134,0.22);
+  border-radius:16px;padding:20px;text-align:center;width:100%;
+  box-shadow:0 8px 24px rgba(94,80,74,0.18);
+}
+.qr-box .qr-img{
+  width:130px;height:130px;background:rgba(255,255,255,0.1);border-radius:8px;
+  margin:0 auto 10px;display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:rgba(255,255,255,0.4);border:1px dashed rgba(255,255,255,0.2);
+}
+.qr-box p{font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:1px}
+.sb-cta{
+  display:block;width:100%;padding:16px;
+  background:linear-gradient(135deg, var(--cta), var(--cta-deep));
+  color:#fff;text-align:center;text-decoration:none;
+  font-size:14px;font-weight:700;border-radius:50px;
+  transition:all 0.3s;box-shadow:0 4px 20px rgba(6,199,85,0.35);
+  animation:ctaPulse 2.5s ease-in-out infinite;
+}
+.sb-cta:hover{transform:translateY(-2px);box-shadow:0 6px 30px rgba(6,199,85,0.5)}
+
+@keyframes ctaPulse{
+  0%,100%{box-shadow:0 4px 20px rgba(6,199,85,0.3)}
+  50%{box-shadow:0 4px 30px rgba(6,199,85,0.55)}
+}
+
+/* ── 中央コンテンツ ── */
+.main{
+  max-width:var(--content-width);width:100%;margin:0 auto;
+  background:var(--cream);position:relative;z-index:5;
+  box-shadow:0 0 80px rgba(0,0,0,0.35);
+}
+
+/* ── セクション共通 ── */
+.sec{padding:56px 24px}
+.sec--dark{background:var(--main);color:#fff}
+.sec--navy{background:var(--main-mid);color:#fff}
+.sec--light{background:var(--off-white)}
+.sec-label{
+  font-family:var(--font-serif);font-size:13px;color:var(--gold-deep);
+  text-align:center;letter-spacing:3px;margin-bottom:6px;
+}
+.sec--dark .sec-label{color:var(--accent-light)}
+.sec-title{
+  text-align:center;font-size:22px;font-weight:700;margin-bottom:32px;
+  letter-spacing:1px;
+}
+.sec-title::after{
+  content:'';display:block;width:32px;height:1px;
+  background:var(--accent);margin:16px auto 0;
+}
+.sec--dark .sec-title::after{background:var(--accent-light)}
+
+/* ── スクロールアニメーション ── */
+.reveal{opacity:0;transform:translateY(30px);transition:all 0.7s cubic-bezier(0.22,1,0.36,1)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* ── ファーストビュー ── */
+.hero{padding:0;position:relative;overflow:hidden}
+.hero-img{width:100%;height:auto;display:block}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.hero-visual{
+  width:100%;height:480px;position:relative;
+  display:flex;align-items:flex-end;justify-content:center;
+  overflow:hidden;
+}
+.hero-visual img.hero-bg{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;
+}
+.hero-visual::before{
+  content:'';position:absolute;inset:0;z-index:2;
+  background:
+    linear-gradient(180deg, rgba(94,80,74,0.20) 0%, rgba(94,80,74,0.08) 40%, rgba(94,80,74,0.85) 100%);
+}
+.hero-visual .hero-overlay-text{
+  position:relative;z-index:3;text-align:center;padding:32px 20px;
+}
+.hero-visual .hero-overlay-text .eyebrow{
+  font-family:var(--font-serif);font-size:12px;color:var(--accent-light);
+  letter-spacing:5px;margin-bottom:10px;opacity:0.95;
+}
+.hero-visual .hero-overlay-text h2{
+  font-family:var(--font-display);font-size:58px;color:#fff;
+  letter-spacing:4px;line-height:1.05;font-weight:500;
+  text-shadow:0 2px 20px rgba(0,0,0,0.4);
+}
+.hero-visual .hero-overlay-text .sub{
+  font-size:12px;color:rgba(255,255,255,0.8);margin-top:14px;letter-spacing:3px;
+}
+.hero-body{padding:36px 24px;text-align:center;background:var(--cream)}
+.hero-catch{font-size:25px;font-weight:900;line-height:1.55;margin-bottom:16px;letter-spacing:0.5px;color:var(--main)}
+.hero-catch .em{
+  background:linear-gradient(transparent 60%, var(--accent-dim) 60%);
+  padding:0 4px;color:var(--gold-deep);
+}
+.hero-sub{font-size:13px;color:var(--text-light);margin-bottom:28px;line-height:1.9}
+
+/* 信頼バッジ */
+.badges{display:flex;justify-content:center;gap:12px;margin-bottom:28px}
+.badge{
+  width:104px;height:104px;border-radius:50%;
+  border:2px solid var(--accent);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;font-size:11px;font-weight:700;color:var(--main);
+  line-height:1.25;background:rgba(201,150,134,0.10);
+  box-shadow:0 4px 14px rgba(168,111,94,0.16);
+  transition:all 0.3s;
+}
+.badge:hover{background:var(--accent-dim);transform:scale(1.05)}
+.badge .num{font-family:var(--font-display);font-size:38px;font-weight:600;color:var(--gold-deep);letter-spacing:1px;line-height:1;margin:2px 0}
+
+/* ── CTAブロック ── */
+.cta-block{padding:36px 24px;text-align:center;background:var(--main);position:relative;overflow:hidden}
+.cta-block::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at center, rgba(201,150,134,0.10) 0%, transparent 70%);
+}
+.cta-block *{position:relative}
+.cta-price{
+  font-family:var(--font-display);font-size:50px;color:#fff;
+  letter-spacing:2px;line-height:1;margin:8px 0;
+}
+.cta-price .yen{font-size:18px;opacity:0.7;vertical-align:super}
+.cta-price .tax{font-size:11px;opacity:0.5;font-family:var(--font-body);letter-spacing:0}
+
+/* ── キャンペーンバナー＋オファー強化 ── */
+.campaign-banner{
+  background:linear-gradient(135deg,var(--accent),var(--gold-deep));
+  color:#fff;padding:14px 18px;border-radius:8px;
+  margin:0 auto 20px;max-width:340px;
+  box-shadow:0 6px 18px rgba(168,111,94,0.35);
+  position:relative;z-index:1;
+}
+.campaign-tag{
+  display:inline-block;font-size:10px;letter-spacing:3px;
+  background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:99px;
+  margin-bottom:8px;font-weight:700;
+}
+.campaign-title{
+  font-family:var(--font-display);font-size:21px;font-weight:600;
+  letter-spacing:1px;line-height:1.4;margin-bottom:8px;
+}
+.campaign-sub{font-size:11.5px;line-height:1.7;opacity:0.96;}
+.offer-box{
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.18);
+  border-radius:10px;padding:18px 16px;margin:0 auto 16px;
+  max-width:300px;position:relative;z-index:1;
+}
+.offer-img{margin:0 -24px 20px;border-radius:0;overflow:hidden;position:relative;z-index:1}
+.offer-img img{width:100%;height:auto;display:block}
+.offer-special-label{font-size:11px;color:var(--accent-light);letter-spacing:2px;font-weight:700;margin-bottom:2px}
+.offer-note{font-size:11px;color:rgba(255,255,255,0.65);margin-top:4px;letter-spacing:1px}
+.cta-btn{
+  display:block;max-width:320px;margin:20px auto 0;padding:16px 32px;
+  background:linear-gradient(135deg, var(--cta), var(--cta-deep));
+  color:#fff;text-align:center;text-decoration:none;
+  font-size:15px;font-weight:700;border-radius:50px;
+  transition:all 0.3s;box-shadow:0 4px 24px rgba(6,199,85,0.4);
+  animation:ctaPulse 2.5s ease-in-out infinite;
+}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(6,199,85,0.55)}
+.cta-btn svg{display:inline;vertical-align:middle;margin-right:6px}
+.cta-note{font-size:10px;color:rgba(255,255,255,0.5);margin-top:10px;letter-spacing:0.5px}
+
+/* ── 悩み共感 ── */
+.pain-intro{
+  text-align:center;font-size:18px;font-weight:700;margin-bottom:28px;
+  color:rgba(255,255,255,0.95);line-height:1.6;
+}
+.pain-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+.pain-list li{
+  padding:14px 16px;background:rgba(255,255,255,0.06);
+  border-radius:10px;font-size:13px;color:rgba(255,255,255,0.85);
+  display:flex;align-items:center;gap:10px;
+  border-left:3px solid var(--accent);transition:all 0.3s;
+}
+.pain-list li:hover{background:rgba(255,255,255,0.1);transform:translateX(4px)}
+.pain-resolve{
+  text-align:center;margin-top:36px;font-size:18px;font-weight:700;color:#fff;
+}
+.pain-resolve .hl{
+  display:inline-block;color:var(--accent-light);font-size:22px;
+  border-bottom:2px solid var(--accent);padding-bottom:2px;
+}
+
+/* ── コンセプト ── */
+.owner-photo{
+  width:100%;aspect-ratio:4/5;background:linear-gradient(135deg, var(--accent-dim) 0%, var(--off-white) 100%);
+  border-radius:12px;margin-bottom:24px;overflow:hidden;
+}
+.owner-photo img{width:100%;height:100%;object-fit:cover;object-position:center 30%;display:block}
+.owner-text{font-size:14px;margin-bottom:14px;line-height:1.9;color:var(--text)}
+.owner-text strong{color:var(--gold-deep);font-weight:700}
+.owner-quote{
+  font-family:var(--font-serif);font-size:18px;font-weight:600;
+  color:var(--main);text-align:center;margin-top:24px;
+  padding:20px;border-top:1px solid var(--accent-dim);border-bottom:1px solid var(--accent-dim);
+  letter-spacing:1px;line-height:1.6;
+}
+
+/* ── デザインギャラリー（横スクロール・ループ） ── */
+.dm-label{
+  font-family:var(--font-display);font-size:13px;font-style:italic;
+  letter-spacing:4px;color:var(--gold-deep);text-align:center;margin-bottom:18px;
+}
+.dm-viewport{
+  width:100%;overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%);
+  mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%);
+}
+.dm-track{display:flex;gap:14px;width:max-content;animation:dmScroll 38s linear infinite}
+.dm-track:hover{animation-play-state:paused}
+.dm-track img{
+  height:200px;width:auto;border-radius:16px;object-fit:cover;flex-shrink:0;
+  box-shadow:0 6px 22px rgba(94,80,74,0.18);
+}
+@keyframes dmScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.dm-track{animation:none}.dm-viewport{overflow-x:auto}}
+
+/* ── 選ばれる理由 ── */
+.r-item{margin-bottom:40px}
+.r-num{font-family:var(--font-display);font-size:52px;color:rgba(168,111,94,0.22);line-height:1}
+.r-heading{font-size:18px;font-weight:700;margin-bottom:12px;letter-spacing:0.5px;color:var(--main)}
+.r-img{
+  width:100%;aspect-ratio:16/10;border-radius:10px;margin-bottom:14px;
+  background:linear-gradient(135deg, var(--accent-dim) 0%, var(--off-white) 100%);
+  overflow:hidden;box-shadow:0 4px 16px rgba(168,111,94,0.14);
+}
+.r-img img{width:100%;height:100%;object-fit:cover;display:block}
+.r-text{font-size:13px;color:var(--text-light);line-height:1.85}
+
+/* ── お客様の声 ── */
+.v-card{
+  background:#fff;border-radius:14px;padding:22px;margin-bottom:14px;
+  box-shadow:0 2px 12px rgba(168,111,94,0.07);border:1px solid rgba(168,111,94,0.07);
+  transition:all 0.3s;
+}
+.v-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(168,111,94,0.14)}
+.v-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.v-avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg, var(--accent), var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:15px;font-weight:700;font-family:var(--font-display);letter-spacing:1px;
+}
+.v-name{font-size:13px;font-weight:700;color:var(--main)}
+.v-meta{font-size:10px;color:var(--text-muted)}
+.v-stars{color:var(--gold);font-size:12px;letter-spacing:2px;margin-bottom:6px}
+.v-text{font-size:13px;line-height:1.85}
+.v-text b{color:var(--gold-deep);font-weight:700}
+.g-badge{
+  text-align:center;margin-top:32px;padding:24px;
+  background:rgba(201,150,134,0.10);border-radius:16px;border:1px solid var(--accent-dim);
+}
+.g-badge .g-label{font-size:11px;color:var(--text-muted);letter-spacing:2px;margin-bottom:8px}
+.g-badge .g-score{font-family:var(--font-display);font-size:58px;color:var(--main);letter-spacing:3px;line-height:1}
+.g-badge .g-stars{color:var(--gold);font-size:18px;letter-spacing:3px}
+.g-badge .g-count{font-size:11px;color:var(--text-muted);margin-top:6px;letter-spacing:1px}
+
+/* ── フォトギャラリー（マソンリー） ── */
+.photo-mosaic{column-count:2;column-gap:10px}
+.pm-item{
+  break-inside:avoid;margin:0 0 10px;border-radius:14px;overflow:hidden;
+  box-shadow:0 4px 16px rgba(94,80,74,0.12);
+}
+.pm-item img{
+  width:100%;height:auto;display:block;
+  transition:transform 0.7s cubic-bezier(0.22,1,0.36,1);
+}
+.pm-item:hover img{transform:scale(1.06)}
+
+/* ── メニュー（セリフ見出し×オーバル写真×価格リスト） ── */
+.menu-group{margin-top:36px}
+.mg-head{position:relative;margin-bottom:8px}
+.mg-title{
+  font-family:var(--font-display);font-weight:500;
+  font-size:clamp(30px,9vw,40px);line-height:1.0;letter-spacing:2px;
+  color:var(--main);position:relative;z-index:2;
+}
+.mg-title .mg-amp{display:block;font-style:italic;color:var(--gold-deep);margin:2px 0}
+.mg-photo{
+  width:62%;margin:-46px 0 0 auto;position:relative;z-index:1;
+  aspect-ratio:5/3.7;border-radius:50%;overflow:hidden;
+  box-shadow:0 8px 24px rgba(94,80,74,0.16);
+}
+.mg-photo img{width:100%;height:100%;object-fit:cover;object-position:center 42%;display:block}
+.mg-list{list-style:none;margin:18px 0 0;padding:0}
+.mg-list li{
+  display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  padding:15px 4px;border-bottom:1px solid var(--accent-dim);
+}
+.mg-name{font-family:var(--font-display);font-size:18px;letter-spacing:.5px;color:var(--text-light)}
+.mg-price{font-family:var(--font-display);font-size:19px;font-weight:600;color:var(--main);white-space:nowrap}
+.menu-note{font-size:11px;color:var(--text-muted);text-align:center;margin-top:18px;line-height:1.8}
+
+/* ── FAQ ── */
+.faq-item{border-bottom:1px solid rgba(168,111,94,0.14);overflow:hidden}
+.faq-q{
+  display:flex;align-items:center;gap:12px;padding:18px 0;cursor:pointer;
+  font-size:13px;font-weight:500;transition:color 0.2s;user-select:none;color:var(--text)
+}
+.faq-q:hover{color:var(--gold-deep)}
+.faq-q .qi{
+  flex-shrink:0;width:26px;height:26px;
+  background:var(--main);color:var(--accent-light);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;font-family:var(--font-display);letter-spacing:1px;
+}
+.faq-q .arr{
+  margin-left:auto;color:var(--text-muted);font-size:12px;
+  transition:transform 0.35s cubic-bezier(0.22,1,0.36,1);
+}
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height 0.4s cubic-bezier(0.22,1,0.36,1), padding 0.4s;
+  padding:0 0 0 38px;font-size:13px;color:var(--text-light);line-height:1.85;
+}
+.faq-item.open .faq-a{max-height:260px;padding-bottom:18px}
+.faq-item.open .arr{transform:rotate(180deg)}
+
+/* ── 店舗情報 ── */
+.shop-tbl{width:100%;font-size:13px}
+.shop-tbl tr{border-bottom:1px solid rgba(168,111,94,0.1)}
+.shop-tbl th{
+  width:28%;padding:14px 0;font-weight:700;text-align:left;
+  vertical-align:top;color:var(--main);font-size:12px;letter-spacing:0.5px;
+}
+.shop-tbl td{padding:14px 0;color:var(--text-light)}
+.map-box{
+  width:100%;height:240px;background:linear-gradient(135deg, var(--accent-dim), var(--off-white));
+  border-radius:12px;margin-top:24px;overflow:hidden;
+}
+.map-box iframe{width:100%;height:100%;border:0;display:block}
+.map-link{
+  display:block;text-align:center;margin-top:12px;padding:14px;
+  border:1px solid rgba(168,111,94,0.18);border-radius:10px;
+  color:var(--text);text-decoration:none;font-size:13px;font-weight:500;
+  transition:all 0.2s;letter-spacing:0.5px;
+}
+.map-link:hover{background:var(--accent-dim);border-color:var(--accent)}
+
+/* ── SNSリンク ── */
+.sns-row{display:flex;gap:10px;margin-top:20px}
+.sns-row a{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px;border:1px solid rgba(168,111,94,0.22);border-radius:10px;
+  color:var(--text);text-decoration:none;font-size:12px;font-weight:500;
+  transition:all 0.2s;
+}
+.sns-row a:hover{background:var(--accent-dim);border-color:var(--accent)}
+
+/* ── クロージング ── */
+.closing{text-align:center}
+.closing .msg{
+  font-size:20px;font-weight:700;margin-bottom:20px;
+  line-height:1.6;color:#fff;
+}
+.closing .msg .em{color:var(--accent-light)}
+.closing .txt{font-size:13px;color:rgba(255,255,255,0.75);margin-bottom:28px;line-height:1.85}
+
+/* ── フッター ── */
+.footer{
+  text-align:center;padding:24px;font-size:10px;
+  color:var(--text-muted);background:var(--off-white);
+  letter-spacing:1px;
+}
+
+/* ── フローティングCTA（スマホ用） ── */
+.float-cta{
+  display:none;position:fixed;bottom:0;left:0;width:100%;z-index:100;
+  padding:10px 16px;
+  background:linear-gradient(180deg, rgba(94,80,74,0) 0%, rgba(94,80,74,0.95) 40%);
+  padding-top:24px;
+}
+.float-cta a{
+  display:block;padding:15px;
+  background:linear-gradient(135deg, var(--cta), var(--cta-deep));
+  color:#fff;text-align:center;text-decoration:none;
+  font-size:15px;font-weight:700;border-radius:50px;
+  box-shadow:0 4px 20px rgba(6,199,85,0.4);
+}
+.float-cta svg{display:inline;vertical-align:middle;margin-right:6px}
+
+/* ── レスポンシブ ── */
+@media(min-width:768px){
+  .dm-track img{height:248px}.dm-track{gap:18px}
+  .photo-mosaic{column-count:3;column-gap:14px}.pm-item{margin-bottom:14px}
+  .mg-photo{width:54%;margin-top:-56px}
+  .mg-name{font-size:19px}.mg-price{font-size:21px}
+}
+@media(max-width:960px){
+  .sb-left,.sb-right{display:none}
+  .float-cta{display:block}
+  .main{max-width:100%;box-shadow:none}
+  .footer{padding-bottom:80px}
+}
+</style>
+</head>
+<body>
+
+<div class="lp-wrapper">
+
+<!-- 左サイドバー -->
+<aside class="sb-left">
+  <div class="logo">chacha</div>
+  <div class="logo-sub">EYELASH &amp; EYEBROW</div>
+  <nav>
+    <a href="#top" class="active">トップ</a>
+    <a href="#influencer">インフルエンサー</a>
+    <a href="#pain">こんなお悩み</a>
+    <a href="#concept">chachaについて</a>
+    <a href="#design">デザイン</a>
+    <a href="#reason">選ばれる理由</a>
+    <a href="#voice">お客様の声</a>
+    <a href="#gallery">フォトギャラリー</a>
+    <a href="#menu">メニュー・料金</a>
+    <a href="#faq">よくある質問</a>
+    <a href="#shop">店舗情報・アクセス</a>
+    <a href="#closing">最後に</a>
+  </nav>
+</aside>
+
+<!-- 右サイドバー -->
+<aside class="sb-right">
+  <div class="price-card">
+    <span class="tag">8月 予約開放</span>
+    <div class="amount"><span class="yen">&yen;</span>4,980<span class="tax">〜(税込)</span></div>
+    <div class="campaign-text">新規様 eyelash perm 〜</div>
+  </div>
+  <div class="qr-box">
+    <div class="qr-img">QR CODE</div>
+    <p>LINEで友だち追加</p>
+  </div>
+  <!-- ▼ LINE友だち追加URLを差し込んでください ▼ -->
+  <a href="#" class="sb-cta">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+    LINE登録で優先予約
+  </a>
+</aside>
+
+<!-- 中央コンテンツ -->
+<main class="main">
+
+  <!-- [1] ファーストビュー -->
+  <section class="hero" id="top">
+    <h1 class="sr-only">chacha eyelash&amp;eyebrow 錦糸町店｜予約が取れない人気サロンが、ついに予約開放</h1>
+    <img class="hero-img" src="images/fv.webp" alt="chacha eyelash&eyebrow 錦糸町店｜予約が取れない人気サロンが、ついに予約開放。LINE登録で優先予約のご案内">
+    <div class="hero-body">
+      <div class="badges">
+        <div class="badge">口コミ<div class="num">4.8</div>評価</div>
+        <div class="badge"><div class="num">214</div>件の<br>口コミ</div>
+        <div class="badge">リピート率<div class="num">90</div>％</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- インフルエンサー紹介 -->
+  <style>
+  .inf-card{
+    background:#fff;border-radius:18px;overflow:hidden;max-width:380px;margin:0 auto;
+    box-shadow:0 8px 28px rgba(94,80,74,0.14);border:1px solid rgba(168,111,94,0.08);
+  }
+  .inf-photo img{width:100%;height:auto;display:block}
+  .inf-body{padding:22px 22px 26px}
+  .inf-name{font-size:17px;font-weight:700;color:var(--main);letter-spacing:0.5px}
+  .inf-handle{font-family:var(--font-display);font-size:13px;color:var(--gold-deep);letter-spacing:1px;margin-top:2px}
+  .inf-followers{margin:12px 0 14px;font-size:11px;color:var(--text-light);letter-spacing:1px}
+  .inf-followers .num{font-family:var(--font-display);font-size:24px;color:var(--main);font-weight:600;margin-right:5px}
+  .inf-comment{font-size:13px;line-height:1.9;color:var(--text);border-top:1px solid var(--accent-dim);padding-top:14px}
+  .inf-note{font-size:11px;color:var(--text-muted);text-align:center;margin-top:16px;letter-spacing:0.5px}
+  </style>
+  <section class="sec sec--light reveal" id="influencer">
+    <div class="sec-label">Influencer</div>
+    <h2 class="sec-title">人気インフルエンサーも通う<br>アイラッシュサロン</h2>
+    <div class="inf-card">
+      <div class="inf-photo"><img src="images/influencer-01.webp" alt="chachaに通う人気インフルエンサー" loading="lazy"></div>
+      <div class="inf-body">
+        <div class="inf-name">ののち</div>
+        <div class="inf-handle">@nonochiiidechi</div>
+        <div class="inf-followers"><span class="num">21万</span>followers / Instagram</div>
+        <p class="inf-comment">茨城県出身の大学生クリエイター。原宿の人気タピオカ店「ベビタピトーキョー」の店員として注目を集め、TikTok・Instagramでメイク・美容を発信。愛らしいキャラクターとピンクヘアがトレードマークの人気インフルエンサー。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA（FV直後） -->
+  <div class="cta-block">
+    <div class="offer-img"><img src="images/offer.webp" alt="8月予約開放記念 事前受付キャンペーン｜30名限定 chachaラッシュ50%OFF ¥5,990 初回限定価格"></div>
+    <!-- ▼ LINE友だち追加URLを差し込んでください ▼ -->
+    <a href="#" class="cta-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+      LINE登録で優先予約する
+    </a>
+    <p class="cta-note">無料・30秒で登録完了 / 8月予約開放を優先案内</p>
+  </div>
+
+  <!-- [2] 悩み共感 -->
+  <section class="sec sec--dark reveal" id="pain">
+    <p class="pain-intro">まつ毛サロン選びで、<br>こんなお悩みありませんか？</p>
+    <ul class="pain-list">
+      <li>◆ マツエク・まつげパーマの持ちが悪く、すぐ取れてしまう</li>
+      <li>◆ 仕上がりがイメージと違って、何度もやり直したくなる</li>
+      <li>◆ 自分に似合うデザインがわからず、毎回同じになってしまう</li>
+      <li>◆ 他のサロンで満足できず、自分に合うサロンを探している</li>
+      <li>◆ トレンドのデザインに挑戦したいけど、対応してくれるサロンがない</li>
+    </ul>
+    <p class="pain-resolve">そのお悩み、<br><span class="hl">chachaが解決します</span></p>
+  </section>
+
+  <!-- [3] コンセプト -->
+  <section class="sec reveal" id="concept">
+    <div class="sec-label">Concept</div>
+    <h2 class="sec-title">chachaについて</h2>
+    <div class="owner-photo"><img src="images/salon-02.webp" alt="chacha 店内・パウダースペース"></div>
+    <p class="owner-text">「持ちが悪い」「イメージと違う」——何度も繰り返してきたあなたへ。chachaは、<strong>他店で満足できなかった方が最後にたどり着く</strong>アイラッシュサロンです。</p>
+    <p class="owner-text">独自技法による圧倒的な持ち、カラーエクステ<strong>20種類以上</strong>の豊富なデザイン、骨格と目の形に合わせた似合わせ提案。<strong>インフルエンサーも多数</strong>通う、錦糸町の人気サロンです。</p>
+    <p class="owner-text">ナチュラルから華やかまで、あなただけのスタイルを。理想以上の仕上がりで、鏡を見るのが楽しみになる毎日へ。</p>
+    <div class="owner-quote">「妥協したまつ毛から、<br>卒業しませんか。」</div>
+  </section>
+
+  <!-- [4] デザインバリエーション（横スクロール） -->
+  <section class="sec sec--light reveal" id="design">
+    <div class="sec-label">Design</div>
+    <h2 class="sec-title">豊富なデザイン<br>バリエーション</h2>
+    <div class="dm-label">Design Variation</div>
+    <div class="dm-viewport">
+      <div class="dm-track">
+        <img src="images/design/design-01.webp" alt="まつ毛デザイン例" loading="lazy">
+        <img src="images/design/design-02.webp" alt="まつ毛デザイン例" loading="lazy">
+        <img src="images/design/design-03.webp" alt="まつ毛デザイン例" loading="lazy">
+        <img src="images/design/design-04.webp" alt="まつ毛デザイン例" loading="lazy">
+        <img src="images/design/design-05.webp" alt="まつ毛デザイン例" loading="lazy">
+        <img src="images/design/design-06.webp" alt="まつ毛デザイン例" loading="lazy">
+        <img src="images/design/design-07.webp" alt="まつ毛デザイン例" loading="lazy">
+        <img src="images/design/design-01.webp" alt="" aria-hidden="true" loading="lazy">
+        <img src="images/design/design-02.webp" alt="" aria-hidden="true" loading="lazy">
+        <img src="images/design/design-03.webp" alt="" aria-hidden="true" loading="lazy">
+        <img src="images/design/design-04.webp" alt="" aria-hidden="true" loading="lazy">
+        <img src="images/design/design-05.webp" alt="" aria-hidden="true" loading="lazy">
+        <img src="images/design/design-06.webp" alt="" aria-hidden="true" loading="lazy">
+        <img src="images/design/design-07.webp" alt="" aria-hidden="true" loading="lazy">
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:24px;line-height:1.8">
+      カラーエクステ20種類以上・豊富なロット。<br>トレンドを押さえた最旬デザインをご提案します。
+    </p>
+  </section>
+
+  <!-- [5] 選ばれる理由 -->
+  <section class="sec reveal" id="reason">
+    <div class="sec-label">Reason</div>
+    <h2 class="sec-title">chachaが選ばれる<br>3つの理由</h2>
+
+    <div class="r-item">
+      <div class="r-num">01</div>
+      <h3 class="r-heading">独自技法で持ちが圧倒的に違う</h3>
+      <div class="r-img"><img src="images/reason-01.webp" alt="独自技法による持ちの良いまつ毛"></div>
+      <p class="r-text">chachaオリジナルの技法により、一般的なサロンでは2〜3週間の持ちが、1.5〜2ヶ月持続するとの声を多数いただいています。独自の接着技術と厳選した素材で、長く美しいまつ毛をキープ。</p>
+    </div>
+
+    <div class="r-item">
+      <div class="r-num">02</div>
+      <h3 class="r-heading">圧倒的なデザインバリエーション</h3>
+      <div class="r-img"><img src="images/reason-02.webp" alt="豊富なまつ毛デザイン"></div>
+      <p class="r-text">カラーエクステ20種類以上、豊富なロットとデザインをご用意。インフルエンサーも多数来店する、トレンドを押さえた最旬デザインをご提案します。ナチュラルから華やかまで、あなただけのスタイルが見つかります。</p>
+    </div>
+
+    <div class="r-item">
+      <div class="r-num">03</div>
+      <h3 class="r-heading">骨格に合わせた似合わせ提案</h3>
+      <div class="r-img"><img src="images/design/design-04.webp" alt="骨格に合わせた似合わせ提案"></div>
+      <p class="r-text">骨格診断と目の形を見極めた、お一人おひとりに合わせた丁寧なカウンセリング。左右差の微調整まで行い、あなたの魅力を最大限に引き出します。「理想以上の仕上がり」とご好評いただいています。</p>
+    </div>
+  </section>
+
+  <!-- CTA（中間） -->
+  <div class="cta-block">
+    <!-- ▼ LINE友だち追加URLを差し込んでください ▼ -->
+    <a href="#" class="cta-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+      LINE登録で優先予約する
+    </a>
+  </div>
+
+  <!-- [6] お客様の声 -->
+  <section class="sec reveal" id="voice">
+    <div class="sec-label">Voice</div>
+    <h2 class="sec-title">お客様の声</h2>
+
+    <div class="g-badge" style="margin-top:0;margin-bottom:28px">
+      <div class="g-label">REVIEW SCORE</div>
+      <div class="g-score">4.80</div>
+      <div class="g-stars">★★★★★</div>
+      <div class="g-count">214件の口コミ</div>
+    </div>
+
+    <style>
+    /* お客様の声：横スワイプ カルーセル */
+    .rv-hint{text-align:center;font-size:11px;color:var(--text-muted);letter-spacing:2px;margin-bottom:14px}
+    .review-swipe{
+      display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
+      -webkit-overflow-scrolling:touch;
+      margin:0 -24px;padding:4px 24px 16px;scrollbar-width:none;
+    }
+    .review-swipe::-webkit-scrollbar{display:none}
+    .rv-card{
+      flex:0 0 auto;height:460px;scroll-snap-align:center;
+      border-radius:16px;overflow:hidden;background:#fff;
+      box-shadow:0 6px 22px rgba(94,80,74,0.16);border:1px solid rgba(168,111,94,0.08);
+    }
+    .rv-card img{height:100%;width:auto;display:block}
+    @media(min-width:768px){.rv-card{height:520px}}
+    </style>
+    <p class="rv-hint">← スワイプでご覧いただけます →</p>
+    <div class="review-swipe">
+      <div class="rv-card"><img src="images/review/review-01.webp" alt="chacha お客様の口コミ" loading="lazy"></div>
+      <div class="rv-card"><img src="images/review/review-02.webp" alt="chacha お客様の口コミ" loading="lazy"></div>
+      <div class="rv-card"><img src="images/review/review-03.webp" alt="chacha お客様の口コミ" loading="lazy"></div>
+      <div class="rv-card"><img src="images/review/review-04.webp" alt="chacha お客様の口コミ" loading="lazy"></div>
+      <div class="rv-card"><img src="images/review/review-05.webp" alt="chacha お客様の口コミ" loading="lazy"></div>
+      <div class="rv-card"><img src="images/review/review-06.webp" alt="chacha お客様の口コミ" loading="lazy"></div>
+    </div>
+  </section>
+
+  <!-- [7] フォトギャラリー -->
+  <section class="sec sec--light reveal" id="gallery">
+    <div class="sec-label">Gallery</div>
+    <h2 class="sec-title">chacha photo gallery</h2>
+    <div class="photo-mosaic">
+      <figure class="pm-item"><img src="images/gallery/gallery-01.webp" alt="chacha 店内" loading="lazy"></figure>
+      <figure class="pm-item"><img src="images/gallery/gallery-02.webp" alt="chacha 施術ブース" loading="lazy"></figure>
+      <figure class="pm-item"><img src="images/gallery/gallery-03.webp" alt="chacha 個室空間" loading="lazy"></figure>
+      <figure class="pm-item"><img src="images/gallery/gallery-04.webp" alt="chacha プライベートブース" loading="lazy"></figure>
+      <figure class="pm-item"><img src="images/gallery/gallery-05.webp" alt="chacha 内観" loading="lazy"></figure>
+      <figure class="pm-item"><img src="images/gallery/gallery-06.webp" alt="chacha パウダースペース" loading="lazy"></figure>
+      <figure class="pm-item"><img src="images/gallery/gallery-07.webp" alt="chacha ディスプレイ" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <!-- [8] メニュー・料金 -->
+  <section class="sec reveal" id="menu">
+    <div class="sec-label">Menu</div>
+    <h2 class="sec-title">メニュー・料金</h2>
+
+    <!-- グループ1：まつ毛パーマ／眉 -->
+    <div class="menu-group">
+      <div class="mg-head">
+        <h3 class="mg-title">LASHLIFT<span class="mg-amp">&amp;</span>EYEBROW</h3>
+        <div class="mg-photo"><img src="images/design/design-06.webp" alt="まつ毛パーマの仕上がり" loading="lazy"></div>
+      </div>
+      <ul class="mg-list">
+        <li><span class="mg-name">eyelash perm</span><span class="mg-price">¥4,980</span></li>
+        <li><span class="mg-name">eyebrow</span><span class="mg-price">¥5,800</span></li>
+        <li><span class="mg-name">perm &amp; eyebrow set</span><span class="mg-price">¥9,980</span></li>
+      </ul>
+    </div>
+
+    <!-- グループ2：まつ毛エクステ／眉 -->
+    <div class="menu-group">
+      <div class="mg-head">
+        <h3 class="mg-title">EYELASH<span class="mg-amp">&amp;</span>EYEBROW</h3>
+        <div class="mg-photo"><img src="images/design/design-02.webp" alt="まつ毛エクステの仕上がり" loading="lazy"></div>
+      </div>
+      <ul class="mg-list">
+        <li><span class="mg-name">chacha lash 〜200本迄</span><span class="mg-price">¥6,980</span></li>
+        <li><span class="mg-name">flat lash 120本 &amp;eyebrow</span><span class="mg-price">¥10,800</span></li>
+        <li><span class="mg-name">chacha lash 200本 &amp;eyebrow</span><span class="mg-price">¥12,800</span></li>
+      </ul>
+    </div>
+    <p class="menu-note">※ 表示価格はすべて税込です<br>※ 新規のお客様限定の特別価格でご案内しています</p>
+  </section>
+
+  <!-- CTA（料金後） -->
+  <div class="cta-block">
+    <div class="offer-img"><img src="images/offer.webp" alt="8月予約開放記念 事前受付キャンペーン｜30名限定 chachaラッシュ50%OFF ¥5,990 初回限定価格" loading="lazy"></div>
+    <!-- ▼ LINE友だち追加URLを差し込んでください ▼ -->
+    <a href="#" class="cta-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+      LINE登録で優先予約する
+    </a>
+    <p class="cta-note">無料・30秒で登録完了</p>
+  </div>
+
+  <!-- [9] FAQ -->
+  <section class="sec sec--light reveal" id="faq">
+    <div class="sec-label">FAQ</div>
+    <h2 class="sec-title">よくある質問</h2>
+
+    <div class="faq-item">
+      <div class="faq-q"><span class="qi">Q</span><span>今は予約が取れますか？</span><span class="arr">▼</span></div>
+      <div class="faq-a">現在は大変ご予約が取りづらい状況です。8月の予約開放に向けて、LINE登録いただいた方へ優先的にご案内します。まずは友だち追加をお願いします。</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span class="qi">Q</span><span>まつ毛の持ちはどれくらいですか？</span><span class="arr">▼</span></div>
+      <div class="faq-a">独自技法により、1.5〜2ヶ月持続するとの声を多数いただいています（持ちには個人差があります）。独自の接着技術と厳選素材で、長く美しい状態をキープします。</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span class="qi">Q</span><span>デザインの種類は選べますか？</span><span class="arr">▼</span></div>
+      <div class="faq-a">カラーエクステ20種類以上、豊富なロット・デザインをご用意しています。骨格と目の形に合わせて、ナチュラルから華やかまでお一人おひとりにご提案します。</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span class="qi">Q</span><span>眉毛メニューもありますか？</span><span class="arr">▼</span></div>
+      <div class="faq-a">はい。まつ毛パーマ＋眉、まつ毛エクステ＋眉など、まつ毛と眉毛のトータルケアメニューもご用意しています。</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q"><span class="qi">Q</span><span>支払い方法は？</span><span class="arr">▼</span></div>
+      <div class="faq-a">現金・各種キャッシュレス決済に対応しています。詳しくは店舗までお問い合わせください。</div>
+    </div>
+  </section>
+
+  <!-- [10] 店舗情報 -->
+  <section class="sec reveal" id="shop">
+    <div class="sec-label">Information</div>
+    <h2 class="sec-title">店舗情報・アクセス</h2>
+
+    <table class="shop-tbl">
+      <tr><th>店名</th><td>chacha eyelash&amp;eyebrow 錦糸町店</td></tr>
+      <tr><th>所在地</th><td>〒130-0013<br>東京都墨田区錦糸2丁目9-11<br>乾木工芸ビル 102</td></tr>
+      <tr><th>アクセス</th><td>JR総武線・東京メトロ半蔵門線「錦糸町駅」</td></tr>
+      <tr><th>営業時間</th><td>10:00 〜 19:30</td></tr>
+      <tr><th>定休日</th><td>不定休</td></tr>
+      <tr><th>ご予約</th><td>ホットペッパービューティー / 公式LINE</td></tr>
+    </table>
+
+    <div class="map-box">
+      <iframe src="https://www.google.com/maps?q=東京都墨田区錦糸2丁目9-11&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+    <a href="https://maps.app.goo.gl/9F1AHhg6JKijfnUe6" class="map-link" target="_blank" rel="noopener">Google Mapで見る ↗</a>
+  </section>
+
+  <!-- [11] クロージング -->
+  <section class="sec sec--dark closing reveal" id="closing">
+    <div class="sec-label">Message</div>
+    <p class="msg">妥協したまつ毛から、<br><span class="em">卒業しませんか。</span></p>
+    <p class="txt">予約が取れない人気サロンが、<br>8月ついに予約開放。<br>LINE登録で優先予約＋特別キャンペーンを<br>お届けします。</p>
+    <!-- ▼ LINE友だち追加URLを差し込んでください ▼ -->
+    <a href="#" class="cta-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+      LINE登録で優先予約する
+    </a>
+  </section>
+
+  <footer class="footer">&copy; 2026 chacha eyelash&amp;eyebrow KINSHICHO All Rights Reserved.</footer>
+
+</main>
+</div>
+
+<!-- フローティングCTA（スマホ用） -->
+<div class="float-cta">
+  <!-- ▼ LINE友だち追加URLを差し込んでください ▼ -->
+  <a href="#">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+    LINE登録で優先予約する
+  </a>
+</div>
+
+<script>
+// スクロールアニメーション
+const reveals = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }});
+}, { threshold: 0.15 });
+reveals.forEach(el => io.observe(el));
+
+// FAQアコーディオン
+document.querySelectorAll('.faq-q').forEach(q => {
+  q.addEventListener('click', () => q.parentElement.classList.toggle('open'));
+});
+
+// ナビ アクティブ状態
+const navLinks = document.querySelectorAll('.sb-left nav a');
+const sections = [];
+navLinks.forEach(a => {
+  const id = a.getAttribute('href').slice(1);
+  const el = document.getElementById(id);
+  if (el) sections.push({ el, a });
+});
+window.addEventListener('scroll', () => {
+  const y = window.scrollY + 200;
+  let current = sections[0];
+  sections.forEach(s => { if (s.el.offsetTop <= y) current = s; });
+  navLinks.forEach(a => a.classList.remove('active'));
+  if (current) current.a.classList.add('active');
+}, { passive: true });
+</script>
+</body>
+</html>
