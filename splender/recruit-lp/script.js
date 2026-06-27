@@ -78,9 +78,11 @@ if (reasonCarousel && reasonCards.length > 1) {
   reasonCarousel.after(dots);
 
   let ticking = false;
+  let activeReasonIndex = 0;
+
   const updateReasonDots = () => {
     const carouselLeft = reasonCarousel.getBoundingClientRect().left;
-    const activeIndex = reasonCards.reduce(
+    activeReasonIndex = reasonCards.reduce(
       (closest, card, index) => {
         const distance = Math.abs(card.getBoundingClientRect().left - carouselLeft);
         return distance < closest.distance ? { index, distance } : closest;
@@ -89,7 +91,7 @@ if (reasonCarousel && reasonCards.length > 1) {
     ).index;
 
     dotButtons.forEach((button, index) => {
-      button.classList.toggle("is-active", index === activeIndex);
+      button.classList.toggle("is-active", index === activeReasonIndex);
     });
     ticking = false;
   };
