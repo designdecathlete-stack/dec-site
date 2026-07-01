@@ -187,6 +187,21 @@ body::before{
 }
 .hero-visual.fv-bg::before,
 .hero-visual.fv-bg::after{display:none}
+.hero-stack{
+  display:grid;
+  gap:0;
+  background:var(--cream);
+}
+.hero-stack img{
+  display:block;
+  width:100%;
+  height:auto;
+}
+.hero-stack .hero-photo{
+  aspect-ratio:4 / 3;
+  object-fit:cover;
+  object-position:center;
+}
 /* 朝のやわらかな光の差し込み */
 .hero-visual::before{
   content:'';position:absolute;inset:0;
@@ -632,7 +647,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
        [1] ファーストビュー
        ============================================ -->
   <section class="hero" id="top" data-section-id="fv" data-section-name="first_view" data-section-order="1">
-    <div class="hero-visual fv-bg" style="--fv-image:url('images/fv-tamachi-main.webp')" role="img" aria-label="Resole 田町店のファーストビュー"></div>
+    <div class="hero-stack" aria-label="Resole 田町店のファーストビュー">
+      <img src="images/fv-tamachi-top-message.webp" alt="Resole田町店 ファーストビュー上部">
+      <img class="hero-photo" src="images/fv-tamachi-real-photo.webp" alt="Resole田町店の実際の店内写真">
+      <img src="images/fv-tamachi-bottom-message.webp" alt="Resole田町店 ファーストビュー下部">
+    </div>
   </section>
 
   <!-- ============================================
