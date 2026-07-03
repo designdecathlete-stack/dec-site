@@ -91,10 +91,11 @@ a {
 .logo {
   color: #8b5f35;
   font-family: var(--font-display);
-  font-size: 33px;
+  font-size: 21px;
   font-weight: 700;
   line-height: 1;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .logo-sub {
@@ -249,13 +250,13 @@ a {
 }
 
 .hero {
-  overflow: hidden;
-  background: var(--paper);
+  overflow: visible;
+  background: linear-gradient(180deg, #fff4e7, #f8dfd4);
 }
 
 .hero-visual {
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   background: var(--plum-dark);
 }
 
@@ -298,13 +299,21 @@ a {
 }
 
 .hero-cta-wrap {
-  padding: 22px 28px 28px;
-  background: var(--paper);
+  position: absolute;
+  right: 0;
+  bottom: -28px;
+  left: 0;
+  z-index: 3;
+  padding: 0 28px;
 }
 
 .sec {
   padding-top: 64px;
   padding-bottom: 64px;
+}
+
+.hero + .sec {
+  padding-top: 92px;
 }
 
 .sec-night {
@@ -420,6 +429,29 @@ p {
 
 .story-card p:last-child {
   margin-bottom: 0;
+}
+
+.community-proof {
+  margin: 22px 0 0;
+}
+
+.community-proof figcaption {
+  margin-bottom: 8px;
+  color: var(--plum);
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.community-proof img {
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  object-position: top center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 16px 38px rgba(43, 37, 39, 0.06);
 }
 
 .values {
@@ -649,7 +681,8 @@ p {
   }
 
   .hero-cta-wrap {
-    padding: 18px 22px 92px;
+    bottom: -28px;
+    padding: 0 22px;
   }
 
   .float-cta {
