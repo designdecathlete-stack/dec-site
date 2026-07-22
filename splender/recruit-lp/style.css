@@ -1127,6 +1127,46 @@ details p {
   font-size: 13px;
 }
 
+.store-info-card {
+  padding: 22px;
+  border: 1px solid rgba(153, 55, 93, 0.14);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.store-info-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+
+.store-info-list div {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.store-info-list dt {
+  color: var(--rose-deep);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.store-info-list dd {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.9;
+}
+
+.store-map-link {
+  margin-top: 18px;
+}
+
 .closing {
   margin: 14px 14px 0;
   padding-top: 54px;
