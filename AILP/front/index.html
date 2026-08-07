@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AILP LP Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./overrides.css" />
+  <link rel="stylesheet" href="./production.css" />
+  <link rel="stylesheet" href="./client-admin.css" />
+  <link rel="stylesheet" href="./client-portal.css" />
+  <link rel="stylesheet" href="./headquarters.css" />
+  <link rel="stylesheet" href="./lp-categories.css" />
+  <link rel="stylesheet" href="./lp-metrics.css" />
+  <link rel="stylesheet" href="./detail-interactions.css" />
+  <link rel="stylesheet" href="./detail-spec.css" />
+  <link rel="stylesheet" href="./analysis-mock.css" />
+  <link rel="stylesheet" href="./compare-preview.css" />
+  <link rel="stylesheet" href="./foc-improvement.css" />
+  <link rel="stylesheet" href="./foc-current.css" />
+  <link rel="stylesheet" href="./improvement-axes.css" />
+  <link rel="stylesheet" href="./section-parts.css" />
+  <link rel="stylesheet" href="./version-management.css" />
+  <link rel="stylesheet" href="./ai-improvement-plan.css" />
+  <link rel="stylesheet" href="./common-gtm-settings.css" />
+  <link rel="stylesheet" href="./appeal-lp-creation.css" />
+  <link rel="stylesheet" href="./general-improvement.css" />
+  <link rel="stylesheet" href="./initial-lp-setup.css" />
+  <link rel="stylesheet" href="./initial-lp-workflow.css" />
+  <link rel="stylesheet" href="./initial-phase-production.css" />
+  <link rel="stylesheet" href="./customer-publish-workflow.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#dashboard" aria-label="AILP ホーム"><span class="brand-mark">AI</span><span>AILP<small>LP MANAGEMENT</small></span></a>
+      <nav class="nav" aria-label="管理者画面メニュー">
+        <div class="nav-section-title">管理者画面</div>
+        <a href="#dashboard" data-page="dashboard"><i>▦</i>ダッシュボード</a>
+        <a class="active" href="#lps" data-page="lps"><i>▤</i>クライアント一覧</a>
+        <a href="#alerts" data-page="alerts"><i>♧</i>アラート <b class="danger">2</b></a>
+        <a href="#hq" data-page="hq" class="hq-nav-link"><i>▦</i>本部管理</a>
+        <a href="#settings" data-page="settings"><i>⚙</i>設定</a>
+      </nav>
+      <nav class="detail-nav" aria-label="個別クライアント画面メニュー">
+        <div class="detail-nav-title">個別クライアント画面</div>
+        <a href="#client" data-detail-page="client"><i>▣</i>概要</a>
+        <a href="#initial-production" data-detail-page="initial-production"><i>◫</i>初期LP制作</a>
+        <a href="#lp-variants" data-detail-page="lp-variants"><i>▤</i>LP一覧</a>
+        <a href="#meta-ads" data-detail-page="meta-ads"><i>∞</i>META広告</a>
+        <a href="#google-ads" data-detail-page="google-ads"><i>▲</i>Google広告</a>
+        <a href="#customer-info" data-detail-page="customer-info"><i>♙</i>顧客情報</a>
+        <a href="#initial-settings" data-detail-page="initial-settings"><i>⚙</i>初期設定</a>
+      </nav>
+      <div class="side-bottom"><div class="team-icon">山</div><div><strong>山田 太郎</strong><small>マーケティング部</small></div><button title="メニュー">•••</button></div>
+    </aside>
+    <main>
+      <header class="topbar"><div class="crumb" id="crumb">LP管理 <span>/</span> クライアント一覧</div><label class="search"><span>⌕</span><input id="search" placeholder="クライアント名で検索" /></label><label class="viewer-select"><span>閲覧者</span><select id="viewerMode"><option value="internal">社内管理者</option><option value="client">クライアント</option></select></label><label class="lp-select"><span>対象LP</span><select id="lpPicker"></select></label><button class="icon-btn">♧<em>2</em></button><div class="avatar">山</div></header>
+      <section class="page" id="page"></section>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
