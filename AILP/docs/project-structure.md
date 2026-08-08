@@ -38,16 +38,17 @@ app/
 
 ```text
 dist/
-  index.html      # AILP管理アプリ
-  app.js          # AILP管理アプリ
-  assets/
   chacha/         # 既存LP
   marr/           # 既存LP
+    ailp-management/
+      index.html  # AILP管理画面のメンテナンス表示
   resole/         # 既存LP
   ...
 ```
 
-これにより `https://dec-site.netlify.app/` ではAILP管理アプリを表示し、既存の `/chacha/`、`/marr/`、`/resole/` などは維持する。
+AILP管理アプリの実装コードは `AILP/front` に保管するが、ログイン実装までは公開しない。公開URLは `https://dec-site.netlify.app/marr/ailp-management/` とし、当面はタイトルと「メンテナンス中です。」だけを表示する。
+
+既存の `/chacha/`、`/marr/`、`/resole/` などは維持する。`https://dec-site.netlify.app/` にはAILP管理画面を公開しない。
 
 ## Supabase
 
