@@ -29,7 +29,7 @@ for (const dir of legacyPublicDirs) {
   }
 }
 
-const maintenanceDir = join(dist, 'marr', 'ailp-management');
+const maintenanceDir = join(dist, 'ailp-management');
 await mkdir(maintenanceDir, { recursive: true });
 await writeFile(
   join(maintenanceDir, 'index.html'),
