@@ -4,7 +4,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const dist = join(root, 'dist');
+const outputArgIndex = process.argv.indexOf('--output');
+const dist = outputArgIndex >= 0 && process.argv[outputArgIndex + 1]
+  ? join(root, process.argv[outputArgIndex + 1])
+  : join(root, 'dist');
 
 const legacyPublicDirs = [
   'biyoshitsu-owner-hokago-lp',
