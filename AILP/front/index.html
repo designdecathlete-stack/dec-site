@@ -57,24 +57,10 @@
       color: #172033;
       font: 700 32px/1.2 "DM Sans", "Noto Sans JP", sans-serif;
     }
-    .auth-card p {
-      margin: 0;
-      color: #5f6b7a;
-      font: 400 15px/1.8 "Noto Sans JP", sans-serif;
-    }
-    .auth-card .auth-note {
-      margin-top: 18px;
-      padding: 14px 16px;
-      border-radius: 10px;
-      background: #f5f8ff;
-      color: #304258;
-      font-size: 13px;
-      line-height: 1.7;
-    }
     .auth-actions {
       display: flex;
       gap: 12px;
-      margin-top: 28px;
+      margin-top: 24px;
     }
     .auth-btn {
       border: 0;
@@ -111,10 +97,7 @@
   <section class="auth-shell" id="authGate">
     <div class="auth-card">
       <h1>AILP Management</h1>
-      <p id="authMessage">Googleログイン後、権限が付与されているユーザーだけ管理画面を表示します。</p>
-      <div class="auth-note">
-        ログインできても、`admin` または `lp_dashboard` の権限が無い場合は画面を表示しません。
-      </div>
+      <div id="authMessage" hidden></div>
       <div class="auth-actions">
         <button class="auth-btn primary" id="googleLoginButton" type="button">Googleでログイン</button>
         <button class="auth-btn secondary" id="logoutButton" type="button" hidden>ログアウト</button>

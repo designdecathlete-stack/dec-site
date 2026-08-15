@@ -79,7 +79,7 @@ async function showUnauthorizedState() {
   authGate.hidden = false
   googleLoginButton.hidden = true
   logoutButton.hidden = false
-  authMessage.textContent = 'このアカウントには AILP の閲覧権限がありません。管理者に `user_roles` の付与を依頼してください。'
+  authMessage.hidden = true
   setStatus('権限未付与のため、管理画面は表示していません。', true)
 }
 
@@ -89,7 +89,7 @@ async function signOut() {
   authGate.hidden = false
   googleLoginButton.hidden = false
   logoutButton.hidden = true
-  authMessage.textContent = 'Googleログイン後、権限が付与されているユーザーだけ管理画面を表示します。'
+  authMessage.hidden = true
   setStatus('ログアウトしました。')
 }
 
