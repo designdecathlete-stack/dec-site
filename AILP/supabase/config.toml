@@ -1,0 +1,14 @@
+[project]
+id = "ailp-management"
+
+[functions.ga4-sync]
+verify_jwt = false
+
+[functions.lp-create-from-template]
+verify_jwt = true
+
+[functions.ai-change-request]
+verify_jwt = true
+
+[functions.lp-publish]
+verify_jwt = true

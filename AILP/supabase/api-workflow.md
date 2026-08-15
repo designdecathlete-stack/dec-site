@@ -93,6 +93,7 @@ Request:
 Backend behavior:
 
 - `lp_projects.ga4_page_path` を読む
+- `clients.ga4_property_id` または `ga4_property_connections` からGA4 propertyと接続情報を決める
 - GA4 Data APIで対象pathのデータを取得する
 - `ga4_daily_metrics` にupsertする
 - 実行履歴を `ga4_sync_jobs` に保存する
@@ -207,6 +208,8 @@ cron
 ```
 
 定期実行に使うシークレットは、Edge Function SecretsまたはSupabase Vaultに保存する。DBの `integration_secret_refs` には、どのシークレットをどこに保存しているかの参照名だけを記録する。
+
+オーナーがGoogle認証してGA4連携する場合は、`integration_connections` と `ga4_property_connections` で接続単位に管理する。cron用の内部トークンはアプリで1つでもよいが、GA4 OAuth tokenはオーナー/接続ごとに増える。
 
 ## Frontend Data Contract
 

@@ -110,6 +110,12 @@ Supabase関連は `AILP/supabase` に置く。
 - 本物のキーは `.env` に置く
 - Gitには `.env.example` のみ入れる
 
+Supabase側の今回のアプリ名・管理単位も `ailp-management` に揃える。
+
+- アプリ識別名: `ailp-management`
+- Google OAuth / GA4 / secrets / cron / Edge Functions はこの `ailp-management` 単位で管理する
+- 既存の仮名 `ailp-manager` を使う場合も、運用上の正式名称は `ailp-management` として扱う
+
 ## Git運用
 
 `dist/`、`node_modules/`、`.env` はGit管理しない。コード、設定、ドキュメント、Supabase migrationはGit管理する。

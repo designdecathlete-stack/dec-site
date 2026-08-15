@@ -1,4 +1,4 @@
-import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,6 +19,36 @@ const legacyPublicDirs = [
   'splender',
 ];
 
+const appFrontRoot = join(root, 'AILP', 'front');
+const appFrontFiles = [
+  'index.html',
+  'styles.css',
+  'overrides.css',
+  'production.css',
+  'client-admin.css',
+  'client-portal.css',
+  'headquarters.css',
+  'lp-categories.css',
+  'lp-metrics.css',
+  'detail-interactions.css',
+  'detail-spec.css',
+  'analysis-mock.css',
+  'compare-preview.css',
+  'foc-improvement.css',
+  'foc-current.css',
+  'improvement-axes.css',
+  'section-parts.css',
+  'version-management.css',
+  'ai-improvement-plan.css',
+  'common-gtm-settings.css',
+  'appeal-lp-creation.css',
+  'general-improvement.css',
+  'initial-lp-setup.css',
+  'initial-lp-workflow.css',
+  'initial-phase-production.css',
+  'customer-publish-workflow.css',
+];
+
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 
@@ -31,54 +61,9 @@ for (const dir of legacyPublicDirs) {
 
 const maintenanceDir = join(dist, 'ailp-management');
 await mkdir(maintenanceDir, { recursive: true });
-await writeFile(
-  join(maintenanceDir, 'index.html'),
-  `<!doctype html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex,nofollow">
-  <title>AILP Management | メンテナンス中</title>
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: #f5f7fb;
-      color: #172033;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans JP", sans-serif;
-    }
-    main {
-      width: min(560px, calc(100% - 40px));
-      padding: 40px;
-      background: #fff;
-      border: 1px solid #dce3ef;
-      border-radius: 8px;
-      box-shadow: 0 16px 40px rgba(23, 32, 51, 0.08);
-      text-align: center;
-    }
-    h1 {
-      margin: 0 0 16px;
-      font-size: 28px;
-      line-height: 1.3;
-    }
-    p {
-      margin: 0;
-      color: #5f6b7a;
-      font-size: 16px;
-      line-height: 1.8;
-    }
-  </style>
-</head>
-<body>
-  <main>
-    <h1>AILP Management</h1>
-    <p>メンテナンス中です。</p>
-  </main>
-</body>
-</html>
-`,
-  'utf8',
-);
+
+for (const file of appFrontFiles) {
+  await cp(join(appFrontRoot, file), join(maintenanceDir, file), { force: true });
+}
+
+await cp(join(appFrontRoot, 'public'), join(maintenanceDir, 'public'), { recursive: true, force: true });

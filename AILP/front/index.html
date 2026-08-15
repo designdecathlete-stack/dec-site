@@ -32,9 +32,97 @@
   <link rel="stylesheet" href="./initial-lp-workflow.css" />
   <link rel="stylesheet" href="./initial-phase-production.css" />
   <link rel="stylesheet" href="./customer-publish-workflow.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #f5f7fb;
+    }
+    .auth-shell {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 32px 20px;
+      background: #f5f7fb;
+    }
+    .auth-card {
+      width: min(460px, 100%);
+      padding: 40px;
+      border: 1px solid #dce3ef;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 18px 40px rgba(23, 32, 51, 0.08);
+    }
+    .auth-card h1 {
+      margin: 0 0 12px;
+      color: #172033;
+      font: 700 32px/1.2 "DM Sans", "Noto Sans JP", sans-serif;
+    }
+    .auth-card p {
+      margin: 0;
+      color: #5f6b7a;
+      font: 400 15px/1.8 "Noto Sans JP", sans-serif;
+    }
+    .auth-card .auth-note {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: #f5f8ff;
+      color: #304258;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .auth-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+    .auth-btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 0 18px;
+      height: 46px;
+      font: 600 14px/1 "DM Sans", "Noto Sans JP", sans-serif;
+      cursor: pointer;
+    }
+    .auth-btn.primary {
+      background: #1768f2;
+      color: #fff;
+      flex: 1;
+    }
+    .auth-btn.secondary {
+      background: #eef2f8;
+      color: #172033;
+    }
+    .auth-status {
+      min-height: 24px;
+      margin-top: 20px;
+      color: #5f6b7a;
+      font: 500 13px/1.6 "DM Sans", "Noto Sans JP", sans-serif;
+    }
+    .auth-status.error {
+      color: #c53030;
+    }
+    [hidden] {
+      display: none !important;
+    }
+  </style>
 </head>
 <body>
-  <div class="app-shell">
+  <section class="auth-shell" id="authGate">
+    <div class="auth-card">
+      <h1>AILP Management</h1>
+      <p id="authMessage">Googleログイン後、権限が付与されているユーザーだけ管理画面を表示します。</p>
+      <div class="auth-note">
+        ログインできても、`admin` または `lp_dashboard` の権限が無い場合は画面を表示しません。
+      </div>
+      <div class="auth-actions">
+        <button class="auth-btn primary" id="googleLoginButton" type="button">Googleでログイン</button>
+        <button class="auth-btn secondary" id="logoutButton" type="button" hidden>ログアウト</button>
+      </div>
+      <div class="auth-status" id="authStatus"></div>
+    </div>
+  </section>
+  <div class="app-shell" id="appRoot" hidden>
     <aside class="sidebar">
       <a class="brand" href="#dashboard" aria-label="AILP ホーム"><span class="brand-mark">AI</span><span>AILP<small>LP MANAGEMENT</small></span></a>
       <nav class="nav" aria-label="管理者画面メニュー">
@@ -63,6 +151,7 @@
     </main>
   </div>
   <div class="toast" id="toast" role="status"></div>
-  <script src="/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="./public/auth.js"></script>
 </body>
 </html>

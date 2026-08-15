@@ -28,6 +28,27 @@ description
 
 It must not store secret values.
 
+## Token Types
+
+Do not treat all tokens as one thing.
+
+```text
+App cron/API token
+  One internal token for scheduled jobs to call AILP Edge Functions.
+  Stored in Vault or Edge Function secrets.
+
+Owner Google OAuth token
+  Per owner/client Google connection.
+  Used to read GA4 properties the owner granted access to.
+  Store token values in Vault/secret storage, and store only references in `integration_connections`.
+
+Service account credential
+  Optional backend-owned credential for GA4.
+  Works when each GA4 property grants the service account Viewer access.
+```
+
+Future owner growth is handled by creating more `integration_connections` rows, not by creating a new app.
+
 ## Required Secrets
 
 Planned Edge Function secrets:
@@ -40,11 +61,20 @@ GITHUB_TOKEN
 NETLIFY_BUILD_HOOK_URL
 ```
 
+`GA4_PROPERTY_ID` is optional when `clients.ga4_property_id` is set per client. Keep it only as a default/fallback property ID.
+
 Planned Vault secrets for scheduled execution:
 
 ```text
 project_url
 edge_function_token
+```
+
+Planned per-owner OAuth secret names should be generated per connection, for example:
+
+```text
+ga4_oauth_access_token_<connection_id>
+ga4_oauth_refresh_token_<connection_id>
 ```
 
 Supabase official docs say Edge Functions can read project secrets as environment variables, and production secrets can be set through the Dashboard or CLI with `supabase secrets set`.

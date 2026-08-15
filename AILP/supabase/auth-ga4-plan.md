@@ -26,6 +26,32 @@ Roles:
 
 GA4 data is stored per LP, not just per client.
 
+GA4 authentication has two layers:
+
+- App internal cron/API token: one token for the app to call its own scheduled APIs
+- Google GA4 connection token: one connection per owner/client/account as needed
+
+The cron/API token is app-level. It is not the same as the owner's Google token.
+
+For GA4, support both patterns:
+
+- `service_account`: one backend service account can read multiple GA4 properties if each property grants it Viewer access
+- `oauth2`: an owner signs in with Google and grants Analytics read access; the app stores token references per connection
+
+Use `integration_connections` for each connected Google/GA4 account. Store only metadata and Vault/secret names in the database. Do not store access or refresh token values in normal tables.
+
+Project/client mapping is still per client and per LP:
+
+- `clients.ga4_property_id`: GA4 property used for that client/project
+- `ga4_property_connections`: maps a client to a GA4 property and the Google connection used to access it
+- `lp_projects.ga4_page_path`: page path used to filter that LP inside the property
+
+If all LPs are measured in one GA4 property, multiple clients can share the same `ga4_property_id` and differ by `ga4_page_path`.
+
+If each client has a separate GA4 property, set a different `ga4_property_id` on each `clients` row.
+
+If each owner authenticates their own Google account, create one `integration_connections` row per owner connection and link it to the client's GA4 property through `ga4_property_connections`.
+
 Mapping:
 
 ```text
