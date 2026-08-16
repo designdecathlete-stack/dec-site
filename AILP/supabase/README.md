@@ -55,6 +55,28 @@ Supabaseの管理ファイルを置く場所です。
   - AI修正依頼のバックエンド入口
 - `functions/lp-publish`
   - 承認と公開ジョブ投入のバックエンド入口
+- `migrations/202608160001_api_logs.sql`
+  - `api_logs` テーブル
+  - Edge Functions の request / stage / error ログ
+- `migrations/202608160002_dashboard_reporting_and_live_state.sql`
+  - `git_versions.published_at` / `replaced_at`
+  - `lp_dashboard_overview`
+  - `api_logs_overview`
+
+## 管理者が主に見るもの
+
+- `lp_dashboard_overview`
+  - LPごとの公開状態
+  - 直近30日のGA4集計
+  - 最新同期結果
+  - 最新AI分析
+- `api_logs_overview`
+  - function名
+  - stage
+  - level
+  - request_id
+  - actor / client / LP
+  - status_code / duration_ms
 
 ## まだ接続待ちのもの
 

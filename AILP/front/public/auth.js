@@ -1,5 +1,6 @@
 const SUPABASE_URL = 'https://mgawpujvandftyslmnxf.supabase.co'
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_2DsoZRHEzJl14DFSCxHslQ_4gjQvigo'
+const APP_ALLOWED_ROLES = ['admin', 'lp_dashboard']
 
 const authGate = document.getElementById('authGate')
 const appRoot = document.getElementById('appRoot')
@@ -23,18 +24,31 @@ function setStatus(message, isError = false) {
   authStatus.classList.toggle('error', isError)
 }
 
-async function hasAppAccess(userId) {
+async function getUserRoles(userId) {
   const { data, error } = await supabaseClient
     .from('user_roles')
     .select('role, client_id')
     .eq('user_id', userId)
-    .limit(1)
 
   if (error) {
     throw error
   }
 
-  return Array.isArray(data) && data.length > 0
+  return Array.isArray(data) ? data : []
+}
+
+function updateAuthContext(user, roles) {
+  const normalizedRoles = Array.isArray(roles) ? roles : []
+  window.AILP_AUTH_CONTEXT = {
+    user,
+    roles: normalizedRoles,
+    isAdmin: normalizedRoles.some((item) => item.role === 'admin'),
+    supabase: supabaseClient,
+  }
+}
+
+function hasAppAccess(roles) {
+  return roles.some((item) => APP_ALLOWED_ROLES.includes(item.role))
 }
 
 async function loadApp(user) {
@@ -106,6 +120,7 @@ async function refreshSession() {
   const session = data.session
 
   if (!session?.user) {
+    window.AILP_AUTH_CONTEXT = null
     authGate.hidden = false
     appRoot.hidden = true
     googleLoginButton.hidden = false
@@ -115,7 +130,9 @@ async function refreshSession() {
   }
 
   try {
-    const allowed = await hasAppAccess(session.user.id)
+    const roles = await getUserRoles(session.user.id)
+    const allowed = hasAppAccess(roles)
+    updateAuthContext(session.user, roles)
 
     if (!allowed) {
       await showUnauthorizedState()

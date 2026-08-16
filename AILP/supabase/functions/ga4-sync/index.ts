@@ -3,6 +3,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { runGa4Report } from '../_shared/ga4.ts'
 import { getCronToken } from '../_shared/env.ts'
 import { badRequest, forbidden, json, methodNotAllowed, serverError, unauthorized } from '../_shared/http.ts'
+import { createApiLogger } from '../_shared/logging.ts'
 import { createServiceClient, requireUser } from '../_shared/supabase.ts'
 
 type SyncBody = {
@@ -63,30 +64,77 @@ async function createRunningJob(service: ReturnType<typeof createServiceClient>,
 }
 
 Deno.serve(async (req) => {
+  const startedAt = Date.now()
+  const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID()
+  const logger = createApiLogger({
+    requestId,
+    functionName: 'ga4-sync',
+    httpMethod: req.method,
+  })
+
   if (req.method !== 'POST') {
+    await logger.log({
+      level: 'warn',
+      stage: 'method_not_allowed',
+      message: 'Rejected non-POST request',
+      statusCode: 405,
+      durationMs: Date.now() - startedAt,
+    })
     return methodNotAllowed()
   }
 
   try {
     const body = (await req.json()) as SyncBody
+    await logger.log({
+      stage: 'request_received',
+      message: 'Received GA4 sync request',
+      metadata: {
+        has_lp_project_id: Boolean(body.lp_project_id),
+        date_from: body.date_from ?? null,
+        date_to: body.date_to ?? null,
+      },
+    })
 
     if (!body.date_from || !body.date_to) {
+      await logger.log({
+        level: 'warn',
+        stage: 'validation_failed',
+        message: 'Missing required date range',
+        statusCode: 400,
+        durationMs: Date.now() - startedAt,
+      })
       return badRequest('date_from and date_to are required')
     }
 
     let actorUserId: string | null = null
     let userReader: ReturnType<typeof createServiceClient> | null = null
+    const internalRequest = isInternalRequest(req)
 
-    if (!isInternalRequest(req)) {
+    if (!internalRequest) {
       const { client, user } = await requireUser(req)
       actorUserId = user.id
       userReader = client as unknown as ReturnType<typeof createServiceClient>
+      logger.setContext({ actorUserId })
     }
 
     const service = createServiceClient()
     const targets = await resolveTargets(userReader ?? service, body)
+    await logger.log({
+      stage: 'targets_resolved',
+      message: 'Resolved LP targets for GA4 sync',
+      metadata: {
+        target_count: targets.length,
+        internal_request: internalRequest,
+      },
+    })
 
     if (targets.length === 0) {
+      await logger.log({
+        stage: 'completed',
+        message: 'No LP targets matched the sync request',
+        statusCode: 200,
+        durationMs: Date.now() - startedAt,
+      })
       return json({ synced: 0, jobs: [] })
     }
 
@@ -95,6 +143,14 @@ Deno.serve(async (req) => {
     for (const target of targets) {
       const propertyId = target.clients.ga4_property_id
       const job = await createRunningJob(service, target, body)
+      logger.setContext({ lpProjectId: target.id, clientId: target.client_id, appJobId: job.id })
+      await logger.log({
+        stage: 'job_created',
+        message: 'Created GA4 sync job',
+        metadata: {
+          ga4_property_id: propertyId ?? null,
+        },
+      })
 
       if (!propertyId) {
         const errorMessage = `Missing ga4_property_id for lp_project_id=${target.id}`
@@ -114,6 +170,14 @@ Deno.serve(async (req) => {
           rows: 0,
           status: 'skipped',
           error_message: errorMessage,
+        })
+        await logger.log({
+          level: 'warn',
+          stage: 'target_skipped',
+          message: 'Skipped GA4 sync because property ID is missing',
+          metadata: {
+            ga4_sync_job_id: job.id,
+          },
         })
         continue
       }
@@ -169,6 +233,14 @@ Deno.serve(async (req) => {
           rows: rows.length,
           status: 'succeeded',
         })
+        await logger.log({
+          stage: 'target_succeeded',
+          message: 'Completed GA4 sync for LP target',
+          metadata: {
+            ga4_sync_job_id: job.id,
+            row_count: rows.length,
+          },
+        })
       } catch (targetError) {
         const errorMessage = targetError instanceof Error ? targetError.message : 'Unknown error'
 
@@ -188,9 +260,30 @@ Deno.serve(async (req) => {
           status: 'failed',
           error_message: errorMessage,
         })
+        await logger.log({
+          level: 'error',
+          stage: 'target_failed',
+          message: 'Failed GA4 sync for LP target',
+          metadata: {
+            ga4_sync_job_id: job.id,
+            error_message: errorMessage,
+          },
+        })
       }
     }
 
+    await logger.log({
+      stage: 'completed',
+      message: 'Completed GA4 sync request',
+      statusCode: 200,
+      durationMs: Date.now() - startedAt,
+      metadata: {
+        actor_user_id: actorUserId,
+        succeeded_count: results.filter((result) => result.status === 'succeeded').length,
+        failed_count: results.filter((result) => result.status === 'failed').length,
+        skipped_count: results.filter((result) => result.status === 'skipped').length,
+      },
+    })
     return json({
       actor_user_id: actorUserId,
       synced: results.filter((result) => result.status === 'succeeded').length,
@@ -198,13 +291,34 @@ Deno.serve(async (req) => {
     })
   } catch (error) {
     if (error instanceof Error && error.message.includes('Authorization')) {
+      await logger.log({
+        level: 'warn',
+        stage: 'authorization_failed',
+        message: error.message,
+        statusCode: 401,
+        durationMs: Date.now() - startedAt,
+      })
       return unauthorized(error.message)
     }
 
     if (error instanceof Error && error.message.includes('permission denied')) {
+      await logger.log({
+        level: 'warn',
+        stage: 'permission_denied',
+        message: error.message,
+        statusCode: 403,
+        durationMs: Date.now() - startedAt,
+      })
       return forbidden(error.message)
     }
 
+    await logger.log({
+      level: 'error',
+      stage: 'request_failed',
+      message: error instanceof Error ? error.message : 'Unexpected error',
+      statusCode: 500,
+      durationMs: Date.now() - startedAt,
+    })
     return serverError(error instanceof Error ? error.message : 'Unexpected error')
   }
 })

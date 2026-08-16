@@ -88,6 +88,111 @@
     .auth-status.error {
       color: #c53030;
     }
+    .ga4-check-grid {
+      display: grid;
+      gap: 18px;
+    }
+    .ga4-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .ga4-summary-card {
+      padding: 18px;
+      border: 1px solid #dfe7f4;
+      border-radius: 12px;
+      background: #fff;
+    }
+    .ga4-summary-card small {
+      display: block;
+      color: #6b7890;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .ga4-summary-card strong {
+      display: block;
+      margin-top: 8px;
+      color: #132b55;
+      font: 700 28px/1.2 "DM Sans", "Noto Sans JP", sans-serif;
+    }
+    .ga4-summary-card span {
+      display: block;
+      margin-top: 6px;
+      color: #6b7890;
+      font-size: 12px;
+    }
+    .ga4-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .ga4-status-badge.ok {
+      background: #e7f7ee;
+      color: #177f49;
+    }
+    .ga4-status-badge.warn {
+      background: #fff3dc;
+      color: #c97509;
+    }
+    .ga4-status-badge.error {
+      background: #ffeaea;
+      color: #cb3535;
+    }
+    .ga4-meta {
+      display: grid;
+      gap: 4px;
+      color: #6a7891;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .ga4-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .ga4-actions button[disabled] {
+      opacity: 0.55;
+      cursor: wait;
+    }
+    .ga4-empty {
+      padding: 28px;
+      border: 1px dashed #ced8e8;
+      border-radius: 12px;
+      background: #fff;
+      color: #60708b;
+      text-align: center;
+    }
+    .ga4-field-list {
+      display: grid;
+      gap: 6px;
+      min-width: 180px;
+    }
+    .ga4-field-list span {
+      font-size: 12px;
+      color: #30445f;
+    }
+    .ga4-field-list b {
+      margin-left: 6px;
+      font-weight: 700;
+    }
+    @media (max-width: 900px) {
+      .ga4-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 640px) {
+      .ga4-summary-grid {
+        grid-template-columns: 1fr;
+      }
+      .ga4-actions {
+        flex-direction: column;
+      }
+    }
     [hidden] {
       display: none !important;
     }
@@ -112,6 +217,8 @@
         <div class="nav-section-title">管理者画面</div>
         <a href="#dashboard" data-page="dashboard"><i>▦</i>ダッシュボード</a>
         <a class="active" href="#lps" data-page="lps"><i>▤</i>クライアント一覧</a>
+        <a href="#ga4-admin" data-page="ga4-admin"><i>◎</i>GA4確認</a>
+        <a href="#api-logs" data-page="api-logs"><i>☰</i>APIログ</a>
         <a href="#alerts" data-page="alerts"><i>♧</i>アラート <b class="danger">2</b></a>
         <a href="#hq" data-page="hq" class="hq-nav-link"><i>▦</i>本部管理</a>
         <a href="#settings" data-page="settings"><i>⚙</i>設定</a>

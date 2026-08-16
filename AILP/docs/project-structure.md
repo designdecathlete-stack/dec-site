@@ -18,6 +18,7 @@
 - LPのAI修正依頼・承認・公開履歴の管理
 - Git commit / branch / preview URL と紐づくバージョン管理
 - 監査ログ、通知、ジョブ、承認、プレビュー、Git履歴、Netlifyデプロイ履歴、LPファイルメタ情報の管理
+- APIログ、GA4同期結果、公開状態を管理者画面で確認できる集計ビューの提供
 
 LPファイル本体と過去版はGitで管理し、Supabaseにはユーザー、権限、対象LP、解析結果、AI修正依頼、承認状態、Git commit SHA、Netlify preview URLなどの管理情報を保存する。
 
@@ -115,6 +116,18 @@ Supabase側の今回のアプリ名・管理単位も `ailp-management` に揃�
 - アプリ識別名: `ailp-management`
 - Google OAuth / GA4 / secrets / cron / Edge Functions はこの `ailp-management` 単位で管理する
 - 既存の仮名 `ailp-manager` を使う場合も、運用上の正式名称は `ailp-management` として扱う
+
+管理者確認用の主な読み取り面は次を使う。
+
+- `public.lp_dashboard_overview`
+  - LPごとの直近30日GA4集計
+  - 最新同期状態
+  - 最新分析状態
+  - 現在公開中のGitバージョン情報
+- `public.api_logs`
+  - Edge Functions のリクエストログ
+- `public.api_logs_overview`
+  - APIログの管理画面表示用ビュー
 
 ## Git運用
 

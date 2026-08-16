@@ -1,6 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 
 import { badRequest, json, methodNotAllowed, serverError, unauthorized } from '../_shared/http.ts'
+import { createApiLogger } from '../_shared/logging.ts'
 import { createServiceClient, requireUser } from '../_shared/supabase.ts'
 
 type PublishBody = {
@@ -9,15 +10,46 @@ type PublishBody = {
 }
 
 Deno.serve(async (req) => {
+  const startedAt = Date.now()
+  const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID()
+  const logger = createApiLogger({
+    requestId,
+    functionName: 'lp-publish',
+    httpMethod: req.method,
+  })
+
   if (req.method !== 'POST') {
+    await logger.log({
+      level: 'warn',
+      stage: 'method_not_allowed',
+      message: 'Rejected non-POST request',
+      statusCode: 405,
+      durationMs: Date.now() - startedAt,
+    })
     return methodNotAllowed()
   }
 
   try {
     const { client, user } = await requireUser(req)
+    logger.setContext({ actorUserId: user.id })
     const body = (await req.json()) as PublishBody
+    await logger.log({
+      stage: 'request_received',
+      message: 'Received LP publish approval request',
+      metadata: {
+        ai_change_request_id: body.ai_change_request_id ?? null,
+        approved: body.approved ?? null,
+      },
+    })
 
     if (!body.ai_change_request_id) {
+      await logger.log({
+        level: 'warn',
+        stage: 'validation_failed',
+        message: 'Missing ai_change_request_id',
+        statusCode: 400,
+        durationMs: Date.now() - startedAt,
+      })
       return badRequest('ai_change_request_id is required')
     }
 
@@ -28,8 +60,19 @@ Deno.serve(async (req) => {
       .single()
 
     if (changeError || !changeRequest) {
+      await logger.log({
+        level: 'warn',
+        stage: 'change_request_unavailable',
+        message: 'AI change request is not accessible',
+        statusCode: 401,
+        durationMs: Date.now() - startedAt,
+        metadata: {
+          ai_change_request_id: body.ai_change_request_id,
+        },
+      })
       return unauthorized('AI change request is not accessible')
     }
+    logger.setContext({ lpProjectId: changeRequest.lp_project_id })
 
     const service = createServiceClient()
     const status = body.approved ? 'approved' : 'rejected'
@@ -59,6 +102,14 @@ Deno.serve(async (req) => {
     if (approvalError || !approvalRequest) {
       throw new Error(approvalError?.message ?? 'Failed to create approval request')
     }
+    await logger.log({
+      stage: 'approval_request_created',
+      message: 'Created approval request for LP publish flow',
+      metadata: {
+        approval_request_id: approvalRequest.id,
+        approval_status: status,
+      },
+    })
 
     const { error: updateError } = await service
       .from('ai_change_requests')
@@ -92,7 +143,27 @@ Deno.serve(async (req) => {
       }
 
       jobId = jobResult.data
+      logger.setContext({ appJobId: jobId })
+      await logger.log({
+        stage: 'job_enqueued',
+        message: 'Enqueued LP publish job',
+        metadata: {
+          app_job_id: jobId,
+        },
+      })
     }
+
+    await logger.log({
+      stage: 'completed',
+      message: 'Completed LP publish approval request',
+      statusCode: 200,
+      durationMs: Date.now() - startedAt,
+      metadata: {
+        approval_request_id: approvalRequest.id,
+        approved: body.approved,
+        app_job_id: jobId,
+      },
+    })
 
     return json({
       approval_request: approvalRequest,
@@ -100,9 +171,23 @@ Deno.serve(async (req) => {
     })
   } catch (error) {
     if (error instanceof Error && error.message.includes('Authorization')) {
+      await logger.log({
+        level: 'warn',
+        stage: 'authorization_failed',
+        message: error.message,
+        statusCode: 401,
+        durationMs: Date.now() - startedAt,
+      })
       return unauthorized(error.message)
     }
 
+    await logger.log({
+      level: 'error',
+      stage: 'request_failed',
+      message: error instanceof Error ? error.message : 'Unexpected error',
+      statusCode: 500,
+      durationMs: Date.now() - startedAt,
+    })
     return serverError(error instanceof Error ? error.message : 'Unexpected error')
   }
 })

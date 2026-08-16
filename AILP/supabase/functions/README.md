@@ -29,6 +29,18 @@ Do not put frontend UI code here.
 - `_shared/http.ts`: JSON response helpers
 - `_shared/supabase.ts`: user/service Supabase clients
 - `_shared/ga4.ts`: Google service account auth and GA4 Data API access
+- `_shared/logging.ts`: `api_logs` table writer for request/stage logging
+
+## API logs
+
+- table: `public.api_logs`
+- purpose: record API request flow, validation failures, job creation, downstream failures, and completion
+- current targets:
+  - `ga4-sync`
+  - `lp-create-from-template`
+  - `ai-change-request`
+  - `lp-publish`
+- access: admin users only via RLS
 
 ## Current phase limits
 
