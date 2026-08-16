@@ -4,6 +4,9 @@ id = "ailp-management"
 [functions.ga4-sync]
 verify_jwt = false
 
+[functions.ga4-property-discovery]
+verify_jwt = true
+
 [functions.lp-create-from-template]
 verify_jwt = true
 

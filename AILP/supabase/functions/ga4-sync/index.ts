@@ -2,7 +2,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 
 import { runGa4Report } from '../_shared/ga4.ts'
 import { getCronToken } from '../_shared/env.ts'
-import { badRequest, forbidden, json, methodNotAllowed, serverError, unauthorized } from '../_shared/http.ts'
+import { badRequest, forbidden, json, methodNotAllowed, optionsResponse, serverError, unauthorized } from '../_shared/http.ts'
 import { createApiLogger } from '../_shared/logging.ts'
 import { createServiceClient, requireUser } from '../_shared/supabase.ts'
 
@@ -64,6 +64,10 @@ async function createRunningJob(service: ReturnType<typeof createServiceClient>,
 }
 
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return optionsResponse()
+  }
+
   const startedAt = Date.now()
   const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID()
   const logger = createApiLogger({

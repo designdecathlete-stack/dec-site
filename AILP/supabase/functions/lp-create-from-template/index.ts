@@ -1,6 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 
-import { badRequest, json, methodNotAllowed, serverError, unauthorized } from '../_shared/http.ts'
+import { badRequest, json, methodNotAllowed, optionsResponse, serverError, unauthorized } from '../_shared/http.ts'
 import { createApiLogger } from '../_shared/logging.ts'
 import { createServiceClient, requireUser } from '../_shared/supabase.ts'
 
@@ -13,6 +13,10 @@ type CreateRequest = {
 }
 
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return optionsResponse()
+  }
+
   const startedAt = Date.now()
   const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID()
   const logger = createApiLogger({

@@ -13,6 +13,20 @@ type RunReportRow = {
   engagementRate: number | null
 }
 
+type Ga4PropertyCandidate = {
+  accountName: string
+  accountDisplayName: string
+  propertyName: string
+  propertyId: string
+  propertyDisplayName: string
+  canEdit: boolean
+  streamName: string
+  streamDisplayName: string
+  defaultUri: string | null
+  measurementId: string | null
+  matchedHost: boolean
+}
+
 function base64UrlEncode(input: string | Uint8Array): string {
   const bytes = typeof input === 'string' ? new TextEncoder().encode(input) : input
   let binary = ''
@@ -77,6 +91,21 @@ async function getAccessToken(): Promise<string> {
 
   const tokenJson = await tokenResponse.json()
   return tokenJson.access_token as string
+}
+
+async function googleJsonRequest<T>(url: string, accessToken: string): Promise<T> {
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Google Admin API request failed: ${body}`)
+  }
+
+  return await response.json() as T
 }
 
 function pemToArrayBuffer(pem: string): ArrayBuffer {
@@ -175,4 +204,114 @@ export async function runGa4Report(args: {
     eventCount: metricNumber(row.metricValues?.[4]?.value),
     engagementRate: row.metricValues?.[5]?.value ? Number(row.metricValues[5].value) : null,
   }))
+}
+
+export async function listGa4PropertyCandidates(args: {
+  publicUrl?: string | null
+} = {}): Promise<Ga4PropertyCandidate[]> {
+  const accessToken = await getAccessToken()
+  const host = args.publicUrl ? new URL(args.publicUrl).host : null
+  const candidates: Ga4PropertyCandidate[] = []
+  let accountPageToken = ''
+
+  do {
+    const query = new URLSearchParams({ pageSize: '200' })
+    if (accountPageToken) {
+      query.set('pageToken', accountPageToken)
+    }
+
+    const summaryResponse = await googleJsonRequest<{
+      accountSummaries?: Array<{
+        account?: string
+        displayName?: string
+        propertySummaries?: Array<{
+          property?: string
+          displayName?: string
+          canEdit?: boolean
+        }>
+      }>
+      nextPageToken?: string
+    }>(`https://analyticsadmin.googleapis.com/v1beta/accountSummaries?${query.toString()}`, accessToken)
+
+    for (const accountSummary of summaryResponse.accountSummaries ?? []) {
+      for (const propertySummary of accountSummary.propertySummaries ?? []) {
+        if (!propertySummary.property) {
+          continue
+        }
+
+        let streamPageToken = ''
+
+        do {
+          const streamQuery = new URLSearchParams({ pageSize: '200' })
+          if (streamPageToken) {
+            streamQuery.set('pageToken', streamPageToken)
+          }
+
+          const streamResponse = await googleJsonRequest<{
+            dataStreams?: Array<{
+              name?: string
+              displayName?: string
+              type?: string
+              webStreamData?: {
+                defaultUri?: string
+                measurementId?: string
+              }
+            }>
+            nextPageToken?: string
+          }>(`https://analyticsadmin.googleapis.com/v1beta/${propertySummary.property}/dataStreams?${streamQuery.toString()}`, accessToken)
+
+          for (const stream of streamResponse.dataStreams ?? []) {
+            if (stream.type !== 'WEB_DATA_STREAM') {
+              continue
+            }
+
+            const defaultUri = stream.webStreamData?.defaultUri ?? null
+            let matchedHost = false
+
+            if (host && defaultUri) {
+              try {
+                matchedHost = new URL(defaultUri).host === host
+              } catch {
+                matchedHost = false
+              }
+            }
+
+            candidates.push({
+              accountName: accountSummary.account ?? '',
+              accountDisplayName: accountSummary.displayName ?? '',
+              propertyName: propertySummary.property,
+              propertyId: propertySummary.property.replace('properties/', ''),
+              propertyDisplayName: propertySummary.displayName ?? '',
+              canEdit: Boolean(propertySummary.canEdit),
+              streamName: stream.name ?? '',
+              streamDisplayName: stream.displayName ?? '',
+              defaultUri,
+              measurementId: stream.webStreamData?.measurementId ?? null,
+              matchedHost,
+            })
+          }
+
+          streamPageToken = streamResponse.nextPageToken ?? ''
+        } while (streamPageToken)
+      }
+    }
+
+    accountPageToken = summaryResponse.nextPageToken ?? ''
+  } while (accountPageToken)
+
+  return candidates.sort((left, right) => {
+    if (left.matchedHost !== right.matchedHost) {
+      return left.matchedHost ? -1 : 1
+    }
+
+    if (left.accountDisplayName !== right.accountDisplayName) {
+      return left.accountDisplayName.localeCompare(right.accountDisplayName, 'ja')
+    }
+
+    if (left.propertyDisplayName !== right.propertyDisplayName) {
+      return left.propertyDisplayName.localeCompare(right.propertyDisplayName, 'ja')
+    }
+
+    return left.streamDisplayName.localeCompare(right.streamDisplayName, 'ja')
+  })
 }
