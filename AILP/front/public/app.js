@@ -32,6 +32,7 @@ const dashboardState={loading:false,loaded:false,error:'',rows:[]}
 const ga4AdminState={loading:false,loaded:false,error:'',rows:[],busy:{},configs:{}}
 const apiLogState={loading:false,loaded:false,error:'',rows:[]}
 const detailState={loading:false,loadedFor:null,error:'',overview:null,metrics:[],analysisResults:[],versions:[],deployments:[]}
+const userSettingsState={loading:false,loaded:false,error:'',users:[],projects:[],memberships:[]}
 const uiState={apiLogLevel:'all',apiLogQuery:''}
 let selectedLpProjectId=null
 let selectedClientId=null
@@ -265,6 +266,41 @@ async function loadApiLogData(force=false){
   }finally{
     apiLogState.loading=false
     if(page==='api-logs') renderWithDetailMenu()
+  }
+}
+async function loadUserSettingsData(force=false){
+  const auth=currentAuth()
+  if(!auth.isAdmin||!auth.supabase) return
+  if(userSettingsState.loading) return
+  if(userSettingsState.loaded&&!force) return
+  userSettingsState.loading=true
+  userSettingsState.error=''
+  if(page==='user-settings') renderWithDetailMenu()
+  try{
+    const [usersResult,projectsResult,membershipsResult,profilesResult]=await Promise.all([
+      auth.supabase.from('access_users').select('id,email,full_name,role,is_active,is_protected,created_at,updated_at').order('role',{ascending:false}).order('email'),
+      auth.supabase.from('lp_projects').select('id,name,folder_path,public_url,client_id,clients(name)').order('name'),
+      auth.supabase.from('access_user_lp_projects').select('access_user_id,lp_project_id'),
+      auth.supabase.from('profiles').select('id,email,full_name'),
+    ])
+    if(usersResult.error) throw usersResult.error
+    if(projectsResult.error) throw projectsResult.error
+    if(membershipsResult.error) throw membershipsResult.error
+    if(profilesResult.error) throw profilesResult.error
+    const profileByEmail=new Map((profilesResult.data||[]).map(profile=>[String(profile.email||'').toLowerCase(),profile]))
+    userSettingsState.users=(usersResult.data||[]).map(user=>({
+      ...user,
+      profile: profileByEmail.get(String(user.email||'').toLowerCase())||null,
+    }))
+    userSettingsState.projects=projectsResult.data||[]
+    userSettingsState.memberships=membershipsResult.data||[]
+    userSettingsState.loaded=true
+  }catch(error){
+    console.error(error)
+    userSettingsState.error=error?.message||'ユーザー設定データの取得に失敗しました。'
+  }finally{
+    userSettingsState.loading=false
+    if(page==='user-settings') renderWithDetailMenu()
   }
 }
 async function loadGa4AdminData(force=false){
@@ -783,6 +819,83 @@ function formatMetadataPreview(metadata){
 function previousAnalysisResults(){
   return (detailState.analysisResults||[]).slice(1)
 }
+function userMembershipProjectIds(accessUserId){
+  return userSettingsState.memberships.filter(item=>item.access_user_id===accessUserId).map(item=>item.lp_project_id)
+}
+function renderUserProjectChecklist(accessUserId,selectedIds){
+  if(!userSettingsState.projects.length){
+    return '<div class="ga4-empty">選択可能なLPプロジェクトがありません。</div>'
+  }
+  const selectedSet=new Set(selectedIds||[])
+  return `<div class="client-lp-grid">${userSettingsState.projects.map(project=>`<label class="client-lp-card" style="text-align:left;cursor:pointer;"><input type="checkbox" data-user-project value="${project.id}" ${selectedSet.has(project.id)?'checked':''} style="margin-bottom:10px;"><b>${escapeHtml(project.name)}</b><small>${escapeHtml(project.clients?.name||'クライアント未設定')} / ${escapeHtml(project.folder_path)}</small><span>${escapeHtml(project.public_url||'URL未設定')}</span></label>`).join('')}</div>`
+}
+function userRoleLabel(role){
+  return role==='admin'?'管理者':'LP担当'
+}
+async function saveManagedUser(button){
+  const auth=currentAuth()
+  if(!auth.isAdmin||!auth.supabase) return
+  const editor=button.closest('[data-user-editor]')
+  if(!editor) return
+  const accessUserId=editor.dataset.userId||''
+  const emailInput=editor.querySelector('[data-user-email]')
+  const nameInput=editor.querySelector('[data-user-name]')
+  const roleInput=editor.querySelector('[data-user-role]')
+  const activeInput=editor.querySelector('[data-user-active]')
+  const email=String(emailInput?.value||'').trim().toLowerCase()
+  const fullName=String(nameInput?.value||'').trim()
+  const role=String(roleInput?.value||'lp_dashboard')
+  const isActive=activeInput?Boolean(activeInput.checked):true
+  const projectIds=[...editor.querySelectorAll('[data-user-project]:checked')].map(input=>input.value)
+  if(!email){
+    notice('メールアドレスを入力してください。')
+    return
+  }
+  if(role==='lp_dashboard'&&!projectIds.length){
+    notice('LP担当ユーザーには参加LPを1つ以上設定してください。')
+    return
+  }
+  try{
+    let savedId=accessUserId
+    if(savedId){
+      const {error}=await auth.supabase.from('access_users').update({email,full_name:fullName||null,role,is_active:isActive}).eq('id',savedId)
+      if(error) throw error
+    }else{
+      const {data,error}=await auth.supabase.from('access_users').insert({email,full_name:fullName||null,role,is_active:isActive}).select('id').single()
+      if(error) throw error
+      savedId=data.id
+    }
+    const {error:deleteError}=await auth.supabase.from('access_user_lp_projects').delete().eq('access_user_id',savedId)
+    if(deleteError) throw deleteError
+    if(role==='lp_dashboard'&&projectIds.length){
+      const rows=projectIds.map(lpProjectId=>({access_user_id:savedId,lp_project_id:lpProjectId}))
+      const {error:insertError}=await auth.supabase.from('access_user_lp_projects').insert(rows)
+      if(insertError) throw insertError
+    }
+    notice(savedId===accessUserId?'ユーザー設定を更新しました。':'ユーザーを追加しました。')
+    await loadUserSettingsData(true)
+    await loadDashboardData(true)
+  }catch(error){
+    console.error(error)
+    notice(error?.message||'ユーザー設定の保存に失敗しました。')
+  }
+}
+async function deleteManagedUser(button){
+  const auth=currentAuth()
+  if(!auth.isAdmin||!auth.supabase) return
+  const editor=button.closest('[data-user-editor]')
+  if(!editor?.dataset.userId) return
+  try{
+    const {error}=await auth.supabase.from('access_users').delete().eq('id',editor.dataset.userId)
+    if(error) throw error
+    notice('ユーザーを削除しました。')
+    await loadUserSettingsData(true)
+    await loadDashboardData(true)
+  }catch(error){
+    console.error(error)
+    notice(error?.message||'ユーザー削除に失敗しました。')
+  }
+}
 function filteredApiLogs(){
   return apiLogState.rows.filter(row=>{
     const levelMatch=uiState.apiLogLevel==='all'||row.level===uiState.apiLogLevel
@@ -830,6 +943,14 @@ function enhancedApiLogsAdmin(){
   const warnCount=rows.filter(row=>row.level==='warn').length
   const latest=rows[0]?.created_at||null
   return `<div class="ga4-check-grid"><div class="heading-row"><div><div class="eyebrow">API LOGS</div><h1>APIログ確認</h1><p class="page-sub">Edge Functions の受信、検証、ジョブ投入、失敗内容を時系列で確認できます。</p></div><button class="secondary" data-action="api-log-refresh">一覧を更新</button></div>${apiLogState.error?`<div class="ga4-empty">${escapeHtml(apiLogState.error)}</div>`:''}<div class="ga4-summary-grid"><section class="ga4-summary-card"><small>表示件数</small><strong>${rows.length}</strong><span>絞り込み後</span></section><section class="ga4-summary-card"><small>Error</small><strong>${errorCount}</strong><span>level=error</span></section><section class="ga4-summary-card"><small>Warn</small><strong>${warnCount}</strong><span>level=warn</span></section><section class="ga4-summary-card"><small>最新ログ</small><strong>${latest?formatDisplayDate(latest):'未取得'}</strong><span>created_at</span></section></div><div class="dashboard-grid"><section class="panel section-card"><h2>Function別サマリ</h2>${functionStats.length?`<ul class="mini-list">${functionStats.map(item=>`<li><span>${escapeHtml(item.function_name)}<br><small>latest ${escapeHtml(formatDisplayDate(item.last_at))}</small></span><b>${item.total}件 / E${item.error} W${item.warn}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">サマリ対象のログがありません。</div>`}</section><section class="panel section-card"><h2>確認ポイント</h2><ul class="mini-list"><li><span>error が増えている function</span><b>再実行前に message を確認</b></li><li><span>status_code 4xx / 5xx</span><b>権限・入力値・secret を確認</b></li><li><span>duration_ms が長い処理</span><b>外部APIや再試行回数を確認</b></li></ul></section></div><section class="panel table-panel"><div class="heading-row"><div class="ga4-actions"><select data-action="api-log-level"><option value="all" ${uiState.apiLogLevel==='all'?'selected':''}>全レベル</option><option value="error" ${uiState.apiLogLevel==='error'?'selected':''}>error</option><option value="warn" ${uiState.apiLogLevel==='warn'?'selected':''}>warn</option><option value="info" ${uiState.apiLogLevel==='info'?'selected':''}>info</option></select><input type="search" data-action="api-log-query" value="${escapeHtml(uiState.apiLogQuery)}" placeholder="Function / LP / メッセージで検索"></div></div>${apiLogState.loading&&!rows.length?`<div class="ga4-empty">APIログを読み込み中です。</div>`:''}${!rows.length&&!apiLogState.loading?`<div class="ga4-empty">該当する API ログはありません。</div>`:`<table><thead><tr><th>時刻</th><th>Function / Stage</th><th>対象</th><th>内容</th><th>結果</th></tr></thead><tbody>${rows.map(row=>`<tr><td><div class="ga4-field-list"><span>${escapeHtml(formatDisplayDate(row.created_at))}</span><span>request <b>${escapeHtml(row.request_id)}</b></span></div></td><td><div class="ga4-field-list"><span>${statusBadge(row.level,row.level==='error'?'error':row.level==='warn'?'warn':'ok')}</span><span><b>${escapeHtml(row.function_name)}</b></span><span>${escapeHtml(row.stage)}</span></div></td><td><div class="ga4-field-list"><span>client <b>${escapeHtml(row.client_name||'--')}</b></span><span>lp <b>${escapeHtml(row.lp_name||'--')}</b></span><span>actor <b>${escapeHtml(row.actor_email||'--')}</b></span></div></td><td><div class="ga4-field-list"><span>${escapeHtml(row.message)}</span>${row.metadata&&Object.keys(row.metadata).length?`<span><b>${escapeHtml(formatMetadataPreview(row.metadata))}</b></span>`:''}</div></td><td><div class="ga4-field-list"><span>HTTP <b>${escapeHtml(row.http_method||'--')}</b></span><span>Status <b>${escapeHtml(row.status_code||'--')}</b></span><span>Duration <b>${escapeHtml(row.duration_ms||'--')}ms</b></span></div></td></tr>`).join('')}</tbody></table>`}</section></div>`
+}
+function userSettingsAdmin(){
+  const auth=currentAuth()
+  if(!auth.isAdmin) return `<div class="ga4-empty">このページは管理者のみ表示できます。</div>`
+  const users=userSettingsState.users
+  const activeUsers=users.filter(user=>user.is_active)
+  const admins=users.filter(user=>user.role==='admin')
+  return `<div class="ga4-check-grid"><div class="heading-row"><div><div class="eyebrow">USER ACCESS</div><h1>ユーザー設定</h1><p class="page-sub">Googleログイン後に利用できるユーザーと、参加できるLPプロジェクトを管理します。</p></div><button class="secondary" data-action="user-settings-refresh">一覧を更新</button></div>${userSettingsState.error?`<div class="ga4-empty">${escapeHtml(userSettingsState.error)}</div>`:''}<div class="ga4-summary-grid"><section class="ga4-summary-card"><small>登録ユーザー</small><strong>${users.length}</strong><span>設定レコード数</span></section><section class="ga4-summary-card"><small>有効ユーザー</small><strong>${activeUsers.length}</strong><span>is_active=true</span></section><section class="ga4-summary-card"><small>管理者</small><strong>${admins.length}</strong><span>全LPにアクセス可</span></section><section class="ga4-summary-card"><small>LPプロジェクト</small><strong>${userSettingsState.projects.length}</strong><span>割り当て候補</span></section></div><section class="panel section-card"><h2>新規ユーザー追加</h2><div data-user-editor class="ga4-check-grid"><div class="dashboard-grid"><section class="panel section-card"><div class="ga4-field-list"><label>メールアドレス<input type="email" data-user-email placeholder="user@example.com"></label><label>表示名<input type="text" data-user-name placeholder="表示名"></label><label>権限<select data-user-role><option value="lp_dashboard">LP担当</option><option value="admin">管理者</option></select></label><label><input type="checkbox" data-user-active checked> 有効</label></div></section><section class="panel section-card"><h2>参加LPプロジェクト</h2>${renderUserProjectChecklist('',[])}</section></div><div class="ga4-actions"><button class="primary" data-action="user-save">追加する</button></div></div></section><section class="panel table-panel"><div class="heading-row"><div><h2>登録済みユーザー</h2><p class="page-sub">保護ユーザーは削除できません。LP担当は参加LPだけ閲覧できます。</p></div></div>${userSettingsState.loading&&!users.length?`<div class="ga4-empty">ユーザー設定を読み込み中です。</div>`:''}${!users.length&&!userSettingsState.loading?`<div class="ga4-empty">登録済みユーザーがありません。</div>`:users.map(user=>`<section class="panel section-card" data-user-editor data-user-id="${user.id}"><div class="heading-row"><div><h2>${escapeHtml(user.email)}</h2><p class="page-sub">${user.profile?.id?'Googleログイン済み':'未ログイン'} / ${escapeHtml(userRoleLabel(user.role))}</p></div><div class="ga4-actions">${user.is_protected?statusBadge('保護ユーザー','warn'):''}${user.is_active?statusBadge('有効','ok'):statusBadge('無効','error')}</div></div><div class="dashboard-grid"><section class="panel section-card"><div class="ga4-field-list"><label>メールアドレス<input type="email" data-user-email value="${escapeHtml(user.email)}" ${user.is_protected?'disabled':''}></label><label>表示名<input type="text" data-user-name value="${escapeHtml(user.full_name||user.profile?.full_name||'')}"></label><label>権限<select data-user-role ${user.is_protected?'disabled':''}><option value="lp_dashboard" ${user.role==='lp_dashboard'?'selected':''}>LP担当</option><option value="admin" ${user.role==='admin'?'selected':''}>管理者</option></select></label><label><input type="checkbox" data-user-active ${user.is_active?'checked':''} ${user.is_protected?'disabled':''}> 有効</label></div></section><section class="panel section-card"><h2>参加LPプロジェクト</h2>${user.role==='admin'?'<div class="ga4-empty">管理者は全LPプロジェクトを閲覧できます。</div>':renderUserProjectChecklist(user.id,userMembershipProjectIds(user.id))}</section></div><div class="ga4-actions"><button class="secondary" data-action="user-save">保存</button><button class="secondary" data-action="user-delete" ${user.is_protected?'disabled':''}>削除</button></div></section>`).join('')}</section></div>`
 }
 function enhancedList(){
   const rows=currentDashboardRows()
@@ -914,10 +1035,13 @@ function enhancedButtons(){
       else if(action==='analyze-run'){ runLpAnalysis() }
       else if(action==='dashboard-refresh'){ loadDashboardData(true) }
       else if(action==='api-log-refresh'){ loadApiLogData(true) }
+      else if(action==='user-settings-refresh'){ loadUserSettingsData(true) }
       else if(action==='ga4-refresh'){ loadGa4AdminData(true) }
       else if(action==='ga4-discover'){ discoverGa4Candidates(button.dataset.lpId) }
       else if(action==='ga4-save'){ saveGa4Config(button.dataset.lpId) }
       else if(action==='ga4-sync'){ runGa4Action(button.dataset.lpId) }
+      else if(action==='user-save'){ saveManagedUser(button) }
+      else if(action==='user-delete'){ deleteManagedUser(button) }
       else if(action==='publish'){ notice('公開操作の実行基盤は VPS 導入後に接続します。履歴UIは先行整備済みです。') }
       else if(action==='rollback'){ notice('ロールバック操作の実行基盤は VPS 導入後に接続します。') }
       else if(action==='new'){ notice('新規作成フローの UI は整備済みです。実ファイル複製は VPS 導入後に接続します。') }
@@ -931,9 +1055,9 @@ function enhancedButtons(){
 }
 function enhancedRenderWithDetailMenu(){
   const auth=currentAuth()
-  const views={dashboard:enhancedDashboard,production,lps:enhancedList,'ga4-admin':ga4Admin,'api-logs':enhancedApiLogsAdmin,client:enhancedClientHome,detail:enhancedDetail,analysis:enhancedAnalysis,proposals:enhancedProposals,versions:enhancedVersions,history:enhancedHistory,'initial-production':initialProduction,'customer-info':customerInfo,'initial-settings':initialSettings,'lp-variants':enhancedLpVariants,'meta-ads':metaAds,'google-ads':googleAds,alerts,hq,settings}
+  const views={dashboard:enhancedDashboard,production,lps:enhancedList,'ga4-admin':ga4Admin,'api-logs':enhancedApiLogsAdmin,'user-settings':userSettingsAdmin,client:enhancedClientHome,detail:enhancedDetail,analysis:enhancedAnalysis,proposals:enhancedProposals,versions:enhancedVersions,history:enhancedHistory,'initial-production':initialProduction,'customer-info':customerInfo,'initial-settings':initialSettings,'lp-variants':enhancedLpVariants,'meta-ads':metaAds,'google-ads':googleAds,alerts,hq,settings}
   page=location.hash.replace('#','')||'lps'
-  if((page==='ga4-admin'||page==='api-logs')&&!auth.isAdmin){
+  if((page==='ga4-admin'||page==='api-logs'||page==='user-settings')&&!auth.isAdmin){
     page='dashboard'
     location.hash='dashboard'
   }
@@ -942,11 +1066,12 @@ function enhancedRenderWithDetailMenu(){
   if(['detail','analysis','proposals','versions','history'].includes(page)) loadDetailData()
   if(page==='ga4-admin') loadGa4AdminData()
   if(page==='api-logs') loadApiLogData()
-  const labels={dashboard:'管理者画面 / ダッシュボード',production:'新規LP制作一覧',lps:'管理者画面 / クライアント一覧','ga4-admin':'管理者画面 / GA4接続確認','api-logs':'管理者画面 / APIログ',client:'個別クライアント画面 / 概要',detail:'LP詳細','initial-production':'個別クライアント画面 / 初期LP制作','customer-info':'個別クライアント画面 / 顧客情報','initial-settings':'個別クライアント画面 / 初期設定','lp-variants':'個別クライアント画面 / LP一覧','meta-ads':'個別クライアント画面 / META広告','google-ads':'個別クライアント画面 / Google広告',analysis:'LP詳細 / 分析',proposals:'LP詳細 / 改善提案',versions:'LP詳細 / バージョン管理',history:'LP詳細 / 公開履歴',alerts:'管理者画面 / アラート',hq:'管理者画面 / 本部管理',settings:'管理者画面 / 設定'}
+  if(page==='user-settings') loadUserSettingsData()
+  const labels={dashboard:'管理者画面 / ダッシュボード',production:'新規LP制作一覧',lps:'管理者画面 / クライアント一覧','ga4-admin':'管理者画面 / GA4接続確認','api-logs':'管理者画面 / APIログ','user-settings':'管理者画面 / ユーザー設定',client:'個別クライアント画面 / 概要',detail:'LP詳細','initial-production':'個別クライアント画面 / 初期LP制作','customer-info':'個別クライアント画面 / 顧客情報','initial-settings':'個別クライアント画面 / 初期設定','lp-variants':'個別クライアント画面 / LP一覧','meta-ads':'個別クライアント画面 / META広告','google-ads':'個別クライアント画面 / Google広告',analysis:'LP詳細 / 分析',proposals:'LP詳細 / 改善提案',versions:'LP詳細 / バージョン管理',history:'LP詳細 / 公開履歴',alerts:'管理者画面 / アラート',hq:'管理者画面 / 本部管理',settings:'管理者画面 / 設定'}
   crumb.innerHTML=`LP管理 <span>/</span> ${labels[page]||labels.lps}`
   document.querySelectorAll('[data-page]').forEach(link=>link.classList.toggle('active',link.dataset.page===page))
   document.querySelectorAll('[data-detail-page]').forEach(link=>link.classList.toggle('active',link.dataset.detailPage===page))
-  const adminPages=['dashboard','lps','ga4-admin','api-logs','alerts','production','hq','settings']
+  const adminPages=['dashboard','lps','ga4-admin','api-logs','user-settings','alerts','production','hq','settings']
   document.querySelector('.nav').classList.toggle('page-mode-hidden',!adminPages.includes(page))
   document.querySelector('.detail-nav').classList.toggle('page-mode-hidden',adminPages.includes(page))
   document.querySelector('.lp-select').classList.toggle('page-mode-hidden',adminPages.includes(page))
@@ -955,6 +1080,8 @@ function enhancedRenderWithDetailMenu(){
   if(ga4AdminLink) ga4AdminLink.style.display=auth.isAdmin&&viewerRole!=='client'?'':'none'
   const apiLogLink=document.querySelector('[data-page="api-logs"]')
   if(apiLogLink) apiLogLink.style.display=auth.isAdmin&&viewerRole!=='client'?'':'none'
+  const userSettingsLink=document.querySelector('[data-page="user-settings"]')
+  if(userSettingsLink) userSettingsLink.style.display=auth.isAdmin&&viewerRole!=='client'?'':'none'
   enhancedSyncLpPicker()
   enhancedButtons()
   bindProductionActions()
