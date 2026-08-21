@@ -31,6 +31,10 @@ function currentAuth(){return window.AILP_AUTH_CONTEXT||{user:null,roles:[],isAd
 const dashboardState={loading:false,loaded:false,error:'',rows:[]}
 const ga4AdminState={loading:false,loaded:false,error:'',rows:[],busy:{},configs:{}}
 const apiLogState={loading:false,loaded:false,error:'',rows:[]}
+const detailState={loading:false,loadedFor:null,error:'',overview:null,metrics:[],analysisResults:[],versions:[],deployments:[]}
+const uiState={apiLogLevel:'all',apiLogQuery:''}
+let selectedLpProjectId=null
+let selectedClientId=null
 function formatIsoDate(date){return date.toISOString().slice(0,10)}
 function formatDisplayDate(value){if(!value)return '未取得';const date=new Date(value);return Number.isNaN(date.getTime())?String(value):date.toLocaleString('ja-JP')}
 function statusBadge(label,tone){return `<span class="ga4-status-badge ${tone}">${label}</span>`}
@@ -38,6 +42,167 @@ function escapeHtml(value){return String(value??'').replaceAll('&','&amp;').repl
 function formatCount(value){return new Intl.NumberFormat('ja-JP').format(Number(value||0))}
 function dashboardTone(value){if(value==='live'||value==='configured'||value==='succeeded') return 'ok';if(value==='partial'||value==='running'||value==='queued') return 'warn';return 'error'}
 function defaultGa4PagePath(folderPath){return folderPath?`/${String(folderPath).replace(/^\/+|\/+$/g,'')}/`:''}
+function hasPublicUrl(row){return Boolean(String(row?.public_url||'').trim())}
+function publishState(row){
+  if(row?.publish_status==='live') return {label:'公開中',tone:'ok',detail:'live flag 管理中',isLive:true,isUrlLive:true}
+  if(row?.publish_status==='deployed_without_live_flag') return {label:'公開済み',tone:'warn',detail:'deploy 履歴あり / live flag 未設定',isLive:false,isUrlLive:true}
+  if(hasPublicUrl(row)) return {label:'運用URLあり',tone:'warn',detail:'URL は存在するが公開管理未接続',isLive:false,isUrlLive:true}
+  return {label:'未公開',tone:'error',detail:'公開URL未設定',isLive:false,isUrlLive:false}
+}
+function needsDashboardData(targetPage){return ['dashboard','lps','client','detail','analysis','proposals','versions','history','lp-variants'].includes(targetPage)}
+function computeHealthScore(row){
+  if(!row) return 0
+  let score=40
+  const publish=publishState(row)
+  if(publish.isLive) score+=15
+  else if(publish.isUrlLive) score+=8
+  if(row.ga4_connection_status==='configured') score+=15
+  else if(row.ga4_connection_status==='partial') score+=8
+  if(row.latest_sync_status==='succeeded') score+=15
+  if(row.latest_analysis_result_id) score+=5
+  score+=Math.min(10,Math.round(Number(row.conversion_rate_30d||0)*2))
+  return Math.max(0,Math.min(99,score))
+}
+function phaseLabel(row){
+  if(!row) return '未設定'
+  const publish=publishState(row)
+  if(!publish.isUrlLive) return '公開準備'
+  if(!publish.isLive) return '公開管理待ち'
+  if(row.latest_analysis_result_id) return '分析・改善'
+  if(row.latest_sync_status==='succeeded') return '分析待ち'
+  if(row.ga4_connection_status!=='configured') return 'GA4設定'
+  return '運用中'
+}
+function toLegacySelected(row){
+  return {
+    name: row?.lp_name||selected?.name||'LP',
+    client: row?.client_name||selected?.client||'クライアント',
+    score: computeHealthScore(row),
+    state: row?.publish_status==='live'?'公開中':'未公開',
+    phase: phaseLabel(row),
+    owner: 'AILP',
+    update: row?.latest_sync_finished_at?formatDisplayDate(row.latest_sync_finished_at):'未取得',
+    cv: row?.conversion_rate_30d===null||row?.conversion_rate_30d===undefined?'--':`${Number(row.conversion_rate_30d).toFixed(2)}%`,
+  }
+}
+function setSelectedFromRow(row){
+  if(!row) return
+  selectedLpProjectId=row.lp_project_id
+  selectedClientId=row.client_id
+  selected=toLegacySelected(row)
+}
+function currentDashboardRows(){return Array.isArray(dashboardState.rows)?dashboardState.rows:[]}
+function getSelectedDashboardRow(){
+  const rows=currentDashboardRows()
+  if(!rows.length) return null
+  let row=rows.find(item=>item.lp_project_id===selectedLpProjectId)
+  if(!row&&selectedClientId){
+    row=rows.find(item=>item.client_id===selectedClientId)
+  }
+  if(!row){
+    row=rows[0]
+    setSelectedFromRow(row)
+  }
+  return row
+}
+function rowsForClient(clientId){return currentDashboardRows().filter(row=>row.client_id===clientId)}
+function getSelectedClientRows(){
+  const row=getSelectedDashboardRow()
+  const clientId=selectedClientId||row?.client_id||null
+  return clientId?rowsForClient(clientId):[]
+}
+function setSelectedClientFromId(clientId){
+  selectedClientId=clientId
+  const row=rowsForClient(clientId)[0]
+  if(row) setSelectedFromRow(row)
+}
+function setSelectedLpFromId(lpProjectId){
+  selectedLpProjectId=lpProjectId
+  const row=currentDashboardRows().find(item=>item.lp_project_id===lpProjectId)
+  if(row) setSelectedFromRow(row)
+}
+function metricWindowDays(){
+  if(analysisPeriod==='公開後7日') return 7
+  if(analysisPeriod==='公開後90日') return 90
+  if(analysisPeriod==='公開後すべて') return null
+  return 30
+}
+function filterMetricsByChannel(metrics){
+  if(analysisChannel==='all') return metrics
+  return metrics.filter(metric=>{
+    const source=String(metric.source_medium||'').toLowerCase()
+    if(analysisChannel==='meta') return source.includes('fb')||source.includes('facebook')||source.includes('ig')||source.includes('instagram')||source.includes('meta')
+    if(analysisChannel==='google') return source.includes('google')
+    if(analysisChannel==='instagram') return source.includes('ig')||source.includes('instagram')
+    return true
+  })
+}
+function aggregateMetrics(metrics){
+  const grouped=new Map()
+  metrics.forEach(metric=>{
+    const key=metric.metric_date
+    if(!grouped.has(key)){
+      grouped.set(key,{metric_date:key,sessions:0,total_users:0,screen_page_views:0,conversions:0,event_count:0,engagement_rate_sum:0,engagement_rate_count:0})
+    }
+    const row=grouped.get(key)
+    row.sessions+=Number(metric.sessions||0)
+    row.total_users+=Number(metric.total_users||0)
+    row.screen_page_views+=Number(metric.screen_page_views||0)
+    row.conversions+=Number(metric.conversions||0)
+    row.event_count+=Number(metric.event_count||0)
+    if(metric.engagement_rate!==null&&metric.engagement_rate!==undefined){
+      row.engagement_rate_sum+=Number(metric.engagement_rate)
+      row.engagement_rate_count+=1
+    }
+  })
+  return [...grouped.values()].sort((a,b)=>String(a.metric_date).localeCompare(String(b.metric_date))).map(row=>({
+    ...row,
+    engagement_rate: row.engagement_rate_count?row.engagement_rate_sum/row.engagement_rate_count:null,
+  }))
+}
+function metricsForActivePeriod(){
+  const rows=filterMetricsByChannel(detailState.metrics||[])
+  const days=metricWindowDays()
+  if(days===null) return rows
+  const sorted=[...rows].sort((a,b)=>String(a.metric_date).localeCompare(String(b.metric_date)))
+  const latest=sorted[sorted.length-1]?.metric_date
+  if(!latest) return rows
+  const latestDate=new Date(latest)
+  const start=new Date(latestDate)
+  start.setDate(start.getDate()-(days-1))
+  const startIso=formatIsoDate(start)
+  return rows.filter(metric=>metric.metric_date>=startIso&&metric.metric_date<=latest)
+}
+function analysisTotals(){
+  const aggregated=aggregateMetrics(metricsForActivePeriod())
+  return aggregated.reduce((sum,row)=>{
+    sum.sessions+=row.sessions
+    sum.total_users+=row.total_users
+    sum.screen_page_views+=row.screen_page_views
+    sum.conversions+=row.conversions
+    sum.event_count+=row.event_count
+    return sum
+  },{sessions:0,total_users:0,screen_page_views:0,conversions:0,event_count:0})
+}
+function latestAnalysisResult(){return (detailState.analysisResults||[])[0]||null}
+function currentVersions(){return detailState.versions||[]}
+function versionStatus(version){
+  if(version?.is_production) return {label:'公開中',tone:'ok'}
+  if(version?.published_at) return {label:'公開履歴',tone:'warn'}
+  return {label:'下書き',tone:'warn'}
+}
+function renderMiniTrendSvg(values){
+  if(!values.length) return '<div class="ga4-empty">折れ線用のデータがありません。</div>'
+  const max=Math.max(...values,1)
+  const min=Math.min(...values,0)
+  const range=Math.max(max-min,1)
+  const points=values.map((value,index)=>{
+    const x=(index/(Math.max(values.length-1,1)))*100
+    const y=90-((value-min)/range)*70
+    return `${x},${y}`
+  }).join(' ')
+  return `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${points}" fill="none" stroke="#1768f2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+}
 function ga4ConfigFor(row){
   if(!ga4AdminState.configs[row.id]){
     ga4AdminState.configs[row.id]={
@@ -69,13 +234,16 @@ async function loadDashboardData(force=false){
     const {data,error}=await auth.supabase.from('lp_dashboard_overview').select('*').order('client_name').order('lp_name')
     if(error) throw error
     dashboardState.rows=data||[]
+    if(dashboardState.rows.length&&!dashboardState.rows.some(row=>row.lp_project_id===selectedLpProjectId)){
+      setSelectedFromRow(dashboardState.rows[0])
+    }
     dashboardState.loaded=true
   }catch(error){
     console.error(error)
     dashboardState.error=error?.message||'ダッシュボードデータの取得に失敗しました。'
   }finally{
     dashboardState.loading=false
-    if(page==='dashboard') renderWithDetailMenu()
+    if(needsDashboardData(page)) renderWithDetailMenu()
   }
 }
 async function loadApiLogData(force=false){
@@ -243,6 +411,58 @@ async function runGa4Action(lpProjectId){
     if(page==='ga4-admin') renderWithDetailMenu()
   }
 }
+async function loadDetailData(force=false){
+  const auth=currentAuth()
+  const selectedRow=getSelectedDashboardRow()
+  if(!auth.supabase||!selectedRow?.lp_project_id) return
+  if(detailState.loading) return
+  if(detailState.loadedFor===selectedRow.lp_project_id&&!force) return
+  detailState.loading=true
+  detailState.error=''
+  if(['detail','analysis','proposals','versions','history'].includes(page)) renderWithDetailMenu()
+  try{
+    const lpProjectId=selectedRow.lp_project_id
+    const [overviewResult,metricResult,analysisResult,versionResult,deploymentResult]=await Promise.all([
+      auth.supabase.from('lp_dashboard_overview').select('*').eq('lp_project_id',lpProjectId).single(),
+      auth.supabase.from('ga4_daily_metrics').select('metric_date,source_medium,sessions,total_users,screen_page_views,conversions,event_count,engagement_rate,synced_at').eq('lp_project_id',lpProjectId).order('metric_date',{ascending:true}).limit(1000),
+      auth.supabase.from('ai_analysis_results').select('*').eq('lp_project_id',lpProjectId).order('created_at',{ascending:false}).limit(10),
+      auth.supabase.from('git_versions').select('*').eq('lp_project_id',lpProjectId).order('created_at',{ascending:false}).limit(30),
+      auth.supabase.from('production_deployments').select('*').eq('lp_project_id',lpProjectId).order('created_at',{ascending:false}).limit(30),
+    ])
+    if(overviewResult.error) throw overviewResult.error
+    if(metricResult.error) throw metricResult.error
+    if(analysisResult.error) throw analysisResult.error
+    if(versionResult.error) throw versionResult.error
+    if(deploymentResult.error) throw deploymentResult.error
+    detailState.overview=overviewResult.data||selectedRow
+    detailState.metrics=metricResult.data||[]
+    detailState.analysisResults=analysisResult.data||[]
+    detailState.versions=versionResult.data||[]
+    detailState.deployments=deploymentResult.data||[]
+    detailState.loadedFor=lpProjectId
+    setSelectedFromRow(detailState.overview)
+  }catch(error){
+    console.error(error)
+    detailState.error=error?.message||'LP詳細データの取得に失敗しました。'
+  }finally{
+    detailState.loading=false
+    if(['detail','analysis','proposals','versions','history'].includes(page)) renderWithDetailMenu()
+  }
+}
+async function runLpAnalysis(){
+  const auth=currentAuth()
+  const selectedRow=getSelectedDashboardRow()
+  if(!auth.supabase||!selectedRow?.lp_project_id) return
+  try{
+    const {error}=await auth.supabase.rpc('generate_lp_analysis',{target_lp_project_id:selectedRow.lp_project_id})
+    if(error) throw error
+    notice('AI分析を実行しました。結果を更新します。')
+    await Promise.all([loadDetailData(true),loadDashboardData(true)])
+  }catch(error){
+    console.error(error)
+    notice(error?.message||'AI分析の実行に失敗しました。')
+  }
+}
 function ga4FieldState(metric){
   if(!metric){
     return {
@@ -356,7 +576,7 @@ function proposals(){return `<div class="heading-row"><div><div class="eyebrow">
 function versions(){return `<div class="heading-row"><div><div class="eyebrow">VERSION CONTROL</div><h1>バージョン管理</h1><p class="page-sub">eyebee 岡山黒石店｜まつげパーマ LP</p></div><button class="primary" data-action="new">＋ 新バージョンを作成</button></div><div class="version-grid">${[['v2.4','最新｜レビュー中','CTAの文言とFVコピーを改善','今日 10:15'],['v2.3','公開中','口コミセクションの見出しを変更','2025/05/18 16:22'],['v2.2','公開履歴','料金プランの表示順を更新','2025/05/08 11:44'],['v2.1','公開履歴','初回公開バージョン','2025/04/26 13:20']].map((v,i)=>`<section class="panel version ${i===0?'current':''}"><div class="version-number">${v[0]}</div><span class="status ${i===0?'review':'live'}">${v[1]}</span><h3>${v[2]}</h3><p class="page-sub">更新：${v[3]}　山田 太郎</p><div class="actions"><button class="secondary">プレビュー</button>${i>0?'<button class="secondary" data-action="rollback">この版に戻す</button>':'<button class="primary" data-action="publish">公開する</button>'}</div></section>`).join('')}</div>`}
 function alerts(){return `<div class="heading-row"><div><div class="eyebrow">MONITORING</div><h1>アラート</h1><p class="page-sub">LPの成果・公開状態・計測に関する異常を監視しています。</p></div><button class="secondary">期間：今週 ▾</button></div><section class="panel">${[['緊急','LPの表示エラーが発生しています','eyebee 岡山北店｜/lp/eyebee','LPの表示を確認し修正する'],['緊急','フォーム送信エラーを検知しました','Resole 田町店｜/contact','フォーム設定・連携を確認する'],['注意','計測タグが停止しています','chacha 給井町店｜GTM-XXXX','タグ設置状況・設定を確認する'],['情報','CVRが先週比で上昇しました','Bianca 銀座店｜+0.8pt','分析レポートを確認する']].map(x=>`<div class="alert-row"><span class="status ${x[0]==='緊急'?'draft':'review'}">${x[0]}</span><div><h3>${x[1]}</h3><p>${x[2]}</p></div><b>${x[3]} →</b><button class="secondary" data-action="other">詳細を確認</button></div>`).join('')}</section>`}
 function render(){const views={dashboard,lps:list,detail,analysis,proposals,versions,alerts}; page=location.hash.replace('#','')||'lps'; const detailTabs=['analysis','proposals','versions']; pageEl.innerHTML=(detailTabs.includes(page)?detailContext(page):'')+(views[page]||list)();crumb.innerHTML=`LP管理 <span>/</span> ${({dashboard:'ダッシュボード',lps:'LP一覧',detail:'LP詳細',analysis:'LP詳細 / 分析',proposals:'LP詳細 / 改善提案',versions:'LP詳細 / バージョン管理',alerts:'アラート'})[page]||'LP一覧'}`;document.querySelectorAll('[data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===page));buttons()}
-window.addEventListener('hashchange',render);document.querySelector('#search').addEventListener('input',e=>{if(page!=='lps')return;document.querySelectorAll('tbody tr').forEach(r=>r.style.display=r.textContent.includes(e.target.value)?'':'none')});render();
+document.querySelector('#search').addEventListener('input',e=>{if(page!=='lps')return;document.querySelectorAll('tbody tr').forEach(r=>r.style.display=r.textContent.includes(e.target.value)?'':'none')});
 
 // 権限別の対象LP表示（フロント用ダミー挙動）
 let viewerRole='internal';
@@ -364,7 +584,7 @@ const viewerMode=document.querySelector('#viewerMode');
 const lpPicker=document.querySelector('#lpPicker');
 const ownClient='株式会社eyebee';
 function accessibleLps(){return viewerRole==='client'?lps.filter(lp=>lp.client===ownClient):lps}
-function syncLpPicker(){
+function enhancedSyncLpPicker(){
   const choices=accessibleLps();
   if(!choices.includes(selected)) selected=choices[0];
   lpPicker.innerHTML=choices.map(lp=>`<option value="${lps.indexOf(lp)}">${lp.name}</option>`).join('');
@@ -527,7 +747,233 @@ function renderWithDetailMenu(){
   if(apiLogLink) apiLogLink.style.display=auth.isAdmin&&viewerRole!=='client'?'':'none';
   syncLpPicker(); buttons(); bindProductionActions();
 }
+function analysisListItems(items){
+  if(!Array.isArray(items)) return []
+  return items.map(item=>typeof item==='string'?{title:item,body:''}:{title:item.title||item.label||item.heading||'項目',body:item.body||item.detail||item.description||''})
+}
+function channelBreakdown(metrics){
+  const grouped=new Map()
+  filterMetricsByChannel(metrics).forEach(metric=>{
+    const key=metric.source_medium||'(all)'
+    if(!grouped.has(key)) grouped.set(key,{source_medium:key,sessions:0,conversions:0})
+    const row=grouped.get(key)
+    row.sessions+=Number(metric.sessions||0)
+    row.conversions+=Number(metric.conversions||0)
+  })
+  return [...grouped.values()].sort((a,b)=>b.sessions-a.sessions)
+}
+function summarizeLogFunctions(rows){
+  const grouped=new Map()
+  rows.forEach(row=>{
+    const key=row.function_name||'unknown'
+    if(!grouped.has(key)) grouped.set(key,{function_name:key,total:0,error:0,warn:0,last_at:null})
+    const item=grouped.get(key)
+    item.total+=1
+    if(row.level==='error') item.error+=1
+    if(row.level==='warn') item.warn+=1
+    if(!item.last_at||String(row.created_at)>String(item.last_at)) item.last_at=row.created_at
+  })
+  return [...grouped.values()].sort((a,b)=>b.total-a.total||String(b.last_at||'').localeCompare(String(a.last_at||'')))
+}
+function formatMetadataPreview(metadata){
+  if(!metadata||!Object.keys(metadata).length) return ''
+  const json=JSON.stringify(metadata)
+  return json.length>220?`${json.slice(0,220)}…`:json
+}
+function previousAnalysisResults(){
+  return (detailState.analysisResults||[]).slice(1)
+}
+function filteredApiLogs(){
+  return apiLogState.rows.filter(row=>{
+    const levelMatch=uiState.apiLogLevel==='all'||row.level===uiState.apiLogLevel
+    const query=uiState.apiLogQuery.trim().toLowerCase()
+    if(!query) return levelMatch
+    const haystack=[row.function_name,row.stage,row.message,row.client_name,row.lp_name,row.actor_email,JSON.stringify(row.metadata||{})].join(' ').toLowerCase()
+    return levelMatch&&haystack.includes(query)
+  })
+}
+function syncLpPicker(){
+  const rows=currentDashboardRows()
+  if(!rows.length){
+    lpPicker.innerHTML=lps.map((lp,index)=>`<option value="${index}">${lp.name}</option>`).join('')
+    lpPicker.value=String(lps.indexOf(selected))
+    return
+  }
+  const choices=viewerRole==='client'?rows.filter(row=>row.client_id===(selectedClientId||rows[0].client_id)):rows
+  const active=getSelectedDashboardRow()||choices[0]
+  if(active) setSelectedFromRow(active)
+  lpPicker.innerHTML=choices.map(row=>`<option value="${row.lp_project_id}">${escapeHtml(row.lp_name)}</option>`).join('')
+  lpPicker.value=active?.lp_project_id||''
+  const adminListLink=document.querySelector('[data-page="lps"]')
+  if(adminListLink) adminListLink.style.display=viewerRole==='client'?'none':''
+  const productionLink=document.querySelector('[data-page="production"]')
+  if(productionLink) productionLink.style.display=viewerRole==='client'?'none':''
+}
+function enhancedDashboard(){
+  const rows=currentDashboardRows()
+  const publishRows=rows.map(row=>({row,publish:publishState(row)}))
+  const liveCount=publishRows.filter(item=>item.publish.isLive).length
+  const publicUrlCount=publishRows.filter(item=>item.publish.isUrlLive).length
+  const configuredCount=rows.filter(row=>row.ga4_connection_status==='configured').length
+  const syncedCount=rows.filter(row=>row.latest_sync_status==='succeeded').length
+  const conversionAvg=rows.length?rows.reduce((sum,row)=>sum+Number(row.conversion_rate_30d||0),0)/rows.length:0
+  const topRows=[...rows].sort((a,b)=>Number(b.conversions_30d||0)-Number(a.conversions_30d||0)).slice(0,5)
+  const issueRows=rows.filter(row=>row.ga4_connection_status!=='configured'||row.latest_sync_status==='failed'||!publishState(row).isLive).slice(0,5)
+  return `<div class="heading-row"><div><div class="eyebrow">OVERVIEW</div><h1>LP管理ダッシュボード</h1><p class="page-sub">公開中LP、GA4接続、同期状態、直近30日の成果を管理者がまとめて確認できます。</p></div><div class="ga4-actions"><button class="secondary" data-action="dashboard-refresh">更新</button><button class="primary" data-action="new">＋ 新規LPを作成</button></div></div>${dashboardState.error?`<div class="ga4-empty">${escapeHtml(dashboardState.error)}</div>`:''}<div class="stat-grid"><div class="panel stat"><small>管理LP数</small><strong>${formatCount(rows.length)} <small>件</small></strong><span>登録済みLP</span></div><div class="panel stat"><small>公開管理済み</small><strong>${formatCount(liveCount)} <small>件</small></strong><span>live flag が立っているLP</span></div><div class="panel stat"><small>運用URLあり</small><strong>${formatCount(publicUrlCount)} <small>件</small></strong><span>既存公開URLを持つLP</span></div><div class="panel stat"><small>平均CVR(30日)</small><strong>${conversionAvg.toFixed(2)} <small>%</small></strong><span>LP平均</span></div></div><div class="dashboard-grid"><section class="panel section-card"><h2>状態サマリ</h2><ul class="mini-list"><li><span>GA4同期成功</span><b>${formatCount(syncedCount)}件</b></li><li><span>GA4設定済み</span><b>${formatCount(configuredCount)}件</b></li><li><span>公開管理未接続</span><b>${formatCount(rows.filter(row=>publishState(row).isUrlLive&&!publishState(row).isLive).length)}件</b></li><li><span>最新分析あり</span><b>${formatCount(rows.filter(row=>row.latest_analysis_result_id).length)}件</b></li></ul></section><section class="panel section-card"><h2>成果上位LP（直近30日）</h2>${topRows.length?`<ul class="mini-list">${topRows.map(row=>`<li><span>${escapeHtml(row.client_name)} / ${escapeHtml(row.lp_name)}</span><b>CV ${formatCount(row.conversions_30d)} / CVR ${Number(row.conversion_rate_30d||0).toFixed(2)}%</b></li>`).join('')}</ul>`:`<div class="ga4-empty">表示できる GA4 データがまだありません。</div>`}</section><section class="panel section-card"><h2>優先確認LP</h2>${issueRows.length?`<ul class="mini-list">${issueRows.map(row=>`<li><span>${escapeHtml(row.client_name)} / ${escapeHtml(row.lp_name)}</span><b>${row.ga4_connection_status!=='configured'?'GA4設定確認':row.latest_sync_status==='failed'?'同期失敗':'公開管理接続'}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">優先確認項目はありません。</div>`}</section></div><section class="panel table-panel"><div class="heading-row"><div><h2>LP運用状況</h2><p class="page-sub">直近30日集計、同期状況、公開状態をLP単位で確認します。</p></div></div>${dashboardState.loading&&!rows.length?`<div class="ga4-empty">ダッシュボードデータを読み込み中です。</div>`:''}${!rows.length&&!dashboardState.loading?`<div class="ga4-empty">対象データがありません。</div>`:`<table><thead><tr><th>クライアント / LP</th><th>公開状態</th><th>GA4</th><th>直近30日</th><th>最新同期 / 分析</th></tr></thead><tbody>${rows.map(row=>{const publish=publishState(row);return `<tr><td><button class="client-open client-name" data-action="detail" data-lp-id="${row.lp_project_id}">${escapeHtml(row.lp_name)}<span>${escapeHtml(row.client_name)} の詳細を開く →</span></button><div class="ga4-meta"><span>folder: <b>${escapeHtml(row.folder_path)}</b></span><span>URL: <b>${escapeHtml(row.public_url)}</b></span></div></td><td><div class="ga4-field-list">${statusBadge(publish.label,publish.tone)}<span>${escapeHtml(publish.detail)}</span><span>version <b>${escapeHtml(row.live_version_label||'未設定')}</b></span><span>commit <b>${escapeHtml(row.live_commit_sha||'未設定')}</b></span><span>公開日時 <b>${escapeHtml(formatDisplayDate(row.live_published_at))}</b></span></div></td><td><div class="ga4-field-list">${statusBadge(row.ga4_connection_status==='configured'?'設定済み':row.ga4_connection_status==='partial'?'一部不足':'未設定',dashboardTone(row.ga4_connection_status))}<span>property <b>${escapeHtml(row.ga4_property_id||'未設定')}</b></span><span>path <b>${escapeHtml(row.ga4_page_path||'未設定')}</b></span></div></td><td><div class="ga4-field-list"><span>sessions <b>${formatCount(row.sessions_30d)}</b></span><span>users <b>${formatCount(row.total_users_30d)}</b></span><span>pageViews <b>${formatCount(row.page_views_30d)}</b></span><span>CV <b>${formatCount(row.conversions_30d)}</b></span><span>CVR <b>${row.conversion_rate_30d===null?'--':`${Number(row.conversion_rate_30d).toFixed(2)}%`}</b></span></div></td><td><div class="ga4-field-list">${statusBadge(row.latest_sync_status||'未実行',dashboardTone(row.latest_sync_status||'failed'))}<span>最終取得 <b>${escapeHtml(formatDisplayDate(row.latest_sync_finished_at))}</b></span><span>最終分析 <b>${escapeHtml(formatDisplayDate(row.latest_analysis_created_at))}</b></span>${row.latest_sync_error_message?`<span>同期エラー <b>${escapeHtml(row.latest_sync_error_message)}</b></span>`:''}</div></td></tr>`}).join('')}</tbody></table>`}</section>`
+}
+function enhancedApiLogsAdmin(){
+  const auth=currentAuth()
+  if(!auth.isAdmin) return `<div class="ga4-empty">このページは管理者のみ表示できます。</div>`
+  const rows=filteredApiLogs()
+  const functionStats=summarizeLogFunctions(rows).slice(0,6)
+  const errorCount=rows.filter(row=>row.level==='error').length
+  const warnCount=rows.filter(row=>row.level==='warn').length
+  const latest=rows[0]?.created_at||null
+  return `<div class="ga4-check-grid"><div class="heading-row"><div><div class="eyebrow">API LOGS</div><h1>APIログ確認</h1><p class="page-sub">Edge Functions の受信、検証、ジョブ投入、失敗内容を時系列で確認できます。</p></div><button class="secondary" data-action="api-log-refresh">一覧を更新</button></div>${apiLogState.error?`<div class="ga4-empty">${escapeHtml(apiLogState.error)}</div>`:''}<div class="ga4-summary-grid"><section class="ga4-summary-card"><small>表示件数</small><strong>${rows.length}</strong><span>絞り込み後</span></section><section class="ga4-summary-card"><small>Error</small><strong>${errorCount}</strong><span>level=error</span></section><section class="ga4-summary-card"><small>Warn</small><strong>${warnCount}</strong><span>level=warn</span></section><section class="ga4-summary-card"><small>最新ログ</small><strong>${latest?formatDisplayDate(latest):'未取得'}</strong><span>created_at</span></section></div><div class="dashboard-grid"><section class="panel section-card"><h2>Function別サマリ</h2>${functionStats.length?`<ul class="mini-list">${functionStats.map(item=>`<li><span>${escapeHtml(item.function_name)}<br><small>latest ${escapeHtml(formatDisplayDate(item.last_at))}</small></span><b>${item.total}件 / E${item.error} W${item.warn}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">サマリ対象のログがありません。</div>`}</section><section class="panel section-card"><h2>確認ポイント</h2><ul class="mini-list"><li><span>error が増えている function</span><b>再実行前に message を確認</b></li><li><span>status_code 4xx / 5xx</span><b>権限・入力値・secret を確認</b></li><li><span>duration_ms が長い処理</span><b>外部APIや再試行回数を確認</b></li></ul></section></div><section class="panel table-panel"><div class="heading-row"><div class="ga4-actions"><select data-action="api-log-level"><option value="all" ${uiState.apiLogLevel==='all'?'selected':''}>全レベル</option><option value="error" ${uiState.apiLogLevel==='error'?'selected':''}>error</option><option value="warn" ${uiState.apiLogLevel==='warn'?'selected':''}>warn</option><option value="info" ${uiState.apiLogLevel==='info'?'selected':''}>info</option></select><input type="search" data-action="api-log-query" value="${escapeHtml(uiState.apiLogQuery)}" placeholder="Function / LP / メッセージで検索"></div></div>${apiLogState.loading&&!rows.length?`<div class="ga4-empty">APIログを読み込み中です。</div>`:''}${!rows.length&&!apiLogState.loading?`<div class="ga4-empty">該当する API ログはありません。</div>`:`<table><thead><tr><th>時刻</th><th>Function / Stage</th><th>対象</th><th>内容</th><th>結果</th></tr></thead><tbody>${rows.map(row=>`<tr><td><div class="ga4-field-list"><span>${escapeHtml(formatDisplayDate(row.created_at))}</span><span>request <b>${escapeHtml(row.request_id)}</b></span></div></td><td><div class="ga4-field-list"><span>${statusBadge(row.level,row.level==='error'?'error':row.level==='warn'?'warn':'ok')}</span><span><b>${escapeHtml(row.function_name)}</b></span><span>${escapeHtml(row.stage)}</span></div></td><td><div class="ga4-field-list"><span>client <b>${escapeHtml(row.client_name||'--')}</b></span><span>lp <b>${escapeHtml(row.lp_name||'--')}</b></span><span>actor <b>${escapeHtml(row.actor_email||'--')}</b></span></div></td><td><div class="ga4-field-list"><span>${escapeHtml(row.message)}</span>${row.metadata&&Object.keys(row.metadata).length?`<span><b>${escapeHtml(formatMetadataPreview(row.metadata))}</b></span>`:''}</div></td><td><div class="ga4-field-list"><span>HTTP <b>${escapeHtml(row.http_method||'--')}</b></span><span>Status <b>${escapeHtml(row.status_code||'--')}</b></span><span>Duration <b>${escapeHtml(row.duration_ms||'--')}ms</b></span></div></td></tr>`).join('')}</tbody></table>`}</section></div>`
+}
+function enhancedList(){
+  const rows=currentDashboardRows()
+  const clientMap=new Map()
+  rows.forEach(row=>{if(!clientMap.has(row.client_id)) clientMap.set(row.client_id,{id:row.client_id,name:row.client_name,rows:[]});clientMap.get(row.client_id).rows.push(row)})
+  const clients=[...clientMap.values()].map(client=>{
+    const scores=client.rows.map(computeHealthScore)
+    const latest=[...client.rows].sort((a,b)=>String(b.latest_sync_finished_at||b.live_published_at||'').localeCompare(String(a.latest_sync_finished_at||a.live_published_at||'')))[0]
+    return {id:client.id,name:client.name,lpCount:client.rows.length,average:scores.length?Math.round(scores.reduce((sum,value)=>sum+value,0)/scores.length):0,live:client.rows.filter(row=>row.publish_status==='live').length,configured:client.rows.filter(row=>row.ga4_connection_status==='configured').length,update:latest?.latest_sync_finished_at||latest?.live_published_at||latest?.latest_analysis_created_at||null}
+  }).sort((a,b)=>a.name.localeCompare(b.name,'ja'))
+  return `<div class="heading-row"><div><div class="eyebrow">ADMIN / CLIENT MANAGEMENT</div><h1>クライアント一覧</h1><p class="page-sub">クライアントごとの LP 運用状況を確認し、個別画面を開きます。</p></div><button class="primary" data-action="new">＋ 新規クライアント</button></div>${dashboardState.error?`<div class="ga4-empty">${escapeHtml(dashboardState.error)}</div>`:''}<div class="toolbar"><button class="filter-btn active">すべて ${clients.length}</button><button class="filter-btn">要確認 ${clients.filter(client=>client.live===0).length}</button><button class="filter-btn">稼働中 ${clients.filter(client=>client.live>0).length}</button></div><section class="panel table-panel">${dashboardState.loading&&!clients.length?`<div class="ga4-empty">クライアント一覧を読み込み中です。</div>`:''}${!clients.length&&!dashboardState.loading?`<div class="ga4-empty">対象クライアントがありません。</div>`:`<table><thead><tr><th>クライアント名</th><th>運用LP数</th><th>平均健全度</th><th>公開中LP</th><th>GA4設定済み</th><th>最終更新</th><th></th></tr></thead><tbody>${clients.map(client=>`<tr class="row-link"><td><button class="client-open client-name" data-action="open-client" data-client-id="${client.id}">${escapeHtml(client.name)}<span>個別クライアント画面を開く →</span></button></td><td><b>${client.lpCount} 件</b></td><td><span class="score ${scoreClass(client.average)}">${client.average}</span></td><td>${client.live} 件</td><td>${client.configured} 件</td><td>${escapeHtml(formatDisplayDate(client.update))}</td><td>›</td></tr>`).join('')}</tbody></table>`}<div class="pagination"><span>${clients.length} クライアントを表示</span></div></section>`
+}
+function enhancedClientHome(){
+  const rows=getSelectedClientRows()
+  const row=getSelectedDashboardRow()
+  const clientName=row?.client_name||selected.client
+  const totals=rows.reduce((sum,item)=>{sum.sessions+=Number(item.sessions_30d||0);sum.conversions+=Number(item.conversions_30d||0);return sum},{sessions:0,conversions:0})
+  return `<div class="client-page-label">個別クライアント画面 / ${escapeHtml(clientName)}</div><div class="heading-row"><div><div class="eyebrow">CLIENT OVERVIEW</div><h1>${escapeHtml(clientName)}</h1><p class="page-sub">集客LPの状態、GA4の同期、分析結果をクライアント単位で確認します。</p></div><button class="secondary" onclick="go('lps')">管理者画面に戻る</button></div><div class="stat-grid"><div class="panel stat"><small>対象LP</small><strong>${formatCount(rows.length)}</strong><span>クライアント配下</span></div><div class="panel stat"><small>公開管理済み</small><strong>${formatCount(rows.filter(item=>publishState(item).isLive).length)}</strong><span>live version あり</span></div><div class="panel stat"><small>直近30日CV</small><strong>${formatCount(totals.conversions)}</strong><span>全LP合計</span></div><div class="panel stat"><small>直近30日Session</small><strong>${formatCount(totals.sessions)}</strong><span>全LP合計</span></div></div><section class="panel section-card"><h2>LP一覧</h2>${rows.length?`<div class="client-lp-grid">${rows.map(item=>`<button class="client-lp-card" data-action="detail" data-lp-id="${item.lp_project_id}"><span class="score ${scoreClass(computeHealthScore(item))}">${computeHealthScore(item)}</span><b>${escapeHtml(item.lp_name)}</b><small>フェーズ：${escapeHtml(phaseLabel(item))} / ${escapeHtml(publishState(item).label)} / CVR ${item.conversion_rate_30d===null?'--':`${Number(item.conversion_rate_30d).toFixed(2)}%`}</small><span>LP詳細を開く →</span></button>`).join('')}</div>`:`<div class="ga4-empty">対象 LP がありません。</div>`}</section>`
+}
+function enhancedLpVariants(){
+  const rows=getSelectedClientRows()
+  const row=getSelectedDashboardRow()
+  const clientName=row?.client_name||selected.client
+  return `<div class="client-page-label">個別クライアント画面 / ${escapeHtml(clientName)}</div><div class="heading-row"><div><div class="eyebrow">LP VARIATIONS</div><h1>LP一覧</h1><p class="page-sub">クライアント配下のLPを一覧し、公開状態と直近30日成果を確認します。</p></div><span class="tag">${rows.length} LP</span></div><section class="panel table-panel">${rows.length?`<table><thead><tr><th>LP名</th><th>公開状態</th><th>Sessions</th><th>CV</th><th>CVR</th><th>最終同期</th><th></th></tr></thead><tbody>${rows.map(item=>{const publish=publishState(item);return `<tr><td><div class="lp-name">${escapeHtml(item.lp_name)}</div><div class="client">${escapeHtml(item.folder_path)}</div></td><td><div class="ga4-field-list compact">${statusBadge(publish.label,publish.tone)}<span>${escapeHtml(publish.detail)}</span></div></td><td>${formatCount(item.sessions_30d)}</td><td>${formatCount(item.conversions_30d)}</td><td>${item.conversion_rate_30d===null?'--':`${Number(item.conversion_rate_30d).toFixed(2)}%`}</td><td>${escapeHtml(formatDisplayDate(item.latest_sync_finished_at))}</td><td><button class="secondary" data-action="detail" data-lp-id="${item.lp_project_id}">詳細</button></td></tr>`}).join('')}</tbody></table>`:`<div class="ga4-empty">対象 LP がありません。</div>`}</section>`
+}
+function enhancedDetailContext(active){
+  const row=detailState.overview||getSelectedDashboardRow()
+  const latestVersion=currentVersions()[0]
+  const analysis=latestAnalysisResult()
+  const score=computeHealthScore(row)
+  const publish=publishState(row)
+  return `<div class="back" onclick="go('lp-variants')">‹ LP一覧に戻る</div><section class="panel detail-hero"><div class="detail-heading"><div><div class="eyebrow">LP DETAIL / ${escapeHtml(row?.folder_path||'LP')}</div><h1>${escapeHtml(row?.lp_name||selected.name)}</h1><p class="page-sub">${escapeHtml(row?.client_name||selected.client)} ｜ 公開URL： <b>${escapeHtml(row?.public_url||'未設定')}</b></p></div><div><button class="secondary" data-action="rollback">↶ ロールバック</button> <button class="primary" data-action="publish">公開する</button></div></div><div class="detail-meta"><div>ヘルススコア<b><span class="score ${scoreClass(score)}">${score}</span></b></div><div>公開状態<b>${statusBadge(publish.label,publish.tone)}</b></div><div>最新バージョン<b>${escapeHtml(latestVersion?.version_label||row?.live_version_label||'未設定')}</b></div><div>次のアクション<b>${analysis?'改善提案を確認':'分析を実行'}</b></div></div></section><div class="tabs"><button class="${active==='detail'?'active':''}" onclick="go('detail')">概要</button><button class="${active==='analysis'?'active':''}" onclick="go('analysis')">分析</button><button class="${active==='proposals'?'active':''}" onclick="go('proposals')">改善提案</button><button class="${active==='versions'?'active':''}" onclick="go('versions')">バージョン</button><button class="${active==='history'?'active':''}" onclick="go('history')">公開履歴</button></div>`
+}
+function enhancedDetail(){
+  const row=detailState.overview||getSelectedDashboardRow()
+  const analysis=latestAnalysisResult()
+  const publish=publishState(row)
+  return enhancedDetailContext('detail')+`${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="detail-grid"><section class="panel preview"><div class="phone"><small>${escapeHtml(row?.client_slug||'AILP')}</small><h3>${escapeHtml(analysis?.summary||row?.latest_analysis_summary||row?.lp_name||'LP詳細')}</h3><p>公開URLはそのままに、成果と分析を見ながら改善履歴を管理します。</p><div class="line-btn">公開URLを確認</div></div></section><section class="panel detail-info"><h2>現状サマリ</h2><div class="ga4-field-list"><span>公開状態 <b>${escapeHtml(publish.label)}</b></span><span>公開管理 <b>${escapeHtml(publish.detail)}</b></span><span>GA4 <b>${escapeHtml(row?.ga4_connection_status||'missing')}</b></span><span>直近30日 Session <b>${formatCount(row?.sessions_30d)}</b></span><span>直近30日 CV <b>${formatCount(row?.conversions_30d)}</b></span><span>直近30日 CVR <b>${row?.conversion_rate_30d===null?'--':`${Number(row?.conversion_rate_30d).toFixed(2)}%`}</b></span><span>最終同期 <b>${escapeHtml(formatDisplayDate(row?.latest_sync_finished_at))}</b></span></div><hr><h2>AIによる最新要約</h2><p>${escapeHtml(analysis?.summary||row?.latest_analysis_summary||'まだ分析結果がありません。分析実行から開始してください。')}</p><div class="actions"><button class="secondary" data-action="analyze-run">分析を更新</button><button class="primary" onclick="go('proposals')">改善提案を見る</button></div></section></div>`
+}
+function enhancedAnalysis(){
+  const row=detailState.overview||getSelectedDashboardRow()
+  const metrics=metricsForActivePeriod()
+  const daily=aggregateMetrics(metrics)
+  const totals=analysisTotals()
+  const cvr=totals.sessions?((totals.conversions/totals.sessions)*100):0
+  const channels=channelBreakdown(metrics).slice(0,5)
+  const latestMetric=daily[daily.length-1]
+  return enhancedDetailContext('analysis')+`${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="heading-row"><div><div class="eyebrow">PERFORMANCE</div><h1>LP分析</h1><p class="page-sub">${escapeHtml(row?.client_name||selected.client)} / ${escapeHtml(row?.lp_name||selected.name)}</p></div><button class="secondary">期間：${analysisPeriod} ▾</button></div><div class="stat-grid"><div class="panel stat"><small>セッション</small><strong>${formatCount(totals.sessions)}</strong><span>${analysisPeriod}</span></div><div class="panel stat"><small>CV数</small><strong>${formatCount(totals.conversions)}</strong><span>${analysisPeriod}</span></div><div class="panel stat"><small>CVR</small><strong>${cvr.toFixed(2)}%</strong><span>${analysisPeriod}</span></div><div class="panel stat"><small>PV</small><strong>${formatCount(totals.screen_page_views)}</strong><span>${analysisPeriod}</span></div></div><div class="dashboard-grid"><section class="panel section-card"><h2>指標サマリ</h2><ul class="mini-list"><li><span>最新計測日</span><b>${escapeHtml(latestMetric?.metric_date||row?.last_metric_date||'未取得')}</b></li><li><span>計測ユーザー</span><b>${formatCount(totals.total_users)}</b></li><li><span>イベント数</span><b>${formatCount(totals.event_count)}</b></li><li><span>平均エンゲージメント</span><b>${row?.avg_engagement_rate_30d===null||row?.avg_engagement_rate_30d===undefined?'--':`${(Number(row.avg_engagement_rate_30d)*100).toFixed(1)}%`}</b></li></ul></section><section class="panel section-card"><h2>CV推移</h2><div class="chart">${renderMiniTrendSvg(daily.map(item=>item.conversions))}</div></section><section class="panel section-card"><h2>流入チャネル</h2>${channels.length?`<ul class="mini-list">${channels.map(channel=>`<li><span>${escapeHtml(channel.source_medium)}</span><b>${formatCount(channel.sessions)} / CV ${formatCount(channel.conversions)}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">チャネル別データがありません。</div>`}</section><section class="panel section-card"><h2>AIインサイト</h2><p>${escapeHtml(latestAnalysisResult()?.summary||'AI分析結果がまだありません。')}</p><button class="primary" data-action="analyze-run">分析を更新</button></section></div>`
+}
+function enhancedProposals(){
+  const analysis=latestAnalysisResult()
+  const findings=analysisListItems(analysis?.findings)
+  const recommendations=analysisListItems(analysis?.recommendations)
+  const previous=previousAnalysisResults()
+  return enhancedDetailContext('proposals')+`${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="heading-row"><div><div class="eyebrow">AI OPTIMIZATION</div><h1>改善提案</h1><p class="page-sub">最新のGA4実績と保存済み分析結果を表示します。</p></div><button class="secondary" data-action="analyze-run">分析を再実行</button></div>${!analysis?`<div class="panel ga4-empty">まだ分析結果がありません。まず「分析を再実行」を押してください。</div>`:`<div class="dashboard-grid"><section class="panel section-card"><h2>最新サマリ</h2><p>${escapeHtml(analysis.summary)}</p><ul class="mini-list"><li><span>スコア</span><b>${analysis.score??'--'}</b></li><li><span>作成日時</span><b>${escapeHtml(formatDisplayDate(analysis.created_at))}</b></li><li><span>モデル</span><b>${escapeHtml(analysis.model||'heuristic')}</b></li></ul></section><section class="panel section-card"><h2>主要な気づき</h2>${findings.length?`<ul class="mini-list">${findings.map(item=>`<li><span>${escapeHtml(item.title)}</span><b>${escapeHtml(item.body||'')}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">気づきがありません。</div>`}</section><section class="panel section-card"><h2>推奨アクション</h2>${recommendations.length?`<ul class="mini-list">${recommendations.map(item=>`<li><span>${escapeHtml(item.title)}</span><b>${escapeHtml(item.body||'')}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">推奨アクションがありません。</div>`}</section>${previous.length?`<section class="panel section-card"><h2>過去の分析履歴</h2><ul class="mini-list">${previous.slice(0,5).map(item=>`<li><span>${escapeHtml(formatDisplayDate(item.created_at))}<br><small>${escapeHtml(item.model||'heuristic')}</small></span><b>score ${item.score??'--'}</b></li>`).join('')}</ul></section>`:''}</div>`}`
+}
+function enhancedVersions(){
+  const row=detailState.overview||getSelectedDashboardRow()
+  const versions=currentVersions()
+  return enhancedDetailContext('versions')+`${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="heading-row"><div><div class="eyebrow">VERSION CONTROL</div><h1>バージョン管理</h1><p class="page-sub">${escapeHtml(row?.lp_name||selected.name)}</p></div><button class="primary" data-action="new">＋ 新バージョンを作成</button></div>${!versions.length?`<div class="panel ga4-empty">バージョン情報がまだありません。</div>`:`<section class="panel table-panel"><table><thead><tr><th>バージョン</th><th>ステータス</th><th>ブランチ / Commit</th><th>変更内容</th><th>作成 / 公開</th></tr></thead><tbody>${versions.map(version=>{const status=versionStatus(version);return `<tr><td><div class="lp-name">${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'未設定')}</div><div class="client">${escapeHtml(version.folder_path||row?.folder_path||'')}</div></td><td><div class="ga4-field-list">${statusBadge(status.label,status.tone)}${version.is_production?`<span>current live</span>`:''}${version.replaced_at?`<span>置換 ${escapeHtml(formatDisplayDate(version.replaced_at))}</span>`:''}</div></td><td><div class="ga4-field-list"><span>branch <b>${escapeHtml(version.branch||'--')}</b></span><span>commit <b>${escapeHtml(version.commit_sha||'--')}</b></span></div></td><td>${escapeHtml(version.change_summary||'変更概要未設定')}</td><td><div class="ga4-field-list"><span>作成 <b>${escapeHtml(formatDisplayDate(version.created_at))}</b></span><span>公開 <b>${escapeHtml(formatDisplayDate(version.published_at))}</b></span></div></td></tr>`}).join('')}</tbody></table></section>`}`
+}
+function enhancedHistory(){
+  const versions=currentVersions().filter(version=>version.is_production||version.published_at)
+  const deployments=detailState.deployments||[]
+  const timeline=[...versions.map(version=>({date:version.published_at||version.created_at,title:`${version.version_label||version.commit_sha?.slice(0,7)||'version'} を登録`,body:version.change_summary||'変更概要未設定'})),...deployments.map(deploy=>({date:deploy.deployed_at||deploy.created_at,title:`${deploy.status||'deploy'} / ${deploy.commit_sha?.slice(0,7)||'--'}`,body:deploy.public_url||deploy.deploy_url||'URL未設定'}))].sort((a,b)=>String(b.date).localeCompare(String(a.date)))
+  return enhancedDetailContext('history')+`<div class="heading-row"><div><div class="eyebrow">PUBLISH HISTORY</div><h1>公開履歴</h1><p class="page-sub">${escapeHtml((detailState.overview||getSelectedDashboardRow())?.lp_name||selected.name)} の公開・デプロイ履歴</p></div><button class="primary" data-action="publish">このバージョンを公開</button></div>${timeline.length?`<section class="panel section-card"><ul class="mini-list">${timeline.map(item=>`<li><span><b>${escapeHtml(item.title)}</b><br>${escapeHtml(item.body)}</span><b>${escapeHtml(formatDisplayDate(item.date))}</b></li>`).join('')}</ul></section>`:`<div class="panel ga4-empty">公開履歴がまだありません。</div>`}`
+}
+function enhancedButtons(){
+  document.querySelectorAll('[data-action]').forEach(button=>{
+    button.onclick=event=>{
+      const action=button.dataset.action
+      if(action==='detail'){
+        if(button.dataset.lpId) setSelectedLpFromId(button.dataset.lpId)
+        else selected=lps.find(item=>item.name===button.dataset.name)||selected
+        go('detail')
+      }
+      else if(action==='open-client'){
+        if(button.dataset.clientId) setSelectedClientFromId(button.dataset.clientId)
+        else selected=lps.find(item=>item.client===button.dataset.client)||selected
+        go('client')
+      }
+      else if(action==='analyze-run'){ runLpAnalysis() }
+      else if(action==='dashboard-refresh'){ loadDashboardData(true) }
+      else if(action==='api-log-refresh'){ loadApiLogData(true) }
+      else if(action==='ga4-refresh'){ loadGa4AdminData(true) }
+      else if(action==='ga4-discover'){ discoverGa4Candidates(button.dataset.lpId) }
+      else if(action==='ga4-save'){ saveGa4Config(button.dataset.lpId) }
+      else if(action==='ga4-sync'){ runGa4Action(button.dataset.lpId) }
+      else if(action==='publish'){ notice('公開操作の実行基盤は VPS 導入後に接続します。履歴UIは先行整備済みです。') }
+      else if(action==='rollback'){ notice('ロールバック操作の実行基盤は VPS 導入後に接続します。') }
+      else if(action==='new'){ notice('新規作成フローの UI は整備済みです。実ファイル複製は VPS 導入後に接続します。') }
+      else { notice('操作を受け付けました。') }
+    }
+  })
+  document.querySelectorAll('select[data-action="ga4-property-select"]').forEach(select=>{select.onchange=()=>{setGa4ConfigValue(select.dataset.lpId,'propertyId',select.value);if(page==='ga4-admin') renderWithDetailMenu()}})
+  document.querySelectorAll('input[data-action="ga4-page-path-input"]').forEach(input=>{input.oninput=()=>{setGa4ConfigValue(input.dataset.lpId,'pagePath',input.value)}})
+  document.querySelectorAll('select[data-action="api-log-level"]').forEach(select=>{select.onchange=()=>{uiState.apiLogLevel=select.value;renderWithDetailMenu()}})
+  document.querySelectorAll('input[data-action="api-log-query"]').forEach(input=>{input.oninput=()=>{uiState.apiLogQuery=input.value;renderWithDetailMenu()}})
+}
+function enhancedRenderWithDetailMenu(){
+  const auth=currentAuth()
+  const views={dashboard:enhancedDashboard,production,lps:enhancedList,'ga4-admin':ga4Admin,'api-logs':enhancedApiLogsAdmin,client:enhancedClientHome,detail:enhancedDetail,analysis:enhancedAnalysis,proposals:enhancedProposals,versions:enhancedVersions,history:enhancedHistory,'initial-production':initialProduction,'customer-info':customerInfo,'initial-settings':initialSettings,'lp-variants':enhancedLpVariants,'meta-ads':metaAds,'google-ads':googleAds,alerts,hq,settings}
+  page=location.hash.replace('#','')||'lps'
+  if((page==='ga4-admin'||page==='api-logs')&&!auth.isAdmin){
+    page='dashboard'
+    location.hash='dashboard'
+  }
+  pageEl.innerHTML=(views[page]||list)()
+  if(needsDashboardData(page)) loadDashboardData()
+  if(['detail','analysis','proposals','versions','history'].includes(page)) loadDetailData()
+  if(page==='ga4-admin') loadGa4AdminData()
+  if(page==='api-logs') loadApiLogData()
+  const labels={dashboard:'管理者画面 / ダッシュボード',production:'新規LP制作一覧',lps:'管理者画面 / クライアント一覧','ga4-admin':'管理者画面 / GA4接続確認','api-logs':'管理者画面 / APIログ',client:'個別クライアント画面 / 概要',detail:'LP詳細','initial-production':'個別クライアント画面 / 初期LP制作','customer-info':'個別クライアント画面 / 顧客情報','initial-settings':'個別クライアント画面 / 初期設定','lp-variants':'個別クライアント画面 / LP一覧','meta-ads':'個別クライアント画面 / META広告','google-ads':'個別クライアント画面 / Google広告',analysis:'LP詳細 / 分析',proposals:'LP詳細 / 改善提案',versions:'LP詳細 / バージョン管理',history:'LP詳細 / 公開履歴',alerts:'管理者画面 / アラート',hq:'管理者画面 / 本部管理',settings:'管理者画面 / 設定'}
+  crumb.innerHTML=`LP管理 <span>/</span> ${labels[page]||labels.lps}`
+  document.querySelectorAll('[data-page]').forEach(link=>link.classList.toggle('active',link.dataset.page===page))
+  document.querySelectorAll('[data-detail-page]').forEach(link=>link.classList.toggle('active',link.dataset.detailPage===page))
+  const adminPages=['dashboard','lps','ga4-admin','api-logs','alerts','production','hq','settings']
+  document.querySelector('.nav').classList.toggle('page-mode-hidden',!adminPages.includes(page))
+  document.querySelector('.detail-nav').classList.toggle('page-mode-hidden',adminPages.includes(page))
+  document.querySelector('.lp-select').classList.toggle('page-mode-hidden',adminPages.includes(page))
+  document.querySelector('.hq-nav-link').classList.toggle('page-mode-hidden',!hqEnabled)
+  const ga4AdminLink=document.querySelector('[data-page="ga4-admin"]')
+  if(ga4AdminLink) ga4AdminLink.style.display=auth.isAdmin&&viewerRole!=='client'?'':'none'
+  const apiLogLink=document.querySelector('[data-page="api-logs"]')
+  if(apiLogLink) apiLogLink.style.display=auth.isAdmin&&viewerRole!=='client'?'':'none'
+  enhancedSyncLpPicker()
+  enhancedButtons()
+  bindProductionActions()
+}
+syncLpPicker = enhancedSyncLpPicker
+dashboard = enhancedDashboard
+apiLogsAdmin = enhancedApiLogsAdmin
+list = enhancedList
+clientHome = enhancedClientHome
+lpVariants = enhancedLpVariants
+detailContext = enhancedDetailContext
+detail = enhancedDetail
+analysis = enhancedAnalysis
+proposals = enhancedProposals
+versions = enhancedVersions
+history = enhancedHistory
+buttons = enhancedButtons
+renderWithDetailMenu = enhancedRenderWithDetailMenu
 viewerMode.addEventListener('change',event=>{viewerRole=event.target.value; renderWithDetailMenu(); if(viewerRole==='client') go('detail');});
-lpPicker.addEventListener('change',event=>{selected=lps[Number(event.target.value)]; if(page==='detail') renderWithDetailMenu(); else go('detail');});
+lpPicker.addEventListener('change',event=>{if(currentDashboardRows().length){setSelectedLpFromId(event.target.value)}else{selected=lps[Number(event.target.value)]} if(page==='detail') renderWithDetailMenu(); else go('detail');});
 window.addEventListener('hashchange',renderWithDetailMenu);
 renderWithDetailMenu();
