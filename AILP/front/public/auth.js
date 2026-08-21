@@ -19,6 +19,15 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLI
 
 let appLoaded = false
 
+function displayNameForUser(user) {
+  return user.user_metadata?.full_name || user.user_metadata?.name || user.email || 'AILP User'
+}
+
+function avatarLetterForUser(user) {
+  const source = String(displayNameForUser(user) || '').trim()
+  return (source || 'A').slice(0, 1).toUpperCase()
+}
+
 function setStatus(message, isError = false) {
   authStatus.textContent = message ?? ''
   authStatus.classList.toggle('error', isError)
@@ -65,18 +74,25 @@ async function loadApp(user) {
 
   const sideBottom = document.querySelector('.side-bottom strong')
   const sideBottomSub = document.querySelector('.side-bottom small')
-  const avatar = document.querySelector('.avatar')
+  const topbarAvatar = document.querySelector('.avatar')
+  const sideAvatar = document.querySelector('.team-icon')
+  const displayName = displayNameForUser(user)
+  const avatarLetter = avatarLetterForUser(user)
 
   if (sideBottom) {
-    sideBottom.textContent = user.user_metadata?.full_name || user.email || 'AILP User'
+    sideBottom.textContent = displayName
   }
 
   if (sideBottomSub) {
     sideBottomSub.textContent = user.email || ''
   }
 
-  if (avatar) {
-    avatar.textContent = (user.email || 'A').slice(0, 1).toUpperCase()
+  if (topbarAvatar) {
+    topbarAvatar.textContent = avatarLetter
+  }
+
+  if (sideAvatar) {
+    sideAvatar.textContent = avatarLetter
   }
 }
 
