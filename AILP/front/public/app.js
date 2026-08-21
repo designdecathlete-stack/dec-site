@@ -33,7 +33,7 @@ const ga4AdminState={loading:false,loaded:false,error:'',rows:[],busy:{},configs
 const apiLogState={loading:false,loaded:false,error:'',rows:[]}
 const detailState={loading:false,loadedFor:null,error:'',overview:null,metrics:[],analysisResults:[],versions:[],deployments:[]}
 const userSettingsState={loading:false,loaded:false,error:'',users:[],projects:[],memberships:[]}
-const uiState={apiLogLevel:'all',apiLogQuery:''}
+const uiState={apiLogLevel:'all',apiLogQuery:'',userSearchQuery:'',selectedAccessUserId:'',newUserRole:'lp_dashboard'}
 let selectedLpProjectId=null
 let selectedClientId=null
 function formatIsoDate(date){return date.toISOString().slice(0,10)}
@@ -822,12 +822,42 @@ function previousAnalysisResults(){
 function userMembershipProjectIds(accessUserId){
   return userSettingsState.memberships.filter(item=>item.access_user_id===accessUserId).map(item=>item.lp_project_id)
 }
-function renderUserProjectChecklist(accessUserId,selectedIds){
+function selectedManagedUser(){
+  const users=filteredManagedUsers()
+  if(!users.length) return null
+  let user=users.find(item=>item.id===uiState.selectedAccessUserId)
+  if(!user){
+    user=users[0]
+    uiState.selectedAccessUserId=user.id
+  }
+  return user
+}
+function filteredManagedUsers(){
+  const query=uiState.userSearchQuery.trim().toLowerCase()
+  const users=userSettingsState.users||[]
+  if(!query) return users
+  return users.filter(user=>{
+    const haystack=[user.email,user.full_name,user.profile?.full_name,userRoleLabel(user.role)].join(' ').toLowerCase()
+    return haystack.includes(query)
+  })
+}
+function renderUserProjectChecklist(selectedIds,disabled=false){
   if(!userSettingsState.projects.length){
     return '<div class="ga4-empty">選択可能なLPプロジェクトがありません。</div>'
   }
   const selectedSet=new Set(selectedIds||[])
-  return `<div class="client-lp-grid">${userSettingsState.projects.map(project=>`<label class="client-lp-card" style="text-align:left;cursor:pointer;"><input type="checkbox" data-user-project value="${project.id}" ${selectedSet.has(project.id)?'checked':''} style="margin-bottom:10px;"><b>${escapeHtml(project.name)}</b><small>${escapeHtml(project.clients?.name||'クライアント未設定')} / ${escapeHtml(project.folder_path)}</small><span>${escapeHtml(project.public_url||'URL未設定')}</span></label>`).join('')}</div>`
+  return `<div class="ga4-check-grid">${userSettingsState.projects.map(project=>`<label style="display:grid;grid-template-columns:20px 1fr;gap:12px;align-items:start;padding:12px 14px;border:1px solid #dfe7f4;border-radius:10px;background:#fff;cursor:${disabled?'default':'pointer'};"><input type="checkbox" data-user-project value="${project.id}" ${selectedSet.has(project.id)?'checked':''} ${disabled?'disabled':''} style="width:18px;height:18px;margin:2px 0 0;"><span style="display:grid;gap:4px;"><b>${escapeHtml(project.name)}</b><small>${escapeHtml(project.clients?.name||'クライアント未設定')} / ${escapeHtml(project.folder_path)}</small><small>${escapeHtml(project.public_url||'URL未設定')}</small></span></label>`).join('')}</div>`
+}
+function syncUserProjectPanel(editor,role){
+  if(!editor) return
+  const projectPanel=editor.querySelector('[data-user-project-panel]')
+  const adminNote=editor.querySelector('[data-user-project-admin-note]')
+  const isAdmin=role==='admin'
+  if(projectPanel) projectPanel.hidden=isAdmin
+  if(adminNote) adminNote.hidden=!isAdmin
+  editor.querySelectorAll('[data-user-project]').forEach(input=>{
+    input.disabled=isAdmin
+  })
 }
 function userRoleLabel(role){
   return role==='admin'?'管理者':'LP担当'
@@ -948,9 +978,11 @@ function userSettingsAdmin(){
   const auth=currentAuth()
   if(!auth.isAdmin) return `<div class="ga4-empty">このページは管理者のみ表示できます。</div>`
   const users=userSettingsState.users
+  const filteredUsers=filteredManagedUsers()
+  const selectedUser=selectedManagedUser()
   const activeUsers=users.filter(user=>user.is_active)
   const admins=users.filter(user=>user.role==='admin')
-  return `<div class="ga4-check-grid"><div class="heading-row"><div><div class="eyebrow">USER ACCESS</div><h1>ユーザー設定</h1><p class="page-sub">Googleログイン後に利用できるユーザーと、参加できるLPプロジェクトを管理します。</p></div><button class="secondary" data-action="user-settings-refresh">一覧を更新</button></div>${userSettingsState.error?`<div class="ga4-empty">${escapeHtml(userSettingsState.error)}</div>`:''}<div class="ga4-summary-grid"><section class="ga4-summary-card"><small>登録ユーザー</small><strong>${users.length}</strong><span>設定レコード数</span></section><section class="ga4-summary-card"><small>有効ユーザー</small><strong>${activeUsers.length}</strong><span>is_active=true</span></section><section class="ga4-summary-card"><small>管理者</small><strong>${admins.length}</strong><span>全LPにアクセス可</span></section><section class="ga4-summary-card"><small>LPプロジェクト</small><strong>${userSettingsState.projects.length}</strong><span>割り当て候補</span></section></div><section class="panel section-card"><h2>新規ユーザー追加</h2><div data-user-editor class="ga4-check-grid"><div class="dashboard-grid"><section class="panel section-card"><div class="ga4-field-list"><label>メールアドレス<input type="email" data-user-email placeholder="user@example.com"></label><label>表示名<input type="text" data-user-name placeholder="表示名"></label><label>権限<select data-user-role><option value="lp_dashboard">LP担当</option><option value="admin">管理者</option></select></label><label><input type="checkbox" data-user-active checked> 有効</label></div></section><section class="panel section-card"><h2>参加LPプロジェクト</h2>${renderUserProjectChecklist('',[])}</section></div><div class="ga4-actions"><button class="primary" data-action="user-save">追加する</button></div></div></section><section class="panel table-panel"><div class="heading-row"><div><h2>登録済みユーザー</h2><p class="page-sub">保護ユーザーは削除できません。LP担当は参加LPだけ閲覧できます。</p></div></div>${userSettingsState.loading&&!users.length?`<div class="ga4-empty">ユーザー設定を読み込み中です。</div>`:''}${!users.length&&!userSettingsState.loading?`<div class="ga4-empty">登録済みユーザーがありません。</div>`:users.map(user=>`<section class="panel section-card" data-user-editor data-user-id="${user.id}"><div class="heading-row"><div><h2>${escapeHtml(user.email)}</h2><p class="page-sub">${user.profile?.id?'Googleログイン済み':'未ログイン'} / ${escapeHtml(userRoleLabel(user.role))}</p></div><div class="ga4-actions">${user.is_protected?statusBadge('保護ユーザー','warn'):''}${user.is_active?statusBadge('有効','ok'):statusBadge('無効','error')}</div></div><div class="dashboard-grid"><section class="panel section-card"><div class="ga4-field-list"><label>メールアドレス<input type="email" data-user-email value="${escapeHtml(user.email)}" ${user.is_protected?'disabled':''}></label><label>表示名<input type="text" data-user-name value="${escapeHtml(user.full_name||user.profile?.full_name||'')}"></label><label>権限<select data-user-role ${user.is_protected?'disabled':''}><option value="lp_dashboard" ${user.role==='lp_dashboard'?'selected':''}>LP担当</option><option value="admin" ${user.role==='admin'?'selected':''}>管理者</option></select></label><label><input type="checkbox" data-user-active ${user.is_active?'checked':''} ${user.is_protected?'disabled':''}> 有効</label></div></section><section class="panel section-card"><h2>参加LPプロジェクト</h2>${user.role==='admin'?'<div class="ga4-empty">管理者は全LPプロジェクトを閲覧できます。</div>':renderUserProjectChecklist(user.id,userMembershipProjectIds(user.id))}</section></div><div class="ga4-actions"><button class="secondary" data-action="user-save">保存</button><button class="secondary" data-action="user-delete" ${user.is_protected?'disabled':''}>削除</button></div></section>`).join('')}</section></div>`
+  return `<div class="ga4-check-grid"><div class="heading-row"><div><div class="eyebrow">USER ACCESS</div><h1>ユーザー設定</h1><p class="page-sub">Googleログイン後に利用できるユーザーと、参加できるLPプロジェクトを管理します。</p></div><button class="secondary" data-action="user-settings-refresh">一覧を更新</button></div>${userSettingsState.error?`<div class="ga4-empty">${escapeHtml(userSettingsState.error)}</div>`:''}<div class="ga4-summary-grid"><section class="ga4-summary-card"><small>登録ユーザー</small><strong>${users.length}</strong><span>設定レコード数</span></section><section class="ga4-summary-card"><small>有効ユーザー</small><strong>${activeUsers.length}</strong><span>is_active=true</span></section><section class="ga4-summary-card"><small>管理者</small><strong>${admins.length}</strong><span>全LPにアクセス可</span></section><section class="ga4-summary-card"><small>LPプロジェクト</small><strong>${userSettingsState.projects.length}</strong><span>割り当て候補</span></section></div><section class="panel section-card"><h2>新規ユーザー追加</h2><div data-user-editor class="ga4-check-grid"><div class="dashboard-grid" style="grid-template-columns:minmax(280px,360px) minmax(0,1fr);"><section class="panel section-card"><div class="ga4-field-list"><label>メールアドレス<input type="email" data-user-email placeholder="user@example.com"></label><label>表示名<input type="text" data-user-name placeholder="表示名"></label><label>権限<select data-user-role data-user-role-mode="new"><option value="lp_dashboard" ${uiState.newUserRole==='lp_dashboard'?'selected':''}>LP担当</option><option value="admin" ${uiState.newUserRole==='admin'?'selected':''}>管理者</option></select></label><label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" data-user-active checked style="width:18px;height:18px;margin:0;"> 有効</label></div></section><section class="panel section-card" data-user-project-panel ${uiState.newUserRole==='admin'?'hidden':''}><h2>参加LPプロジェクト</h2>${renderUserProjectChecklist([],false)}</section><section class="panel section-card" data-user-project-admin-note ${uiState.newUserRole==='admin'?'':'hidden'}><div class="ga4-empty">管理者は全LPプロジェクトを閲覧できます。追加選択は不要です。</div></section></div><div class="ga4-actions"><button class="primary" data-action="user-save">追加する</button></div></div></section><section class="panel table-panel"><div class="heading-row"><div><h2>登録済みユーザー</h2><p class="page-sub">行を選択すると下で詳細を編集できます。保護ユーザーは削除できません。</p></div><div class="ga4-actions"><input type="search" data-action="user-search" value="${escapeHtml(uiState.userSearchQuery)}" placeholder="メールアドレス / 表示名で検索"></div></div>${userSettingsState.loading&&!users.length?`<div class="ga4-empty">ユーザー設定を読み込み中です。</div>`:''}${!filteredUsers.length&&!userSettingsState.loading?`<div class="ga4-empty">該当するユーザーがありません。</div>`:`<table><thead><tr><th>メールアドレス</th><th>表示名</th><th>権限</th><th>状態</th><th>参加LP</th><th>ログイン</th></tr></thead><tbody>${filteredUsers.map(user=>{const selected=user.id===selectedUser?.id;const membershipCount=user.role==='admin'?'ALL':userMembershipProjectIds(user.id).length;return `<tr data-action="user-select" data-user-id="${user.id}" style="cursor:pointer;${selected?'background:#eef4ff;':''}"><td><b>${escapeHtml(user.email)}</b>${user.is_protected?`<div>${statusBadge('保護','warn')}</div>`:''}</td><td>${escapeHtml(user.full_name||user.profile?.full_name||'--')}</td><td>${escapeHtml(userRoleLabel(user.role))}</td><td>${user.is_active?statusBadge('有効','ok'):statusBadge('無効','error')}</td><td>${membershipCount}</td><td>${user.profile?.id?'済':'未'}</td></tr>`}).join('')}</tbody></table>`}</section>${selectedUser?`<section class="panel section-card" data-user-editor data-user-id="${selectedUser.id}"><div class="heading-row"><div><h2>${escapeHtml(selectedUser.email)}</h2><p class="page-sub">${selectedUser.profile?.id?'Googleログイン済み':'未ログイン'} / ${escapeHtml(userRoleLabel(selectedUser.role))}</p></div><div class="ga4-actions">${selectedUser.is_protected?statusBadge('保護ユーザー','warn'):''}${selectedUser.is_active?statusBadge('有効','ok'):statusBadge('無効','error')}</div></div><div class="dashboard-grid" style="grid-template-columns:minmax(280px,360px) minmax(0,1fr);"><section class="panel section-card"><div class="ga4-field-list"><label>メールアドレス<input type="email" data-user-email value="${escapeHtml(selectedUser.email)}" ${selectedUser.is_protected?'disabled':''}></label><label>表示名<input type="text" data-user-name value="${escapeHtml(selectedUser.full_name||selectedUser.profile?.full_name||'')}"></label><label>権限<select data-user-role data-user-role-mode="existing" ${selectedUser.is_protected?'disabled':''}><option value="lp_dashboard" ${selectedUser.role==='lp_dashboard'?'selected':''}>LP担当</option><option value="admin" ${selectedUser.role==='admin'?'selected':''}>管理者</option></select></label><label style="display:flex;align-items:center;gap:10px;"><input type="checkbox" data-user-active ${selectedUser.is_active?'checked':''} ${selectedUser.is_protected?'disabled':''} style="width:18px;height:18px;margin:0;"> 有効</label></div></section><section class="panel section-card" data-user-project-panel ${selectedUser.role==='admin'?'hidden':''}><h2>参加LPプロジェクト</h2>${renderUserProjectChecklist(userMembershipProjectIds(selectedUser.id),false)}</section><section class="panel section-card" data-user-project-admin-note ${selectedUser.role==='admin'?'':'hidden'}><div class="ga4-empty">管理者は全LPプロジェクトを閲覧できます。選択は不要です。</div></section></div><div class="ga4-actions"><button class="secondary" data-action="user-save">保存</button><button class="secondary" data-action="user-delete" ${selectedUser.is_protected?'disabled':''}>削除</button></div></section>`:''}</div>`
 }
 function enhancedList(){
   const rows=currentDashboardRows()
@@ -1036,6 +1068,7 @@ function enhancedButtons(){
       else if(action==='dashboard-refresh'){ loadDashboardData(true) }
       else if(action==='api-log-refresh'){ loadApiLogData(true) }
       else if(action==='user-settings-refresh'){ loadUserSettingsData(true) }
+      else if(action==='user-select'){ uiState.selectedAccessUserId=button.dataset.userId||''; renderWithDetailMenu() }
       else if(action==='ga4-refresh'){ loadGa4AdminData(true) }
       else if(action==='ga4-discover'){ discoverGa4Candidates(button.dataset.lpId) }
       else if(action==='ga4-save'){ saveGa4Config(button.dataset.lpId) }
@@ -1052,6 +1085,15 @@ function enhancedButtons(){
   document.querySelectorAll('input[data-action="ga4-page-path-input"]').forEach(input=>{input.oninput=()=>{setGa4ConfigValue(input.dataset.lpId,'pagePath',input.value)}})
   document.querySelectorAll('select[data-action="api-log-level"]').forEach(select=>{select.onchange=()=>{uiState.apiLogLevel=select.value;renderWithDetailMenu()}})
   document.querySelectorAll('input[data-action="api-log-query"]').forEach(input=>{input.oninput=()=>{uiState.apiLogQuery=input.value;renderWithDetailMenu()}})
+  document.querySelectorAll('input[data-action="user-search"]').forEach(input=>{input.oninput=()=>{uiState.userSearchQuery=input.value;renderWithDetailMenu()}})
+  document.querySelectorAll('select[data-user-role]').forEach(select=>{
+    select.onchange=()=>{
+      if(select.dataset.userRoleMode==='new'){
+        uiState.newUserRole=select.value
+      }
+      syncUserProjectPanel(select.closest('[data-user-editor]'),select.value)
+    }
+  })
 }
 function enhancedRenderWithDetailMenu(){
   const auth=currentAuth()
