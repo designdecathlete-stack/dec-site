@@ -12,6 +12,7 @@ const dist = outputArgIndex >= 0 && process.argv[outputArgIndex + 1]
 const legacyPublicDirs = [
   'biyoshitsu-owner-hokago-lp',
   'chacha',
+  'chacha-shinkoiwa',
   'lifutage-shintokorozawa-lp',
   'marr',
   'resole',
