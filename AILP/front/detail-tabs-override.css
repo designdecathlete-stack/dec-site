@@ -1,0 +1,24 @@
+.tabs{
+  display:flex!important;
+  align-items:center;
+  gap:8px;
+  margin:0 0 18px;
+  padding:0 18px;
+  overflow-x:auto;
+  border-bottom:1px solid #dfe7f4;
+  background:#fff;
+  border-radius:10px 10px 0 0;
+}
+.tabs button{
+  flex:0 0 auto;
+  padding:14px 10px 12px;
+  border:0;
+  border-bottom:3px solid transparent;
+  background:transparent;
+  color:#6b7e9b;
+  font:700 13px 'DM Sans','Noto Sans JP',sans-serif;
+  cursor:pointer;
+}
+.tabs button:hover{color:#1768f2}
+.tabs button.active{color:#1768f2;border-bottom-color:#1768f2}
+@media(max-width:720px){.tabs{margin-bottom:14px;padding:0 10px}.tabs button{padding:12px 9px;font-size:12px}}

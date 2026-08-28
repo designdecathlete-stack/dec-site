@@ -36,6 +36,7 @@ const userSettingsState={loading:false,loaded:false,error:'',users:[],projects:[
 const uiState={apiLogLevel:'all',apiLogQuery:'',userSearchQuery:'',selectedAccessUserId:'',newUserRole:'lp_dashboard'}
 let selectedLpProjectId=null
 let selectedClientId=null
+let selectedVersionPreview=null
 function formatIsoDate(date){return date.toISOString().slice(0,10)}
 function formatDisplayDate(value){if(!value)return '未取得';const date=new Date(value);return Number.isNaN(date.getTime())?String(value):date.toLocaleString('ja-JP')}
 function statusBadge(label,tone){return `<span class="ga4-status-badge ${tone}">${label}</span>`}
@@ -59,7 +60,7 @@ function publishState(row){
   if(hasPublicUrl(row)) return {label:'運用URLあり',tone:'warn',detail:'URL は存在するが公開管理未接続',isLive:false,isUrlLive:true}
   return {label:'未公開',tone:'error',detail:'公開URL未設定',isLive:false,isUrlLive:false}
 }
-function needsDashboardData(targetPage){return ['dashboard','lps','client','detail','analysis','proposals','versions','history','lp-variants'].includes(targetPage)}
+function needsDashboardData(targetPage){return ['dashboard','lps','client','detail','analysis','proposals','execution','versions','history','lp-variants'].includes(targetPage)}
 function computeHealthScore(row){
   if(!row) return 0
   let score=40
@@ -97,6 +98,7 @@ function toLegacySelected(row){
 }
 function setSelectedFromRow(row){
   if(!row) return
+  if(selectedVersionPreview&&selectedVersionPreview.lpProjectId!==row.lp_project_id) selectedVersionPreview=null
   selectedLpProjectId=row.lp_project_id
   selectedClientId=row.client_id
   selected=toLegacySelected(row)
@@ -464,7 +466,7 @@ async function loadDetailData(force=false){
   if(detailState.loadedFor===selectedRow.lp_project_id&&!force) return
   detailState.loading=true
   detailState.error=''
-  if(['detail','analysis','proposals','versions','history'].includes(page)) renderWithDetailMenu()
+  if(['detail','analysis','proposals','execution','versions','history'].includes(page)) renderWithDetailMenu()
   try{
     const lpProjectId=selectedRow.lp_project_id
     const [overviewResult,metricResult,analysisResult,versionResult,deploymentResult]=await Promise.all([
@@ -491,7 +493,7 @@ async function loadDetailData(force=false){
     detailState.error=error?.message||'LP詳細データの取得に失敗しました。'
   }finally{
     detailState.loading=false
-    if(['detail','analysis','proposals','versions','history'].includes(page)) renderWithDetailMenu()
+    if(['detail','analysis','proposals','execution','versions','history'].includes(page)) renderWithDetailMenu()
   }
 }
 async function runLpAnalysis(){
@@ -1023,7 +1025,7 @@ function enhancedDetailContext(active){
   const analysis=latestAnalysisResult()
   const score=computeHealthScore(row)
   const publish=publishState(row)
-  return `<div class="back" onclick="go('lp-variants')">‹ LP一覧に戻る</div><section class="panel detail-hero"><div class="detail-heading"><div><div class="eyebrow">LP DETAIL / ${escapeHtml(row?.folder_path||'LP')}</div><h1>${escapeHtml(row?.lp_name||selected.name)}</h1><p class="page-sub">${escapeHtml(row?.client_name||selected.client)} ｜ 公開URL： <b>${escapeHtml(row?.public_url||'未設定')}</b></p></div><div><button class="secondary" data-action="rollback">↶ ロールバック</button> <button class="primary" data-action="publish">公開する</button></div></div><div class="detail-meta"><div>ヘルススコア<b><span class="score ${scoreClass(score)}">${score}</span></b></div><div>公開状態<b>${statusBadge(publish.label,publish.tone)}</b></div><div>最新バージョン<b>${escapeHtml(latestVersion?.version_label||row?.live_version_label||'未設定')}</b></div><div>次のアクション<b>${analysis?'改善提案を確認':'分析を実行'}</b></div></div></section><div class="tabs"><button class="${active==='detail'?'active':''}" onclick="go('detail')">概要</button><button class="${active==='analysis'?'active':''}" onclick="go('analysis')">分析</button><button class="${active==='proposals'?'active':''}" onclick="go('proposals')">改善提案</button><button class="${active==='versions'?'active':''}" onclick="go('versions')">バージョン</button><button class="${active==='history'?'active':''}" onclick="go('history')">公開履歴</button></div>`
+  return `<div class="back" onclick="go('lp-variants')">‹ LP一覧に戻る</div><section class="panel detail-hero"><div class="detail-heading"><div><div class="eyebrow">LP DETAIL / ${escapeHtml(row?.folder_path||'LP')}</div><h1>${escapeHtml(row?.lp_name||selected.name)}</h1><p class="page-sub">${escapeHtml(row?.client_name||selected.client)} ｜ 公開URL： <b>${escapeHtml(row?.public_url||'未設定')}</b></p></div><div><button class="secondary" data-action="rollback">↶ ロールバック</button> <button class="primary" data-action="publish">公開する</button></div></div><div class="detail-meta"><div>ヘルススコア<b><span class="score ${scoreClass(score)}">${score}</span></b></div><div>公開状態<b>${statusBadge(publish.label,publish.tone)}</b></div><div>最新バージョン<b>${escapeHtml(latestVersion?.version_label||row?.live_version_label||'未設定')}</b></div><div>次のアクション<b>${analysis?'改善点を確認':'GA,分析を実行'}</b></div></div></section><div class="tabs"><button class="${active==='detail'?'active':''}" onclick="go('detail')">サマリー</button><button class="${active==='analysis'?'active':''}" onclick="go('analysis')">GA,分析</button><button class="${active==='proposals'?'active':''}" onclick="go('proposals')">改善点の洗い出し</button><button class="${active==='execution'?'active':''}" onclick="go('execution')">修正実行</button><button class="${active==='versions'?'active':''}" onclick="go('versions')">改善履歴・バージョン</button></div>`
 }
 function enhancedDetail(){
   const row=detailState.overview||getSelectedDashboardRow()
@@ -1059,6 +1061,121 @@ function enhancedHistory(){
   const timeline=[...versions.map(version=>({date:version.published_at||version.created_at,title:`${version.version_label||version.commit_sha?.slice(0,7)||'version'} を登録`,body:version.change_summary||'変更概要未設定'})),...deployments.map(deploy=>({date:deploy.deployed_at||deploy.created_at,title:`${deploy.status||'deploy'} / ${deploy.commit_sha?.slice(0,7)||'--'}`,body:deploy.public_url||deploy.deploy_url||'URL未設定'}))].sort((a,b)=>String(b.date).localeCompare(String(a.date)))
   return enhancedDetailContext('history')+`<div class="heading-row"><div><div class="eyebrow">PUBLISH HISTORY</div><h1>公開履歴</h1><p class="page-sub">${escapeHtml((detailState.overview||getSelectedDashboardRow())?.lp_name||selected.name)} の公開・デプロイ履歴</p></div><button class="primary" data-action="publish">このバージョンを公開</button></div>${timeline.length?`<section class="panel section-card"><ul class="mini-list">${timeline.map(item=>`<li><span><b>${escapeHtml(item.title)}</b><br>${escapeHtml(item.body)}</span><b>${escapeHtml(formatDisplayDate(item.date))}</b></li>`).join('')}</ul></section>`:`<div class="panel ga4-empty">公開履歴がまだありません。</div>`}`
 }
+function lpPreviewUrl(row){
+  const url=String(row?.public_url||'')
+  if(url.includes('dec-site.site')) return `https://dec-site.netlify.app/${String(row?.folder_path||'').replace(/^\/+|\/+$/g,'')}/`
+  return url||'about:blank'
+}
+const editableProposals=[
+  {id:'value',priority:'最優先',title:'「誰に、どんな変化を約束するか」をファーストビューで明確化',evidence:'90%到達 26.7%に対して、CTA率は 8.2%。内容は読まれているが、選ぶ理由が弱い状態です。',hypothesis:'施術メニューの説明より先に、ターゲットが得られる具体的な変化と、選ばれる理由を提示します。',impact:'訴求・ベネフィット',tone:'high'},
+  {id:'difference',priority:'優先',title:'他店との違いと価格価値を、比較前に伝える',evidence:'50→75%の継続率が 65.8% と最も低く、比較・納得パートで読了が落ちています。',hypothesis:'実績・独自性・価格に含まれる価値を一つの判断材料として整理し、検討理由を作ります。',impact:'差別化・オファー',tone:'medium'},
+  {id:'cta',priority:'次点',title:'下部CTAの直前に、予約前の不安解消を追加',evidence:'下部CTAクリックは 19件。最後まで読んだユーザーの行動転換を補強する余地があります。',hypothesis:'所要時間・来店後の流れ・相談可否をCTA直前に集約し、迷いを減らします。',impact:'クロージング・CTA',tone:'low'},
+]
+function saveProposalDraft(id){
+  const proposal=editableProposals.find(item=>item.id===id)
+  const card=document.querySelector(`[data-proposal-id="${id}"]`)
+  if(!proposal||!card) return
+  proposal.title=card.querySelector('[data-proposal-field="title"]')?.value.trim()||proposal.title
+  proposal.evidence=card.querySelector('[data-proposal-field="evidence"]')?.value.trim()||proposal.evidence
+  proposal.hypothesis=card.querySelector('[data-proposal-field="hypothesis"]')?.value.trim()||proposal.hypothesis
+  notice('改善案を保存しました。修正実行タブで内容を確認できます。')
+}
+function enhancedSummary(){
+  const row=detailState.overview||getSelectedDashboardRow()
+  const score=computeHealthScore(row)
+  const publish=publishState(row)
+  const previewUrl=lpPreviewUrl(row)
+  return enhancedDetailContext('detail')+`<div class="summary-page"><div class="summary-preview panel"><div class="summary-preview-head"><div><span>LIVE LP PREVIEW</span><h2>実際のLPプレビュー</h2></div><a href="${escapeHtml(previewUrl)}" target="_blank" rel="noopener">別タブで開く ↗</a></div><iframe class="summary-preview-frame" src="${escapeHtml(previewUrl)}" title="${escapeHtml(row?.lp_name||'LP')} のプレビュー" loading="lazy"></iframe></div><div class="summary-side"><section class="summary-score-card"><div><span>現状スコア</span><h2>LPヘルススコア</h2></div><div class="summary-score-gauge" style="--score:${score}"><b>${score}</b><small>/ 100</small></div><div class="summary-score-meta"><span>${publish.label}</span><span>直近30日データ</span></div></section><section class="panel summary-metrics"><div class="summary-section-heading"><div><span>GA4</span><h2>主要数値</h2></div><small>ダミーデータ</small></div><div class="summary-metric-grid"><div><span>Sessions</span><b>1,240</b></div><div><span>Users</span><b>1,096</b></div><div><span>Engagement</span><b>68.2%</b></div><div><span>平均滞在</span><b>47秒</b></div></div></section><section class="panel summary-conversions"><div class="summary-section-heading"><div><span>CONVERSION</span><h2>コンバージョン</h2></div><b>7.3%</b></div><div class="summary-conversion-row"><span>CTAクリック</span><b>102</b><small>8.2%</small></div><div class="summary-conversion-row"><span>Hot Pepper</span><b>70</b><small>5.6%</small></div><div class="summary-conversion-row"><span>LINE</span><b>16</b><small>1.3%</small></div><div class="summary-conversion-row"><span>電話</span><b>4</b><small>0.3%</small></div></section></div></div>`
+}
+function enhancedEditableProposals(){
+  return enhancedDetailContext('proposals')+`<div class="improvement-page"><div class="heading-row"><div><div class="eyebrow">IMPROVEMENT DISCOVERY</div><h1>改善点の洗い出し</h1><p class="page-sub">GA,分析のダミー診断をもとに、改善すべき順番と仮説を整理・編集します。</p></div><button class="secondary" onclick="go('analysis')">GA,分析を確認</button></div><section class="improvement-summary"><div><span>診断結果</span><h2>マクロ課題を先に改善</h2><p>読了は一定水準にあるため、構成を大きく変える前に「何を選ぶ理由にするか」を再設計します。</p></div><div><span>今回の目的</span><b>読んだあとに<br>予約したくなる理由をつくる</b></div></section><div class="improvement-proposals">${editableProposals.map((item,index)=>`<section class="improvement-proposal ${item.tone}" data-proposal-id="${item.id}"><div class="improvement-proposal-top"><span class="improvement-priority">${item.priority}</span><span>改善 ${String(index+1).padStart(2,'0')} / 編集可</span></div><label class="proposal-editor"><span>改善内容</span><textarea data-proposal-field="title">${escapeHtml(item.title)}</textarea></label><label class="proposal-editor"><span>数値から見える事実</span><textarea data-proposal-field="evidence">${escapeHtml(item.evidence)}</textarea></label><label class="proposal-editor"><span>改善仮説</span><textarea data-proposal-field="hypothesis">${escapeHtml(item.hypothesis)}</textarea></label><div class="improvement-footer"><span>${item.impact}</span><div class="proposal-actions"><button class="secondary" data-action="save-proposal" data-proposal-id="${item.id}">保存</button><button class="primary" onclick="go('execution')">修正実行へ進める</button></div></div></section>`).join('')}</div></div>`
+}
+function enhancedRoutedProposals(){
+  return enhancedDetailContext('proposals')+`<div class="improvement-page"><div class="heading-row"><div><div class="eyebrow">IMPROVEMENT DISCOVERY</div><h1>改善点の洗い出し</h1><p class="page-sub">GA,分析のダミー診断をもとに、改善すべき順番と仮説を整理・編集します。</p></div><button class="secondary" onclick="go('analysis')">GA,分析を確認</button></div><section class="improvement-summary"><div><span>今回の診断</span><h2>マクロ課題：別LPを新規制作</h2><p>現LPは維持したまま、訴求・差別化・オファーを変えた別LPを作成して検証します。ミクロ課題の場合だけ、現LPの構成やCTAを細かく改善します。</p></div><div><span>今回の目的</span><b>別LPで<br>選ばれる理由を再設計</b></div></section><div class="route-guide"><div class="route-guide-card active"><b>マクロ課題</b><span>別LPを新規制作</span><small>訴求・コンセプト・差別化・オファー</small></div><i>→</i><div class="route-guide-card"><b>ミクロ課題</b><span>現LPを細かく改善</span><small>構成・情報順・CTA・読みやすさ</small></div></div><div class="improvement-proposals">${editableProposals.map((item,index)=>{const route=item.id==='cta'?'micro':'macro';return `<section class="improvement-proposal ${item.tone}" data-proposal-id="${item.id}"><div class="improvement-proposal-top"><span class="improvement-priority">${item.priority}</span><span>改善 ${String(index+1).padStart(2,'0')} / 編集可</span></div><span class="proposal-route ${route}">${route==='macro'?'マクロ：別LPを制作':'ミクロ：現LPを改善'}</span><label class="proposal-editor"><span>改善内容</span><textarea data-proposal-field="title">${escapeHtml(item.title)}</textarea></label><label class="proposal-editor"><span>数値から見える事実</span><textarea data-proposal-field="evidence">${escapeHtml(item.evidence)}</textarea></label><label class="proposal-editor"><span>改善仮説</span><textarea data-proposal-field="hypothesis">${escapeHtml(item.hypothesis)}</textarea></label><div class="improvement-footer"><span>${item.impact}</span><div class="proposal-actions"><button class="secondary" data-action="save-proposal" data-proposal-id="${item.id}">保存</button>${route==='macro'?`<button class="primary" onclick="go('execution')">別LP制作へ進める</button>`:`<button class="primary" onclick="go('execution')">現LP改善へ進める</button>`}</div></div></section>`}).join('')}</div></div>`
+}
+function enhancedVersionHistory(){
+  const row=detailState.overview||getSelectedDashboardRow()
+  const versions=currentVersions()
+  const deployments=detailState.deployments||[]
+  const timeline=[...versions.map(version=>({date:version.published_at||version.created_at,title:`${version.version_label||version.commit_sha?.slice(0,7)||'version'} を登録`,body:version.change_summary||'変更概要未設定',kind:'version'})),...deployments.map(deploy=>({date:deploy.deployed_at||deploy.created_at,title:`${deploy.status||'deploy'} / ${deploy.commit_sha?.slice(0,7)||'--'}`,body:deploy.public_url||deploy.deploy_url||'URL未設定',kind:'deploy'}))].sort((a,b)=>String(b.date).localeCompare(String(a.date)))
+  return enhancedDetailContext('versions')+`<div class="version-history-page"><div class="heading-row"><div><div class="eyebrow">IMPROVEMENT HISTORY</div><h1>改善履歴・バージョン</h1><p class="page-sub">${escapeHtml(row?.lp_name||selected.name)} の全バージョンと、公開・デプロイ履歴を確認します。</p></div><span class="version-history-count">${versions.length} versions</span></div><section class="panel table-panel"><div class="version-history-heading"><div><span>ALL VERSIONS</span><h2>LPの全バージョン</h2></div><small>現行版・過去版・下書きを含む</small></div>${versions.length?`<table class="version-history-table"><thead><tr><th>バージョン</th><th>状態</th><th>変更内容</th><th>ブランチ / Commit</th><th>作成 / 公開</th></tr></thead><tbody>${versions.map(version=>{const status=versionStatus(version);return `<tr><td><b>${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'未設定')}</b>${version.is_production?'<small class="version-current">現行LP</small>':''}</td><td>${statusBadge(status.label,status.tone)}</td><td>${escapeHtml(version.change_summary||'変更概要未設定')}</td><td><div class="version-commit"><span>${escapeHtml(version.branch||'--')}</span><small>${escapeHtml(version.commit_sha||'--')}</small></div></td><td><div class="version-dates"><span>作成 ${escapeHtml(formatDisplayDate(version.created_at))}</span><span>公開 ${escapeHtml(formatDisplayDate(version.published_at))}</span></div></td></tr>`}).join('')}</tbody></table>`:`<div class="ga4-empty">バージョン情報がまだありません。</div>`}</section><section class="panel version-timeline"><div class="version-history-heading"><div><span>CHANGELOG</span><h2>改善・公開履歴</h2></div><small>${timeline.length} 件</small></div>${timeline.length?`<ol>${timeline.map(item=>`<li><span class="timeline-dot ${item.kind}"></span><div><b>${escapeHtml(item.title)}</b><p>${escapeHtml(item.body)}</p></div><time>${escapeHtml(formatDisplayDate(item.date))}</time></li>`).join('')}</ol>`:`<div class="ga4-empty">履歴がまだありません。</div>`}</section></div>`
+}
+function versionImprovementSummary(version){
+  const summary=String(version?.change_summary||'').trim()
+  if(!summary||summary.startsWith('Imported current live')) return '現行LPを管理対象として初期登録'
+  return summary
+}
+function versionPreviewUrl(version,deployments,row){
+  const deployment=(deployments||[]).find(item=>item.commit_sha&&item.commit_sha===version.commit_sha)
+  const url=deployment?.deploy_url||deployment?.public_url||''
+  if(url.includes('dec-site.site')) return lpPreviewUrl(row)
+  return url
+}
+function enhancedPreviewableVersionHistory(){
+  const row=detailState.overview||getSelectedDashboardRow()
+  const versions=currentVersions()
+  const deployments=detailState.deployments||[]
+  const timeline=[
+    ...versions.map(version=>({
+      date:version.published_at||version.created_at,
+      title:`${version.version_label||version.commit_sha?.slice(0,7)||'version'} を登録`,
+      improvement:versionImprovementSummary(version),
+      kind:'version'
+    })),
+    ...deployments.map(deploy=>{
+      const version=versions.find(item=>item.commit_sha&&item.commit_sha===deploy.commit_sha)
+      return {
+        date:deploy.deployed_at||deploy.created_at,
+        title:`${deploy.status||'deploy'} / ${deploy.commit_sha?.slice(0,7)||'--'}`,
+        improvement:version?versionImprovementSummary(version):'改善内容はこの公開履歴に未登録です',
+        kind:'deploy'
+      }
+    })
+  ].sort((a,b)=>String(b.date).localeCompare(String(a.date)))
+  return enhancedDetailContext('versions')+`<div class="version-history-page"><div class="heading-row"><div><div class="eyebrow">IMPROVEMENT HISTORY</div><h1>改善履歴・バージョン</h1><p class="page-sub">${escapeHtml(row?.lp_name||selected.name)} の全バージョン、改善内容、公開履歴を確認します。</p></div><span class="version-history-count">${versions.length} versions</span></div><section class="panel table-panel"><div class="version-history-heading"><div><span>ALL VERSIONS</span><h2>LPの全バージョン</h2></div><small>URLをクリックすると、詳細のサマリーでその版をプレビューできます</small></div>${versions.length?`<table class="version-history-table"><thead><tr><th>バージョン</th><th>状態</th><th>何を改善したか</th><th>プレビューURL</th><th>作成 / 公開</th></tr></thead><tbody>${versions.map(version=>{const status=versionStatus(version);const previewUrl=versionPreviewUrl(version,deployments,row);return `<tr><td><b>${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'未設定')}</b>${version.is_production?'<small class="version-current">現行LP</small>':''}<div class="version-commit"><small>${escapeHtml(version.branch||'--')} / ${escapeHtml(version.commit_sha||'--')}</small></div></td><td>${statusBadge(status.label,status.tone)}</td><td>${escapeHtml(versionImprovementSummary(version))}</td><td>${previewUrl?`<button class="secondary version-preview-button" data-action="preview-version" data-preview-url="${escapeHtml(previewUrl)}" data-preview-version-label="${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'過去バージョン')}" data-preview-lp-project-id="${escapeHtml(row?.lp_project_id||selectedLpProjectId||'')}">URLを詳細でプレビュー</button>`:'<span class="version-no-preview">プレビューURL未発行</span>'}</td><td><div class="version-dates"><span>作成 ${escapeHtml(formatDisplayDate(version.created_at))}</span><span>公開 ${escapeHtml(formatDisplayDate(version.published_at))}</span></div></td></tr>`}).join('')}</tbody></table>`:`<div class="ga4-empty">バージョン情報がまだありません。</div>`}</section><section class="panel version-timeline"><div class="version-history-heading"><div><span>CHANGELOG</span><h2>改善・公開履歴</h2></div><small>${timeline.length} 件</small></div>${timeline.length?`<ol>${timeline.map(item=>`<li><span class="timeline-dot ${item.kind}"></span><div><b>${escapeHtml(item.title)}</b><p><span class="timeline-improvement-label">改善内容</span>${escapeHtml(item.improvement)}</p></div><time>${escapeHtml(formatDisplayDate(item.date))}</time></li>`).join('')}</ol>`:`<div class="ga4-empty">履歴がまだありません。</div>`}</section></div>`
+}
+function enhancedRoutedExecution(){
+  const steps=[
+    {step:'01',title:'別LPのコンセプトを決める',detail:'現LPと異なる訴求軸・ターゲット・オファーを定義',status:'作成待ち'},
+    {step:'02',title:'別LPの初稿を作成',detail:'新しいファーストビュー、差別化、価格価値の構成で作成',status:'作成待ち'},
+    {step:'03',title:'現LPと比較して検証',detail:'GA4・CTA・予約意向を同じ指標で比較',status:'検証待ち'},
+  ]
+  return enhancedDetailContext('execution')+`<div class="execution-page"><div class="heading-row"><div><div class="eyebrow">IMPLEMENTATION PLAN</div><h1>修正実行</h1><p class="page-sub">診断に応じて、別LPの新規制作または現LPの細かな改善へ進めます。</p></div><button class="secondary" onclick="go('proposals')">改善点を見直す</button></div><section class="execution-route"><div class="execution-route-current"><span>今回の実行方針</span><h2>マクロ課題 → 別LPを新規制作</h2><p>現LPは公開したまま残し、訴求・差別化・オファーを変えた新LPを制作して比較します。</p></div><div class="execution-route-other"><span>ミクロ課題の場合</span><b>現LPを改善</b><small>構成、情報順、CTA、読みやすさを既存LP上で調整</small></div></section><section class="execution-overview"><div><span>現LP</span><b>運用を継続</b><small>比較対象として保持</small></div><div><span>新LP</span><b>v1.0 draft</b><small>別訴求の新規制作</small></div><div><span>公開判定</span><b>比較検証待ち</b><small>GA4で成果を確認</small></div></section><section class="execution-flow"><div class="execution-flow-heading"><div><span>別LPの制作プラン</span><h2>今回の変更内容</h2></div><b>3件</b></div>${steps.map(item=>`<div class="execution-step"><span class="execution-number">${item.step}</span><div><h3>${item.title}</h3><p>${item.detail}</p></div><span class="execution-status">${item.status}</span></div>`).join('')}</section><div class="execution-grid"><section class="panel execution-card"><span>NEW LP PREVIEW</span><h2>新LPの確認用バージョン</h2><div class="execution-preview"><b>v1.0 draft</b><p>現LPとは異なる訴求軸で作成した、新規LPのプレビューを確認します。</p><code>preview / new-concept / v1</code></div><button class="primary">別LPを作成</button></section><section class="panel execution-card"><span>COMPARISON PLAN</span><h2>比較する指標</h2><ul><li>Interest / Read / Action Score</li><li>25%・50%・75%・90% 到達率</li><li>CTAクリック率・予約意向率</li><li>現LPと新LPのCV比較</li></ul><button class="secondary">比較条件を確認</button></section></div></div>`
+}
+function enhancedDemoProposals(){
+  const proposals=[
+    {priority:'最優先',title:'「誰に、どんな変化を約束するか」をファーストビューで明確化',evidence:'90%到達 26.7%に対して、CTA率は 8.2%。内容は読まれているが、選ぶ理由が弱い状態です。',hypothesis:'施術メニューの説明より先に、ターゲットが得られる具体的な変化と、選ばれる理由を提示します。',impact:'訴求・ベネフィット',tone:'high'},
+    {priority:'優先',title:'他店との違いと価格価値を、比較前に伝える',evidence:'50→75%の継続率が 65.8% と最も低く、比較・納得パートで読了が落ちています。',hypothesis:'実績・独自性・価格に含まれる価値を一つの判断材料として整理し、検討理由を作ります。',impact:'差別化・オファー',tone:'medium'},
+    {priority:'次点',title:'下部CTAの直前に、予約前の不安解消を追加',evidence:'下部CTAクリックは 19件。最後まで読んだユーザーの行動転換を補強する余地があります。',hypothesis:'所要時間・来店後の流れ・相談可否をCTA直前に集約し、迷いを減らします。',impact:'クロージング・CTA',tone:'low'},
+  ]
+  return enhancedDetailContext('proposals')+`<div class="improvement-page"><div class="heading-row"><div><div class="eyebrow">IMPROVEMENT DISCOVERY</div><h1>改善点の洗い出し</h1><p class="page-sub">GA,分析のダミー診断をもとに、改善すべき順番と仮説を整理します。</p></div><button class="secondary" onclick="go('analysis')">GA,分析を確認</button></div><section class="improvement-summary"><div><span>診断結果</span><h2>マクロ課題を先に改善</h2><p>読了は一定水準にあるため、構成を大きく変える前に「何を選ぶ理由にするか」を再設計します。</p></div><div><span>今回の目的</span><b>読んだあとに<br>予約したくなる理由をつくる</b></div></section><div class="improvement-proposals">${proposals.map((item,index)=>`<section class="improvement-proposal ${item.tone}"><div class="improvement-proposal-top"><span class="improvement-priority">${item.priority}</span><span>改善 ${String(index+1).padStart(2,'0')}</span></div><h2>${item.title}</h2><div class="improvement-evidence"><b>数値から見える事実</b><p>${item.evidence}</p></div><div class="improvement-hypothesis"><b>改善仮説</b><p>${item.hypothesis}</p></div><div class="improvement-footer"><span>${item.impact}</span><button class="primary" onclick="go('execution')">この修正を実行へ進める</button></div></section>`).join('')}</div></div>`
+}
+function enhancedDemoExecution(){
+  const steps=[
+    {step:'01',title:'訴求コピーを再設計',detail:'ファーストビューに「変化」「対象者」「選ばれる理由」を追加',status:'作成待ち'},
+    {step:'02',title:'比較・納得パートを整理',detail:'実績・独自性・価格価値を一つの判断導線に統合',status:'作成待ち'},
+    {step:'03',title:'CTA前の不安を解消',detail:'所要時間・流れ・相談可否をCTA直前に追加',status:'作成待ち'},
+  ]
+  return enhancedDetailContext('execution')+`<div class="execution-page"><div class="heading-row"><div><div class="eyebrow">IMPLEMENTATION PLAN</div><h1>修正実行</h1><p class="page-sub">選択した改善点を、修正バージョン作成から公開確認まで進めます。</p></div><button class="secondary" onclick="go('proposals')">改善点を見直す</button></div><section class="execution-overview"><div><span>実行対象</span><b>マクロ課題の改善</b><small>訴求・差別化・オファーを優先</small></div><div><span>修正バージョン</span><b>v2.0 draft</b><small>公開前のダミー表示</small></div><div><span>公開判定</span><b>確認待ち</b><small>プレビュー確認後に公開</small></div></section><section class="execution-flow"><div class="execution-flow-heading"><div><span>修正プラン</span><h2>今回の変更内容</h2></div><b>3件</b></div>${steps.map(item=>`<div class="execution-step"><span class="execution-number">${item.step}</span><div><h3>${item.title}</h3><p>${item.detail}</p></div><span class="execution-status">${item.status}</span></div>`).join('')}</section><div class="execution-grid"><section class="panel execution-card"><span>PREVIEW</span><h2>確認用バージョン</h2><div class="execution-preview"><b>v2.0 draft</b><p>訴求コピー・比較パート・CTA前の不安解消を反映したプレビューを作成します。</p><code>preview / biyoshitsu-owner-hokago / v2</code></div><button class="primary">プレビューを作成</button></section><section class="panel execution-card"><span>PUBLISH CHECK</span><h2>公開前チェック</h2><ul><li>FVの訴求が対象者に明確か</li><li>差別化と価格価値が伝わるか</li><li>CTA前の不安解消があるか</li><li>モバイルで予約導線が見えるか</li></ul><button class="secondary">確認を依頼する</button></section></div></div>`
+}
+function enhancedGaAnalysis(){
+  const scrollRows=[
+    {label:'25% 到達',count:920,rate:74.2,retention:'FVを超えて本文を読み始めた'},
+    {label:'50% 到達',count:681,rate:54.9,retention:'25→50% 継続率 74.0%'},
+    {label:'75% 到達',count:448,rate:36.1,retention:'50→75% 継続率 65.8%'},
+    {label:'90% 到達',count:331,rate:26.7,retention:'75→90% 継続率 73.9%'},
+  ]
+  const ctaRows=[{label:'FV CTA',count:52,rate:4.2},{label:'中盤 CTA',count:31,rate:2.5},{label:'下部 CTA',count:19,rate:1.5}]
+  return enhancedDetailContext('analysis')+`<div class="ga-analysis-page"><div class="heading-row"><div><div class="eyebrow">GA4 / LP DIAGNOSIS</div><h1>GA,分析</h1><p class="page-sub">直近30日・ダミーデータ。興味 → 読了 → 行動の順で、改善仮説を確認します。</p></div><button class="secondary" data-action="analyze-run">GA4データを更新</button></div><div class="ga-demo-note">DEMO DATA　実データ連携前の表示イメージです</div><div class="ga-kpi-grid"><section class="ga-kpi"><span>セッション</span><strong>1,240</strong><small>ユーザー 1,096</small></section><section class="ga-kpi"><span>エンゲージメント率</span><strong>68.2%</strong><small>平均エンゲージメント 47秒</small></section><section class="ga-kpi"><span>CTAクリック</span><strong>102</strong><small>CTA率 8.2%</small></section><section class="ga-kpi"><span>予約意向クリック</span><strong>90</strong><small>総成果率 7.3%</small></section></div><div class="ga-score-grid"><section class="ga-score-card"><span>INTEREST SCORE</span><strong>82</strong><b>興味：高い</b><small>エンゲージメント率・25%到達率</small></section><section class="ga-score-card"><span>READ SCORE</span><strong>76</strong><b>読了：高い</b><small>50% / 75% / 90% 到達率</small></section><section class="ga-score-card action"><span>ACTION SCORE</span><strong>41</strong><b>行動：低い</b><small>CTA率・予約意向クリック率</small></section></div><section class="ga-diagnosis"><div><span>診断</span><h2>マクロ課題の可能性が高い</h2><p>LPは最後まで読まれている一方、CTA・予約意向クリック率が相対的に低い状態です。構成より先に、訴求・差別化・オファー・価格価値を見直す仮説が有力です。</p></div><div class="ga-diagnosis-priority"><span>優先順位</span><ol><li>コンセプト / ベネフィット</li><li>他店との差別化</li><li>オファー・価格価値</li></ol></div></section><div class="ga-analysis-grid"><section class="panel ga-analysis-card"><div class="ga-card-heading"><div><span>SCROLL DEPTH</span><h2>どこまで読まれたか</h2></div><b>1,240 sessions</b></div><div class="ga-scroll-list">${scrollRows.map(item=>`<div class="ga-scroll-row"><div><b>${item.label}</b><small>${item.retention}</small></div><div class="ga-progress" role="progressbar" aria-label="${item.label}" aria-valuenow="${item.rate}" aria-valuemin="0" aria-valuemax="100"><i style="width:${item.rate}%"></i></div><strong>${item.rate}%<small>${item.count}人</small></strong></div>`).join('')}</div><p class="ga-insight">最大の減衰は 50→75% 区間です。比較・納得パートの証拠や価格価値を優先的に確認します。</p></section><section class="panel ga-analysis-card"><div class="ga-card-heading"><div><span>CTA POSITION</span><h2>どこで行動したか</h2></div><b>102 clicks</b></div><div class="ga-cta-list">${ctaRows.map(item=>`<div class="ga-cta-row"><span>${item.label}</span><div class="ga-progress"><i style="width:${item.rate*10}%"></i></div><b>${item.count}<small>${item.rate}%</small></b></div>`).join('')}</div><div class="ga-booking-grid"><div><span>Hot Pepper</span><b>70</b></div><div><span>LINE</span><b>16</b></div><div><span>電話</span><b>4</b></div><div><span>Google MAP</span><b>22</b></div></div><p class="ga-insight">FV CTAは機能していますが、読了後のCTA転換が弱く、最終的な選ばれる理由の補強が必要です。</p></section></div></div>`
+}
+function enhancedExecution(){
+  const row=detailState.overview||getSelectedDashboardRow()
+  const analysis=latestAnalysisResult()
+  const recommendations=analysisListItems(analysis?.recommendations)
+  const versions=currentVersions()
+  const deployments=detailState.deployments||[]
+  return enhancedDetailContext('execution')+`${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="heading-row"><div><div class="eyebrow">IMPLEMENTATION</div><h1>修正実行</h1><p class="page-sub">洗い出した改善点を確認し、修正バージョンの作成と公開状況を管理します。</p></div><button class="secondary" onclick="go('proposals')">改善点を確認する</button></div><div class="dashboard-grid"><section class="panel section-card"><h2>今回の修正対象</h2>${recommendations.length?`<ul class="mini-list">${recommendations.map(item=>`<li><span>${escapeHtml(item.title)}</span><b>${escapeHtml(item.body||'')}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">先に「改善点の洗い出し」で分析結果を作成してください。</div>`}</section><section class="panel section-card"><h2>実行ステータス</h2><ul class="mini-list"><li><span>現在のバージョン</span><b>${escapeHtml(versions[0]?.version_label||row?.live_version_label||'未設定')}</b></li><li><span>公開状態</span><b>${escapeHtml(publishState(row).label)}</b></li><li><span>修正バージョン</span><b>${versions.some(item=>!item.is_production)?'確認待ちあり':'未作成'}</b></li><li><span>公開履歴</span><b>${formatCount(deployments.length)}件</b></li></ul></section></div><section class="panel table-panel"><div class="heading-row"><div><h2>修正バージョン</h2><p class="page-sub">作成された修正内容を確認して公開します。</p></div></div>${versions.length?`<table><thead><tr><th>バージョン</th><th>ステータス</th><th>変更内容</th><th>作成 / 公開</th></tr></thead><tbody>${versions.map(version=>{const status=versionStatus(version);return `<tr><td><div class="lp-name">${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'未設定')}</div></td><td>${statusBadge(status.label,status.tone)}</td><td>${escapeHtml(version.change_summary||'変更概要未設定')}</td><td><div class="ga4-field-list compact"><span>作成 ${escapeHtml(formatDisplayDate(version.created_at))}</span><span>公開 ${escapeHtml(formatDisplayDate(version.published_at))}</span></div></td></tr>`}).join('')}</tbody></table>`:`<div class="ga4-empty">修正バージョンはまだありません。</div>`}</section>`
+}
 function enhancedButtons(){
   document.querySelectorAll('[data-action]').forEach(button=>{
     button.onclick=event=>{
@@ -1084,6 +1201,15 @@ function enhancedButtons(){
       else if(action==='ga4-sync'){ runGa4Action(button.dataset.lpId) }
       else if(action==='user-save'){ saveManagedUser(button) }
       else if(action==='user-delete'){ deleteManagedUser(button) }
+      else if(action==='save-proposal'){ saveProposalDraft(button.dataset.proposalId) }
+      else if(action==='preview-version'){
+        selectedVersionPreview={
+          url:button.dataset.previewUrl,
+          versionLabel:button.dataset.previewVersionLabel||'過去バージョン',
+          lpProjectId:button.dataset.previewLpProjectId||selectedLpProjectId
+        }
+        go('detail')
+      }
       else if(action==='publish'){ notice('公開操作の実行基盤は VPS 導入後に接続します。履歴UIは先行整備済みです。') }
       else if(action==='rollback'){ notice('ロールバック操作の実行基盤は VPS 導入後に接続します。') }
       else if(action==='new'){ notice('新規作成フローの UI は整備済みです。実ファイル複製は VPS 導入後に接続します。') }
@@ -1106,7 +1232,7 @@ function enhancedButtons(){
 }
 function enhancedRenderWithDetailMenu(){
   const auth=currentAuth()
-  const views={dashboard:enhancedDashboard,production,lps:enhancedList,'ga4-admin':ga4Admin,'api-logs':enhancedApiLogsAdmin,'user-settings':userSettingsAdmin,client:enhancedClientHome,detail:enhancedDetail,analysis:enhancedAnalysis,proposals:enhancedProposals,versions:enhancedVersions,history:enhancedHistory,'initial-production':initialProduction,'customer-info':customerInfo,'initial-settings':initialSettings,'lp-variants':enhancedLpVariants,'meta-ads':metaAds,'google-ads':googleAds,alerts,hq,settings}
+  const views={dashboard:enhancedDashboard,production,lps:enhancedList,'ga4-admin':ga4Admin,'api-logs':enhancedApiLogsAdmin,'user-settings':userSettingsAdmin,client:enhancedClientHome,detail:enhancedDetail,analysis:enhancedAnalysis,proposals:enhancedProposals,execution:enhancedExecution,versions:enhancedVersions,history:enhancedHistory,'initial-production':initialProduction,'customer-info':customerInfo,'initial-settings':initialSettings,'lp-variants':enhancedLpVariants,'meta-ads':metaAds,'google-ads':googleAds,alerts,hq,settings}
   page=location.hash.replace('#','')||'lps'
   if((page==='ga4-admin'||page==='api-logs'||page==='user-settings')&&!auth.isAdmin){
     page='dashboard'
@@ -1114,11 +1240,11 @@ function enhancedRenderWithDetailMenu(){
   }
   pageEl.innerHTML=(views[page]||list)()
   if(needsDashboardData(page)) loadDashboardData()
-  if(['detail','analysis','proposals','versions','history'].includes(page)) loadDetailData()
+  if(['detail','analysis','proposals','execution','versions','history'].includes(page)) loadDetailData()
   if(page==='ga4-admin') loadGa4AdminData()
   if(page==='api-logs') loadApiLogData()
   if(page==='user-settings') loadUserSettingsData()
-  const labels={dashboard:'管理者画面 / ダッシュボード',production:'新規LP制作一覧',lps:'管理者画面 / クライアント一覧','ga4-admin':'管理者画面 / GA4接続確認','api-logs':'管理者画面 / APIログ','user-settings':'管理者画面 / ユーザー設定',client:'個別クライアント画面 / 概要',detail:'LP詳細','initial-production':'個別クライアント画面 / 初期LP制作','customer-info':'個別クライアント画面 / 顧客情報','initial-settings':'個別クライアント画面 / 初期設定','lp-variants':'個別クライアント画面 / LP一覧','meta-ads':'個別クライアント画面 / META広告','google-ads':'個別クライアント画面 / Google広告',analysis:'LP詳細 / 分析',proposals:'LP詳細 / 改善提案',versions:'LP詳細 / バージョン管理',history:'LP詳細 / 公開履歴',alerts:'管理者画面 / アラート',hq:'管理者画面 / 本部管理',settings:'管理者画面 / 設定'}
+  const labels={dashboard:'管理者画面 / ダッシュボード',production:'新規LP制作一覧',lps:'管理者画面 / クライアント一覧','ga4-admin':'管理者画面 / GA4接続確認','api-logs':'管理者画面 / APIログ','user-settings':'管理者画面 / ユーザー設定',client:'個別クライアント画面 / 概要',detail:'LP詳細 / サマリー','initial-production':'個別クライアント画面 / 初期LP制作','customer-info':'個別クライアント画面 / 顧客情報','initial-settings':'個別クライアント画面 / 初期設定','lp-variants':'個別クライアント画面 / LP一覧','meta-ads':'個別クライアント画面 / META広告','google-ads':'個別クライアント画面 / Google広告',analysis:'LP詳細 / GA,分析',proposals:'LP詳細 / 改善点の洗い出し',execution:'LP詳細 / 修正実行',versions:'LP詳細 / バージョン管理',history:'LP詳細 / 公開履歴',alerts:'管理者画面 / アラート',hq:'管理者画面 / 本部管理',settings:'管理者画面 / 設定'}
   crumb.innerHTML=`LP管理 <span>/</span> ${labels[page]||labels.lps}`
   document.querySelectorAll('[data-page]').forEach(link=>link.classList.toggle('active',link.dataset.page===page))
   document.querySelectorAll('[data-detail-page]').forEach(link=>link.classList.toggle('active',link.dataset.detailPage===page))
@@ -1143,8 +1269,28 @@ apiLogsAdmin = enhancedApiLogsAdmin
 list = enhancedList
 clientHome = enhancedClientHome
 lpVariants = enhancedLpVariants
+function enhancedJapaneseSummary(){
+  const row=detailState.overview||getSelectedDashboardRow()
+  const preview=selectedVersionPreview
+  const defaultPreviewUrl=lpPreviewUrl(row)
+  let summary=enhancedSummary()
+  if(preview?.url){
+    summary=summary
+      .replace('実際のLPプレビュー',`${escapeHtml(preview.versionLabel)} のプレビュー`)
+      .replaceAll(escapeHtml(defaultPreviewUrl),escapeHtml(preview.url))
+  }
+  return summary
+    .replace('Sessions</span>','セッション数</span>')
+    .replace('Users</span>','ユーザー数</span>')
+    .replace('Engagement</span>','エンゲージメント率</span>')
+}
 detailContext = enhancedDetailContext
+enhancedDetail = enhancedJapaneseSummary
 detail = enhancedDetail
+enhancedAnalysis = enhancedGaAnalysis
+enhancedProposals = enhancedRoutedProposals
+enhancedExecution = enhancedRoutedExecution
+enhancedVersions = enhancedPreviewableVersionHistory
 analysis = enhancedAnalysis
 proposals = enhancedProposals
 versions = enhancedVersions
