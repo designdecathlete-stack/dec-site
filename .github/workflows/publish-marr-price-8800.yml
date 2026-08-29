@@ -1,0 +1,55 @@
+name: Publish marr initial price 8800
+
+on:
+  schedule:
+    # 2026-08-31 09:00 JST = 2026-08-31 00:00 UTC
+    - cron: "0 0 31 8 *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out production branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Skip when the new price is already live
+        id: current
+        run: |
+          if grep -q 'images/offer-8800.png' marr/index.html; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Apply the scheduled price image
+        if: steps.current.outputs.already_published != 'true'
+        run: |
+          git fetch origin codex/marr-price-8800-scheduled
+          git checkout origin/codex/marr-price-8800-scheduled -- marr/images/offer-8800.png
+          python - <<'PY'
+          from pathlib import Path
+
+          page = Path("marr/index.html")
+          source = page.read_text(encoding="utf-8")
+          old = 'images/offer.webp'
+          new = 'images/offer-8800.png'
+          count = source.count(old)
+          if count != 3:
+              raise SystemExit(f"Expected 3 offer image references, found {count}.")
+          page.write_text(source.replace(old, new), encoding="utf-8")
+          PY
+
+      - name: Commit and push the production change
+        if: steps.current.outputs.already_published != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add marr/index.html marr/images/offer-8800.png
+          git commit -m "Publish marr initial price 8800"
+          git push origin HEAD:main
