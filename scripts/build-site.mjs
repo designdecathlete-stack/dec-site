@@ -13,6 +13,7 @@ const legacyPublicDirs = [
   'biyoshitsu-owner-hokago-lp',
   'chacha',
   'chacha-shinkoiwa',
+  'eyebee-morioka-recruit-lp',
   'lifutage-shintokorozawa-lp',
   'marr',
   'resole',
