@@ -220,6 +220,9 @@ function ga4ConfigFor(row){
     ga4AdminState.configs[row.id]={
       propertyId: row.propertyId||'',
       pagePath: row.pagePath||defaultGa4PagePath(row.folderPath),
+      measurementId: row.measurementId||'',
+      gtmContainerId: row.gtmContainerId||'',
+      isActive: row.isActive!==false,
       candidates: [],
       candidateError: '',
       candidateLoaded: false,
@@ -324,7 +327,7 @@ async function loadGa4AdminData(force=false){
   if(page==='ga4-admin') renderWithDetailMenu()
   try{
     const [lpResult,syncResult,metricResult]=await Promise.all([
-      auth.supabase.from('lp_projects').select('id,name,folder_path,ga4_page_path,public_url,status,client_id,clients(id,name,slug,ga4_property_id)').order('name'),
+      auth.supabase.from('lp_projects').select('id,name,folder_path,ga4_page_path,public_url,status,client_id,clients(id,name,slug,ga4_property_id),lp_analytics_settings(ga4_property_id,ga4_page_path,ga4_measurement_id,gtm_container_id,is_active)').order('name'),
       auth.supabase.from('ga4_sync_jobs').select('lp_project_id,status,error_message,started_at,finished_at').order('started_at',{ascending:false}).limit(200),
       auth.supabase.from('ga4_daily_metrics').select('lp_project_id,metric_date,sessions,total_users,screen_page_views,conversions,event_count,engagement_rate').order('metric_date',{ascending:false}).limit(500),
     ])
@@ -338,8 +341,9 @@ async function loadGa4AdminData(force=false){
     ga4AdminState.rows=(lpResult.data||[]).map(lp=>{
       const sync=latestSyncByLp.get(lp.id)||null
       const metric=latestMetricByLp.get(lp.id)||null
-      const propertyId=lp.clients?.ga4_property_id||''
-      const pagePath=lp.ga4_page_path||''
+      const settings=Array.isArray(lp.lp_analytics_settings)?lp.lp_analytics_settings[0]:lp.lp_analytics_settings
+      const propertyId=settings?.ga4_property_id?.trim()||lp.clients?.ga4_property_id?.trim()||''
+      const pagePath=settings?.ga4_page_path?.trim()||lp.ga4_page_path?.trim()||''
       return {
         id: lp.id,
         clientId: lp.client_id,
@@ -350,9 +354,12 @@ async function loadGa4AdminData(force=false){
         clientName: lp.clients?.name||'未設定',
         clientSlug: lp.clients?.slug||'',
         propertyId,
-        pagePath: pagePath||defaultGa4PagePath(lp.folder_path),
+        pagePath,
+        measurementId: settings?.ga4_measurement_id||'',
+        gtmContainerId: settings?.gtm_container_id||'',
+        isActive: settings?.is_active!==false,
         hasProperty: Boolean(propertyId),
-        hasPagePath: Boolean(pagePath||defaultGa4PagePath(lp.folder_path)),
+        hasPagePath: Boolean(pagePath),
         latestSync: sync,
         latestMetric: metric,
       }
@@ -387,6 +394,7 @@ async function discoverGa4Candidates(lpProjectId){
     config.saveStatus=''
     if(!config.propertyId&&config.candidates.length===1){
       config.propertyId=config.candidates[0].propertyId
+      config.measurementId=config.candidates[0].measurementId||''
     }
     notice(`GA4候補を${config.candidates.length}件取得しました。`)
   }catch(error){
@@ -417,12 +425,16 @@ async function saveGa4Config(lpProjectId){
   ga4AdminState.busy[lpProjectId]='save'
   if(page==='ga4-admin') renderWithDetailMenu()
   try{
-    const [clientUpdate,lpUpdate]=await Promise.all([
-      auth.supabase.from('clients').update({ga4_property_id:propertyId}).eq('id',row.clientId),
-      auth.supabase.from('lp_projects').update({ga4_page_path:pagePath}).eq('id',lpProjectId),
-    ])
-    if(clientUpdate.error) throw clientUpdate.error
-    if(lpUpdate.error) throw lpUpdate.error
+    const {error}=await auth.supabase.from('lp_analytics_settings').upsert({
+      lp_project_id: lpProjectId,
+      ga4_property_id: propertyId,
+      ga4_page_path: pagePath,
+      ga4_measurement_id: String(config.measurementId||'').trim()||null,
+      gtm_container_id: String(config.gtmContainerId||'').trim()||null,
+      is_active: config.isActive!==false,
+    },{onConflict:'lp_project_id'}).select('lp_project_id').single()
+    if(error) throw error
+    dashboardState.loaded=false
     config.saveStatus='saved'
     notice('GA4設定を保存しました。')
     await loadGa4AdminData(true)
@@ -532,10 +544,10 @@ function ga4Admin(){
     return `<div class="ga4-empty">このページは管理者のみ表示できます。</div>`
   }
   const rows=ga4AdminState.rows
-  const configured=rows.filter(row=>row.hasProperty&&row.hasPagePath).length
+  const configured=rows.filter(row=>row.isActive&&row.hasProperty&&row.hasPagePath).length
   const synced=rows.filter(row=>row.latestSync?.status==='succeeded').length
   const lastSyncRow=[...rows].sort((a,b)=>new Date(b.latestSync?.finished_at||0)-new Date(a.latestSync?.finished_at||0))[0]
-  return `<div class="ga4-check-grid"><div class="heading-row"><div><div class="eyebrow">GA4 CONNECTION HEALTH</div><h1>GA4接続確認</h1><p class="page-sub">候補一覧を取得して管理者が Property を保存し、そのまま接続テスト兼データ取得まで進めます。</p></div><button class="secondary" data-action="ga4-refresh">一覧を更新</button></div>${ga4AdminState.error?`<div class="ga4-empty">${escapeHtml(ga4AdminState.error)}</div>`:''}<div class="ga4-summary-grid"><section class="ga4-summary-card"><small>対象LP数</small><strong>${rows.length}</strong><span>GA4確認対象</span></section><section class="ga4-summary-card"><small>接続設定済み</small><strong>${configured}</strong><span>Property ID と page path の両方あり</span></section><section class="ga4-summary-card"><small>最新取得成功</small><strong>${synced}</strong><span>最新 sync job が succeeded</span></section><section class="ga4-summary-card"><small>最終取得</small><strong>${lastSyncRow?.latestSync?.finished_at?formatDisplayDate(lastSyncRow.latestSync.finished_at):'未実行'}</strong><span>最新の完了時刻</span></section></div>${ga4AdminState.loading&&!rows.length?`<div class="ga4-empty">GA4確認データを読み込み中です。</div>`:''}${!rows.length&&!ga4AdminState.loading?`<div class="ga4-empty">確認対象のLPがありません。</div>`:`<section class="panel table-panel"><table class="ga4-table"><thead><tr><th>クライアント / LP</th><th>初期設定</th><th>主要項目</th><th>最新取得</th><th>操作</th></tr></thead><tbody>${rows.map(row=>{const config=ga4ConfigFor(row);const metricState=ga4FieldState(row.latestMetric);const busy=ga4AdminState.busy[row.id];const syncTone=row.latestSync?.status==='succeeded'?'ok':row.latestSync?.status==='failed'?'error':'warn';const syncLabel=row.latestSync?.status==='succeeded'?'取得成功':row.latestSync?.status==='failed'?'取得失敗':'未実行';const options=config.candidates.map(candidate=>`<option value="${escapeHtml(candidate.propertyId)}" ${config.propertyId===candidate.propertyId?'selected':''}>${escapeHtml(candidate.accountDisplayName)} / ${escapeHtml(candidate.propertyDisplayName)} / ${escapeHtml(candidate.streamDisplayName)}${candidate.matchedHost?' [URL一致]':''}</option>`).join('');return `<tr><td><div class="lp-name">${escapeHtml(row.name)}</div><div class="client">${escapeHtml(row.clientName)}</div><div class="ga4-meta"><span>${escapeHtml(row.clientSlug||'')}</span><span>folder: <b>${escapeHtml(row.folderPath)}</b></span><span>公開URL: <b>${escapeHtml(row.publicUrl)}</b></span></div></td><td><div class="ga4-field-list compact"><span>Property ID ${row.hasProperty?statusBadge('設定済み','ok'):statusBadge('未設定','warn')}</span><span>Page Path ${row.hasPagePath?statusBadge('設定済み','ok'):statusBadge('未設定','warn')}</span><label>GA4候補<select data-action="ga4-property-select" data-lp-id="${row.id}" ${busy?'disabled':''}><option value="">候補を選択</option>${options}</select></label><label>Page Path<input type="text" value="${escapeHtml(config.pagePath||'')}" data-action="ga4-page-path-input" data-lp-id="${row.id}" placeholder="/marr/" ${busy?'disabled':''}></label><div class="ga4-current-value"><span>現在値</span><b>${escapeHtml(row.propertyId||'未設定')}</b></div><div class="ga4-current-value"><span>現在path</span><b>${escapeHtml(row.pagePath||'未設定')}</b></div>${config.candidateLoaded?`<div class="ga4-current-value"><span>候補数</span><b>${formatCount(config.candidates.length)}件</b></div>`:''}${config.candidateError?`<div class="ga4-current-value"><span>候補エラー</span><b>${escapeHtml(config.candidateError)}</b></div>`:''}${config.saveStatus==='saved'?`<span>${statusBadge('保存済み','ok')}</span>`:''}</div></td><td><div class="ga4-field-list compact"><span>sessions <b>${metricState.sessions?'OK':'--'}</b></span><span>totalUsers <b>${metricState.totalUsers?'OK':'--'}</b></span><span>pageViews <b>${metricState.pageViews?'OK':'--'}</b></span><span>conversions <b>${metricState.conversions?'OK':'--'}</b></span></div></td><td><div class="ga4-field-list compact">${statusBadge(syncLabel,syncTone)}<span>最新日付 <b>${escapeHtml(row.latestMetric?.metric_date||'未取得')}</b></span><span>完了時刻 <b>${escapeHtml(formatDisplayDate(row.latestSync?.finished_at))}</b></span>${row.latestSync?.error_message?`<span>詳細 <b>${escapeHtml(row.latestSync.error_message)}</b></span>`:''}</div></td><td><div class="ga4-actions stack"><button class="secondary" data-action="ga4-discover" data-lp-id="${row.id}" ${busy?'disabled':''}>${busy==='discover'?'候補取得中':'候補取得'}</button><button class="secondary" data-action="ga4-save" data-lp-id="${row.id}" ${busy?'disabled':''}>${busy==='save'?'保存中':'設定保存'}</button><button class="primary" data-action="ga4-sync" data-lp-id="${row.id}" ${busy?'disabled':''}>${busy==='sync'?'取得中':'接続テスト・取得'}</button></div></td></tr>`}).join('')}</tbody></table></section>`}</div>`
+  return `<div class="ga4-check-grid"><div class="heading-row"><div><div class="eyebrow">GA4 CONNECTION HEALTH</div><h1>GA4接続確認</h1><p class="page-sub">候補一覧を取得して管理者が Property を保存し、そのまま接続テスト兼データ取得まで進めます。</p></div><button class="secondary" data-action="ga4-refresh">一覧を更新</button></div>${ga4AdminState.error?`<div class="ga4-empty">${escapeHtml(ga4AdminState.error)}</div>`:''}<div class="ga4-summary-grid"><section class="ga4-summary-card"><small>対象LP数</small><strong>${rows.length}</strong><span>GA4確認対象</span></section><section class="ga4-summary-card"><small>接続設定済み</small><strong>${configured}</strong><span>Property ID と page path の両方あり</span></section><section class="ga4-summary-card"><small>最新取得成功</small><strong>${synced}</strong><span>最新 sync job が succeeded</span></section><section class="ga4-summary-card"><small>最終取得</small><strong>${lastSyncRow?.latestSync?.finished_at?formatDisplayDate(lastSyncRow.latestSync.finished_at):'未実行'}</strong><span>最新の完了時刻</span></section></div>${ga4AdminState.loading&&!rows.length?`<div class="ga4-empty">GA4確認データを読み込み中です。</div>`:''}${!rows.length&&!ga4AdminState.loading?`<div class="ga4-empty">確認対象のLPがありません。</div>`:`<section class="panel table-panel"><table class="ga4-table"><thead><tr><th>クライアント / LP</th><th>初期設定</th><th>主要項目</th><th>最新取得</th><th>操作</th></tr></thead><tbody>${rows.map(row=>{const config=ga4ConfigFor(row);const metricState=ga4FieldState(row.latestMetric);const busy=ga4AdminState.busy[row.id];const syncTone=row.latestSync?.status==='succeeded'?'ok':row.latestSync?.status==='failed'?'error':'warn';const syncLabel=row.latestSync?.status==='succeeded'?'取得成功':row.latestSync?.status==='failed'?'取得失敗':'未実行';const options=config.candidates.map((candidate,index)=>`<option value="${index}" ${config.propertyId===candidate.propertyId&&config.measurementId===(candidate.measurementId||'')?'selected':''}>${escapeHtml(candidate.accountDisplayName)} / ${escapeHtml(candidate.propertyDisplayName)} / ${escapeHtml(candidate.streamDisplayName)}${candidate.matchedHost?' [URL一致]':''}</option>`).join('');return `<tr><td><div class="lp-name">${escapeHtml(row.name)}</div><div class="client">${escapeHtml(row.clientName)}</div><div class="ga4-meta"><span>${escapeHtml(row.clientSlug||'')}</span><span>folder: <b>${escapeHtml(row.folderPath)}</b></span><span>公開URL: <b>${escapeHtml(row.publicUrl)}</b></span></div></td><td><div class="ga4-field-list compact"><span>Property ID ${row.hasProperty?statusBadge('設定済み','ok'):statusBadge('未設定','warn')}</span><span>Page Path ${row.hasPagePath?statusBadge('設定済み','ok'):statusBadge('未設定','warn')}</span><label>GA4候補<select data-action="ga4-property-select" data-lp-id="${row.id}" ${busy?'disabled':''}><option value="">候補を選択</option>${options}</select></label><label>Property ID<input type="text" value="${escapeHtml(config.propertyId||'')}" data-action="ga4-property-id-input" data-lp-id="${row.id}" placeholder="550041717" ${busy?'disabled':''}></label><label>Measurement ID（任意）<input type="text" value="${escapeHtml(config.measurementId||'')}" data-action="ga4-measurement-id-input" data-lp-id="${row.id}" placeholder="G-XXXXXXXXXX" ${busy?'disabled':''}></label><label>GTM Container ID（任意）<input type="text" value="${escapeHtml(config.gtmContainerId||'')}" data-action="ga4-gtm-container-input" data-lp-id="${row.id}" placeholder="GTM-XXXXXXX" ${busy?'disabled':''}></label><label><input type="checkbox" data-action="ga4-active-input" data-lp-id="${row.id}" ${config.isActive?'checked':''} ${busy?'disabled':''}> GA4同期を有効にする</label><label>Page Path<input type="text" value="${escapeHtml(config.pagePath||'')}" data-action="ga4-page-path-input" data-lp-id="${row.id}" placeholder="/marr/" ${busy?'disabled':''}></label><div class="ga4-current-value"><span>現在値</span><b>${escapeHtml(row.propertyId||'未設定')}</b></div><div class="ga4-current-value"><span>現在path</span><b>${escapeHtml(row.pagePath||'未設定')}</b></div>${config.candidateLoaded?`<div class="ga4-current-value"><span>候補数</span><b>${formatCount(config.candidates.length)}件</b></div>`:''}${config.candidateError?`<div class="ga4-current-value"><span>候補エラー</span><b>${escapeHtml(config.candidateError)}</b></div>`:''}${config.saveStatus==='saved'?`<span>${statusBadge('保存済み','ok')}</span>`:''}</div></td><td><div class="ga4-field-list compact"><span>sessions <b>${metricState.sessions?'OK':'--'}</b></span><span>totalUsers <b>${metricState.totalUsers?'OK':'--'}</b></span><span>pageViews <b>${metricState.pageViews?'OK':'--'}</b></span><span>conversions <b>${metricState.conversions?'OK':'--'}</b></span></div></td><td><div class="ga4-field-list compact">${statusBadge(syncLabel,syncTone)}<span>最新日付 <b>${escapeHtml(row.latestMetric?.metric_date||'未取得')}</b></span><span>完了時刻 <b>${escapeHtml(formatDisplayDate(row.latestSync?.finished_at))}</b></span>${row.latestSync?.error_message?`<span>詳細 <b>${escapeHtml(row.latestSync.error_message)}</b></span>`:''}</div></td><td><div class="ga4-actions stack"><button class="secondary" data-action="ga4-discover" data-lp-id="${row.id}" ${busy?'disabled':''}>${busy==='discover'?'候補取得中':'候補取得'}</button><button class="secondary" data-action="ga4-save" data-lp-id="${row.id}" ${busy?'disabled':''}>${busy==='save'?'保存中':'設定保存'}</button><button class="primary" data-action="ga4-sync" data-lp-id="${row.id}" ${busy?'disabled':''}>${busy==='sync'?'取得中':'接続テスト・取得'}</button></div></td></tr>`}).join('')}</tbody></table></section>`}</div>`
 }
 function buttons(){
   document.querySelectorAll('[data-action]').forEach(button=>{
@@ -1216,7 +1228,19 @@ function enhancedButtons(){
       else { notice('操作を受け付けました。') }
     }
   })
-  document.querySelectorAll('select[data-action="ga4-property-select"]').forEach(select=>{select.onchange=()=>{setGa4ConfigValue(select.dataset.lpId,'propertyId',select.value);if(page==='ga4-admin') renderWithDetailMenu()}})
+  document.querySelectorAll('select[data-action="ga4-property-select"]').forEach(select=>{select.onchange=()=>{
+    const config=ga4AdminState.configs[select.dataset.lpId]
+    const candidate=select.value===''?null:config?.candidates[Number(select.value)]
+    if(candidate){
+      setGa4ConfigValue(select.dataset.lpId,'propertyId',candidate.propertyId)
+      setGa4ConfigValue(select.dataset.lpId,'measurementId',candidate.measurementId||'')
+    }
+    if(page==='ga4-admin') renderWithDetailMenu()
+  }})
+  for(const [action,key] of [['ga4-property-id-input','propertyId'],['ga4-measurement-id-input','measurementId'],['ga4-gtm-container-input','gtmContainerId']]){
+    document.querySelectorAll('input[data-action="'+action+'"]').forEach(input=>{input.oninput=()=>setGa4ConfigValue(input.dataset.lpId,key,input.value)})
+  }
+  document.querySelectorAll('input[data-action="ga4-active-input"]').forEach(input=>{input.onchange=()=>setGa4ConfigValue(input.dataset.lpId,'isActive',input.checked)})
   document.querySelectorAll('input[data-action="ga4-page-path-input"]').forEach(input=>{input.oninput=()=>{setGa4ConfigValue(input.dataset.lpId,'pagePath',input.value)}})
   document.querySelectorAll('select[data-action="api-log-level"]').forEach(select=>{select.onchange=()=>{uiState.apiLogLevel=select.value;renderWithDetailMenu()}})
   document.querySelectorAll('input[data-action="api-log-query"]').forEach(input=>{input.oninput=()=>{uiState.apiLogQuery=input.value;renderWithDetailMenu()}})

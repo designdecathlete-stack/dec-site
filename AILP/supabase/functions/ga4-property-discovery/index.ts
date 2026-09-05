@@ -1,6 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 
 import { listGa4PropertyCandidates } from '../_shared/ga4.ts'
+import { resolveAnalyticsSettings } from '../_shared/analytics-settings.ts'
 import { badRequest, forbidden, json, methodNotAllowed, optionsResponse, serverError, unauthorized } from '../_shared/http.ts'
 import { createApiLogger } from '../_shared/logging.ts'
 import { requireUser } from '../_shared/supabase.ts'
@@ -38,19 +39,13 @@ Deno.serve(async (req) => {
     logger.setContext({ actorUserId: user.id })
     const body = (await req.json()) as DiscoveryBody
 
-    const { data: roles, error: roleError } = await client
-      .from('user_roles')
-      .select('role, client_id')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .is('client_id', null)
-      .limit(1)
+    const { data: isAdmin, error: roleError } = await client.rpc('current_user_is_admin')
 
     if (roleError) {
       throw new Error(roleError.message)
     }
 
-    if (!roles?.length) {
+    if (!isAdmin) {
       await logger.log({
         level: 'warn',
         stage: 'permission_denied',
@@ -63,11 +58,12 @@ Deno.serve(async (req) => {
 
     let publicUrl: string | null = null
     let lpProjectId: string | null = null
+    let settings: ReturnType<typeof resolveAnalyticsSettings> | null = null
 
     if (body.lp_project_id) {
       const { data: lpProject, error: lpError } = await client
         .from('lp_projects')
-        .select('id, client_id, public_url')
+        .select('id, client_id, public_url, ga4_page_path, clients(ga4_property_id), lp_analytics_settings(ga4_property_id,ga4_page_path,ga4_measurement_id,gtm_container_id,is_active)')
         .eq('id', body.lp_project_id)
         .single()
 
@@ -85,6 +81,7 @@ Deno.serve(async (req) => {
       logger.setContext({ lpProjectId: lpProject.id, clientId: lpProject.client_id })
       publicUrl = lpProject.public_url
       lpProjectId = lpProject.id
+      settings = resolveAnalyticsSettings(lpProject)
     }
 
     const candidates = await listGa4PropertyCandidates({ publicUrl })
@@ -105,6 +102,7 @@ Deno.serve(async (req) => {
       lp_project_id: lpProjectId,
       public_url: publicUrl,
       candidates,
+      analytics_settings: settings,
     })
   } catch (error) {
     if (error instanceof Error && error.message.includes('Authorization')) {

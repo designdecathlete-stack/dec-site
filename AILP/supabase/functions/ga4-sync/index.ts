@@ -1,6 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 
 import { runGa4Report } from '../_shared/ga4.ts'
+import { resolveAnalyticsSettings } from '../_shared/analytics-settings.ts'
 import { getCronToken } from '../_shared/env.ts'
 import { badRequest, forbidden, json, methodNotAllowed, optionsResponse, serverError, unauthorized } from '../_shared/http.ts'
 import { createApiLogger } from '../_shared/logging.ts'
@@ -23,7 +24,7 @@ async function resolveTargets(reader: {
 }, body: SyncBody) {
   let query = reader
     .from('lp_projects')
-    .select('id, client_id, ga4_page_path, clients!inner(ga4_property_id)')
+    .select('id, client_id, ga4_page_path, clients(ga4_property_id), lp_analytics_settings(ga4_property_id,ga4_page_path,is_active)')
     .eq('status', 'active')
 
   if (body.lp_project_id) {
@@ -145,7 +146,8 @@ Deno.serve(async (req) => {
     const results: Array<{ lp_project_id: string; ga4_sync_job_id: string; rows: number; status: 'succeeded' | 'failed' | 'skipped'; error_message?: string }> = []
 
     for (const target of targets) {
-      const propertyId = target.clients.ga4_property_id
+      const settings = resolveAnalyticsSettings(target)
+      const propertyId = settings.ga4_property_id
       const job = await createRunningJob(service, target, body)
       logger.setContext({ lpProjectId: target.id, clientId: target.client_id, appJobId: job.id })
       await logger.log({
@@ -156,8 +158,9 @@ Deno.serve(async (req) => {
         },
       })
 
-      if (!propertyId) {
-        const errorMessage = `Missing ga4_property_id for lp_project_id=${target.id}`
+      if (!settings.is_active || !propertyId || !settings.ga4_page_path) {
+        const reason = !settings.is_active ? 'Analytics settings are inactive' : 'Missing ga4_property_id or ga4_page_path'
+        const errorMessage = `${reason} for lp_project_id=${target.id}`
 
         await service
           .from('ga4_sync_jobs')
@@ -178,7 +181,7 @@ Deno.serve(async (req) => {
         await logger.log({
           level: 'warn',
           stage: 'target_skipped',
-          message: 'Skipped GA4 sync because property ID is missing',
+          message: errorMessage,
           metadata: {
             ga4_sync_job_id: job.id,
           },
@@ -189,7 +192,7 @@ Deno.serve(async (req) => {
       try {
         const rows = await runGa4Report({
           propertyId,
-          pagePath: target.ga4_page_path,
+          pagePath: settings.ga4_page_path,
           dateFrom: body.date_from,
           dateTo: body.date_to,
         })

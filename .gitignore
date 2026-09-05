@@ -8,6 +8,7 @@ node_modules/
 dist/
 AILP/front/node_modules/
 AILP/front/dist/
+AILP/supabase/.temp/
 
 # Local environment files
 .env

@@ -7,7 +7,9 @@ Do not put frontend UI code here.
 
 - `ga4-sync`
   - manual or cron-triggered GA4 sync
-  - reads `lp_projects` and `clients.ga4_property_id`
+  - reads LP-scoped `lp_analytics_settings`, falling back per field to
+    `clients.ga4_property_id` / `lp_projects.ga4_page_path`; inactive or unconfigured
+    targets are logged and skipped without stopping other LPs
   - writes `ga4_sync_jobs` and `ga4_daily_metrics`
   - current implementation uses `GOOGLE_SERVICE_ACCOUNT_JSON`
 - `lp-create-from-template`

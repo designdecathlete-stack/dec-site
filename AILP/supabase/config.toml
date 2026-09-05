@@ -1,5 +1,4 @@
-[project]
-id = "ailp-management"
+project_id = "ailp-manager"
 
 [functions.ga4-sync]
 verify_jwt = false
