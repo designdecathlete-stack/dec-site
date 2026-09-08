@@ -2507,7 +2507,11 @@ body.page-id-12 .woo-lp-sticky-header__text {
     .woo-lp-fv__content h2 em { color:#a66e51; font-style:normal; }
     .woo-lp-fv__copy { margin:18px 0 24px; font-size:clamp(.88rem,1.8vw,1.08rem); font-weight:500; line-height:1.8; }
     .woo-lp-fv__proof { margin:14px 0 -6px; padding:8px 13px; border:1px solid rgba(166,110,81,.35); border-radius:999px; background:rgba(255,253,251,.8); color:#86563d; font-size:clamp(.75rem,1.5vw,.92rem); font-weight:700; line-height:1.4; }
-    .woo-lp-fv__cta { display:inline-flex; max-width:330px; padding:14px 22px; border-radius:999px; background:#24bd63; color:#fff; font-size:.9rem; font-weight:700; line-height:1.4; text-align:center; box-shadow:0 8px 18px rgba(25,111,57,.22); pointer-events:auto; }
+    .woo-lp-fv__cta { display:inline-flex; align-items:center; justify-content:center; min-height:68px; max-width:330px; padding:18px 22px; border-radius:999px; background:#24bd63; color:#fff; font-size:.9rem; font-weight:700; line-height:1.5; text-align:center; box-shadow:0 8px 18px rgba(25,111,57,.22); pointer-events:auto; animation:woo-fv-cta-float 3s ease-in-out infinite; }
+    @keyframes woo-fv-cta-float { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(-4px); } }
+    .woo-lp-fv__cta:hover, .woo-lp-fv__cta:focus-visible, .woo-lp-fv__cta:active { animation-play-state:paused; }
+    .woo-lp-fv__cta:focus-visible { outline:3px solid #4b3727; outline-offset:4px; }
+    @media (prefers-reduced-motion:reduce) { .woo-lp-fv__cta { animation:none; } }
     .woo-lp-worry { padding:72px 20px; background:#f8f2ec; }
     .woo-lp-worry__inner { max-width:760px; margin:auto; text-align:center; }
     .woo-lp-worry h2 { margin:0 0 26px; font-family:var(--woo-font-display); font-size:clamp(1.65rem,4vw,2.3rem); color:var(--woo-color-heading); }
@@ -2560,7 +2564,7 @@ body.page-id-12 .woo-lp-sticky-header__text {
       .woo-lp-fv__copy { max-width:none; margin:13px 0 16px; font-size:.88rem; }
       .woo-lp-fv__mobile-photo { display:block; width:100%; height:auto; margin:0 0 18px; border-radius:12px; }
       .woo-lp-fv__proof { margin:0 0 13px; font-size:.74rem; }
-      .woo-lp-fv__cta { width:100%; max-width:none; justify-content:center; padding:13px 15px; font-size:.8rem; }
+      .woo-lp-fv__cta { width:100%; max-width:none; justify-content:center; min-height:64px; padding:18px 16px; font-size:.85rem; }
     }
     @media (min-width:601px) and (max-width:767px) { body { padding-bottom:82px; } }
     @media (min-width:768px) { body { padding-bottom:0; } .woo-lp__wrap { padding-right:28px; padding-left:28px; } }
