@@ -10,6 +10,7 @@ const dist = outputArgIndex >= 0 && process.argv[outputArgIndex + 1]
   : join(root, 'dist');
 
 const legacyPublicDirs = [
+  'woo-recruit-lp',
   'biyoshitsu-owner-hokago-lp',
   'chacha',
   'chacha-shinkoiwa',

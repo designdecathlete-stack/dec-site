@@ -1,0 +1,3546 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="山口県防府市・くつろぎサロン wooのアイデザイナー・脱毛スタッフ採用情報。18時閉店、未経験OK。">
+  <title>【山口県防府市】アイリスト求人｜未経験OK｜くつろぎサロン woo</title>
+  <style>
+
+/* ============================================================
+   くつろぎサロン woo様 求人LP用CSS
+   ------------------------------------------------------------
+   2026年6月10日 Phase 2移植版
+
+   【貼り付け先】
+   WordPress管理画面 > 外観 > カスタマイザー > 追加CSS
+
+   【内容】
+   1. Google Fonts の @import (見出し: Shippori Mincho / 本文: Zen Maru Gothic)
+   2. CSS変数 (variables.css の内容)
+   3. メインスタイル (style.css の内容)
+
+   【注意】
+   - クラス名はすべて `.woo-lp-` プレフィックス済み (Cocoonテーマと衝突しない)
+   - @import は必ずファイル先頭 (他のCSSルールより前) に置くこと
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Shippori+Mincho:wght@500;600&display=swap');
+
+/* ============================================================
+   ▼ ▼ ▼   variables.css (CSS変数の集約)   ▼ ▼ ▼
+   ============================================================ */
+/* ============================================================
+   くつろぎサロン woo様｜求人LP 共通CSS変数
+   ------------------------------------------------------------
+   抽出元: https://cute-sunflower-01aa32.netlify.app/ (既存LP)
+   命名規則: --woo- プレフィックス（Cocoonテーマとの衝突回避）
+   使い方  : 各セクションのCSSから var(--woo-xxx) で参照する
+   ============================================================ */
+
+/* Google Fonts の読み込み
+   Cocoonの場合は <head> に直接 <link> を入れるか、
+   テーマカスタマイザー > アクセス解析・認証 > 全ページ共通 で
+   下記タグを追加する：
+
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Shippori+Mincho:wght@500;600&display=swap" rel="stylesheet">
+*/
+
+:root {
+  /* ----------------------------------------------------------
+     カラー（ブランド軸）
+     - メイン   : ゴールド（CTA・差し色）
+     - 見出し   : こげ茶（h2・強調）
+     - ベース   : 白＋淡いアイボリー〜ベージュの階調
+     ---------------------------------------------------------- */
+
+  /* メインカラー（ゴールド系） */
+  --woo-color-primary:       #cdac4e;  /* メインゴールド（CTAボタン・差し色） */
+  --woo-color-primary-soft:  #ecdca8;  /* 薄ゴールド（背景の強調・帯） */
+
+  /* 見出し・深色（こげ茶系） */
+  --woo-color-heading:       #58390a;  /* 見出し（h2など）こげ茶 */
+  --woo-color-deep:          #58390a;  /* 深めのブラウン（強調） */
+
+  /* テキスト */
+  --woo-color-text:          #5a4a30;  /* 本文テキスト（やや茶系） */
+  --woo-color-text-soft:     #8a7a5e;  /* 補足テキスト（薄め） */
+  --woo-color-text-inverse:  #ffffff;  /* 反転テキスト（CTAボタン上など） */
+
+  /* 背景 */
+  --woo-color-bg:            #ffffff;  /* ベース背景：白 */
+  --woo-color-surface:       #ffffff;  /* カード等の面 */
+  --woo-color-bg-soft:       #faf6ea;  /* 淡いアイボリー（FV周辺） */
+  --woo-color-bg-beige:      #f3ebe2;  /* ベージュ（お悩み・流れ・1日のスケジュール） */
+  --woo-color-bg-cream:      #faf3ec;  /* クリーム（強調ボックス） */
+
+  /* 罫線・区切り */
+  --woo-color-line:          #ece3cf;  /* 罫線（薄ベージュ） */
+
+  /* FV用グラデーション素材色（必要時のみ使用） */
+  --woo-color-fv-light:      #fffaf0;  /* グラデ：明るい側 */
+  --woo-color-fv-mid:        #f5ecd2;  /* グラデ：中間 */
+  --woo-color-fv-deep:       #efe3c4;  /* グラデ：深い側 */
+
+  /* CTAボタンの影（ゴールドの透過） */
+  --woo-shadow-cta:          0 8px 24px rgba(205, 172, 78, 0.34);
+  --woo-shadow-cta-hover:    0 12px 30px rgba(205, 172, 78, 0.44);
+
+  /* ----------------------------------------------------------
+     LINE公式カラー（CTAボタンLINE化パッケージ用・追加）
+     ---------------------------------------------------------- */
+  --line-green:              #06C755;
+  --line-green-hover:        #05B04A;
+  --line-shadow-cta:         0 10px 24px rgba(6, 199, 85, 0.34);
+  --line-shadow-cta-hover:   0 14px 30px rgba(6, 199, 85, 0.44);
+
+  /* ----------------------------------------------------------
+     タイポグラフィ
+     - 見出し: Shippori Mincho（明朝体）weight 500 / 600
+     - 本文  : Zen Maru Gothic（丸ゴシック）weight 400 / 500 / 700
+     ---------------------------------------------------------- */
+  --woo-font-display:        'Shippori Mincho', 'Yu Mincho', '游明朝', serif;
+  --woo-font-body:           'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Hiragino Sans', sans-serif;
+
+  /* フォントサイズ（基本） */
+  --woo-font-size-base:      16px;
+  --woo-font-size-h2:        1.65rem;   /* セクション見出し */
+  --woo-line-height-body:    1.9;
+  --woo-line-height-heading: 1.6;
+
+  /* ----------------------------------------------------------
+     レイアウト
+     ---------------------------------------------------------- */
+  --woo-max-width:           720px;   /* LP本文の最大幅（スマホ閲覧前提） */
+  --woo-space-section:       88px;    /* セクション間の余白（PC） */
+  --woo-space-section-sp:    64px;    /* セクション間の余白（スマホ） */
+  --woo-radius:              18px;    /* カード・ボタンの角丸（基本） */
+  --woo-radius-pill:         999px;   /* CTAボタンなど完全な丸 */
+
+  /* ブレイクポイント（参考。@media では直接数値を使う） */
+  --woo-bp-sp:               768px;
+}
+
+/* ============================================================
+   レスポンシブの基本上書き（スマホ）
+   ============================================================ */
+@media (max-width: 768px) {
+  :root {
+    --woo-space-section: var(--woo-space-section-sp);
+    --woo-font-size-h2:  1.4rem;
+  }
+}
+
+/* ============================================================
+   ▼ ▼ ▼   style.css (メインスタイル)   ▼ ▼ ▼
+   ============================================================ */
+
+/* ============================================================
+   くつろぎサロン woo様｜求人LP メインスタイル
+   ------------------------------------------------------------
+   構成:
+     1. CSS変数の読み込み (variables.css)
+     2. リセット & ベース
+     3. 共通ユーティリティ (sr-only など)
+     4. CTAボタン (共通)
+     5. セクション1: FV (画像のみ・スッキリ路線)
+     6. 追従CTA (スクロールでフェードイン)
+     7. レスポンシブ調整
+   ============================================================ */
+
+
+/* ============================================================
+   2. リセット & ベース
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--woo-font-body);
+  font-size: var(--woo-font-size-base);
+  line-height: var(--woo-line-height-body);
+  color: var(--woo-color-text);
+  background: var(--woo-color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+/* ============================================================
+   3. 共通ユーティリティ
+   ============================================================ */
+
+/* 画面に表示しないがスクリーンリーダー・SEOには認識される (h1のSEO用) */
+.woo-lp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.woo-lp__wrap {
+  max-width: var(--woo-max-width);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ============================================================
+   4. CTAボタン (追従CTA + 他セクションで使い回す)
+   ============================================================ */
+.woo-lp-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--woo-font-body);
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+/* メインCTA: ゴールドのpill型 */
+.woo-lp-cta-btn--primary {
+  background: var(--woo-color-primary);
+  color: var(--woo-color-text-inverse);
+  font-size: 0.9rem;
+  padding: 14px 18px;
+  border-radius: var(--woo-radius);
+  box-shadow: var(--woo-shadow-cta);
+  letter-spacing: 0.02em;
+  line-height: 1.55;
+}
+
+/* ボタン内テキスト (長文を中央寄せで自然に折り返す) */
+.woo-lp-cta-btn__text {
+  text-align: center;
+  flex: 1;
+}
+
+.woo-lp-cta-btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--woo-shadow-cta-hover);
+}
+
+.woo-lp-cta-btn--primary:active {
+  transform: translateY(0);
+}
+
+/* 横幅いっぱい (追従CTAのスマホ表示用) */
+.woo-lp-cta-btn--full {
+  width: 100%;
+}
+
+/* CTAボタン内のLINEアイコン (吹き出し型) */
+.woo-lp-cta-btn__icon {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4v3l4-3h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z'/></svg>") center/contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4v3l4-3h8a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z'/></svg>") center/contain no-repeat;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   CTAボタン LINE化パッケージ (Luire案件からの横展開)
+   - .woo-lp-cta-line          : 追従CTA / 最終CTA 共通のベース
+   - .woo-lp-cta-line--sticky   : 追従CTA (画面下端)
+   - .woo-lp-cta-line--final    : 最終CTA (セクション10)
+   - .woo-lp-cta-line__notes    : 補足リスト
+   - woo様ブランドカラー(--woo-color-primary)は変更していない
+   ============================================================ */
+.woo-lp-cta-line {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 20px;
+  min-height: 60px;
+  background: var(--line-green);
+  color: #ffffff;
+  font-family: var(--woo-font-body);
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  border-radius: var(--woo-radius-pill);
+  box-shadow: var(--line-shadow-cta);
+  letter-spacing: 0.02em;
+  line-height: 1.55;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  cursor: pointer;
+}
+.woo-lp-cta-line:hover {
+  background: var(--line-green-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--line-shadow-cta-hover);
+  color: #ffffff;
+}
+.woo-lp-cta-line:active {
+  transform: translateY(0);
+}
+.woo-lp-cta-line__icon {
+  display: block;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+.woo-lp-cta-line__text {
+  flex: 1;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.woo-lp-cta-line--final {
+  width: auto;
+  padding: 18px 22px;
+  min-width: 280px;
+  max-width: 100%;
+  min-height: 76px;
+}
+.woo-lp-cta-line__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+.woo-lp-cta-line__main {
+  font-size: 1rem;
+  font-weight: 700;
+}
+.woo-lp-cta-line__sub {
+  font-size: 0.78rem;
+  font-weight: 500;
+  opacity: 0.94;
+  letter-spacing: 0.01em;
+}
+.woo-lp-cta-line--final .woo-lp-cta-line__icon {
+  width: 54px;
+  height: 54px;
+}
+.woo-lp-cta-line--sticky {
+  padding: 12px 16px;
+  min-height: 60px;
+}
+.woo-lp-cta-line--sticky .woo-lp-cta-line__icon {
+  width: 44px;
+  height: 44px;
+}
+.woo-lp-cta-line--sticky .woo-lp-cta-line__text {
+  font-size: 0.85rem;
+}
+.woo-lp-cta-line__notes {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 16px;
+}
+.woo-lp-cta-line__notes li {
+  position: relative;
+  padding-left: 18px;
+  font-family: var(--woo-font-body);
+  font-size: 0.78rem;
+  color: var(--woo-color-text-soft);
+  line-height: 1.6;
+}
+.woo-lp-cta-line__notes li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  transform: translateY(-50%);
+  background-color: var(--line-green);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' d='M5 12l5 5L20 7'/></svg>") center/contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='none' stroke='currentColor' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' d='M5 12l5 5L20 7'/></svg>") center/contain no-repeat;
+}
+@media (min-width: 768px) {
+  .woo-lp-cta-line--final {
+    padding: 22px 34px;
+    min-width: 340px;
+    min-height: 88px;
+  }
+  .woo-lp-cta-line--final .woo-lp-cta-line__icon {
+    width: 60px;
+    height: 60px;
+  }
+  .woo-lp-cta-line__main {
+    font-size: 1.15rem;
+  }
+  .woo-lp-cta-line__sub {
+    font-size: 0.88rem;
+  }
+  .woo-lp-cta-line--sticky {
+    padding: 14px 22px;
+    min-height: 64px;
+  }
+  .woo-lp-cta-line--sticky .woo-lp-cta-line__icon {
+    width: 48px;
+    height: 48px;
+  }
+  .woo-lp-cta-line--sticky .woo-lp-cta-line__text {
+    font-size: 0.95rem;
+  }
+  .woo-lp-cta-line__notes {
+    gap: 10px 22px;
+    margin-top: 20px;
+  }
+  .woo-lp-cta-line__notes li {
+    font-size: 0.85rem;
+    padding-left: 20px;
+  }
+  .woo-lp-cta-line__notes li::before {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* ============================================================
+   5. セクション1: FV (画像のみ・スッキリ路線)
+   ------------------------------------------------------------
+   - 画像内にすべてのコピーが含まれているため、HTMLテキストは
+     `.woo-lp-sr-only` のSEO用見出しのみ
+   - 画像は画面いっぱいに大きく表示
+   ============================================================ */
+.woo-lp-fv {
+  position: relative;
+  width: 100%;
+  background: var(--woo-color-bg);
+  overflow: hidden;
+}
+
+.woo-lp-fv__image {
+  width: 100%;
+  height: auto;
+  display: block;
+  /* 画像が届くまでのフォールバック背景 (プレースホルダーSVGがロード失敗した場合) */
+  background: linear-gradient(135deg,
+    var(--woo-color-primary-soft) 0%,
+    var(--woo-color-fv-light) 60%,
+    var(--woo-color-bg-cream) 100%);
+}
+
+/* 大画面では画像が巨大化しないよう中央寄せ + 上限幅 */
+@media (min-width: 1024px) {
+  .woo-lp-fv__image {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+
+/* ============================================================
+   セクション3: お悩み (画像のみ・FVと同じ方式)
+   ------------------------------------------------------------
+   - 画像内にすべてのコピー (見出し+5つのお悩み+結びの共感メッセージ) が含まれる
+   - HTMLテキストは sr-only の h2 のみ (SEO対策)
+   - 背景白でセクション2 (良い未来) からの自然な接続
+   ============================================================ */
+.woo-lp-worry {
+  position: relative;
+  width: 100%;
+  background: var(--woo-color-bg);
+  overflow: hidden;
+}
+
+.woo-lp-worry__image {
+  width: 100%;
+  height: auto;
+  display: block;
+  /* 画像が届くまでのフォールバック背景 (ベージュ系) */
+  background: linear-gradient(135deg,
+    var(--woo-color-bg-beige) 0%,
+    var(--woo-color-bg-soft) 60%,
+    var(--woo-color-bg-cream) 100%);
+}
+
+/* 大画面では中央寄せ + 上限幅 (FVと同じ挙動) */
+@media (min-width: 1024px) {
+  .woo-lp-worry__image {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+
+/* ============================================================
+   セクション4: 3つの解決策 (wooが選ばれる3つの理由)
+   ------------------------------------------------------------
+   - 背景: 淡いアイボリー (お悩みセクションからの自然な接続)
+   - カード: 白でアイボリー背景から軽く浮き上がる
+   - 番号: 大きく明朝・ゴールドで「章」のような重みを出す
+   - レイアウト: SP/PC 共通で 番号→見出し→画像→本文 の縦並び
+   ============================================================ */
+.woo-lp-solution {
+  padding: 64px 0;
+  background: var(--woo-color-bg-soft);
+}
+
+.woo-lp-solution__inner {
+  max-width: var(--woo-max-width);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.woo-lp-solution__list {
+  display: grid;
+  gap: 24px;
+}
+
+.woo-lp-solution__item {
+  background: var(--woo-color-bg);
+  border: 1px solid var(--woo-color-line);
+  border-radius: var(--woo-radius);
+  padding: 28px 24px;
+  position: relative;
+}
+
+/* 番号 (01 / 02 / 03) */
+.woo-lp-solution__number {
+  display: block;
+  font-family: var(--woo-font-display);
+  font-size: 2.6rem;
+  color: var(--woo-color-primary);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  margin-bottom: 14px;
+}
+
+/* 見出し */
+.woo-lp-solution__title {
+  font-family: var(--woo-font-display);
+  font-size: 1.2rem;
+  color: var(--woo-color-heading);
+  font-weight: 600;
+  line-height: 1.55;
+  margin-bottom: 20px;
+  letter-spacing: 0.01em;
+}
+
+/* 画像 (見出しの下・本文の上に配置) */
+.woo-lp-solution__image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--woo-radius);
+  box-shadow: 0 10px 24px rgba(88, 57, 10, 0.10);
+  margin-bottom: 22px;
+  /* フォールバック背景 (プレースホルダーSVGがロード失敗した場合) */
+  background: linear-gradient(135deg,
+    var(--woo-color-primary-soft) 0%,
+    var(--woo-color-fv-light) 60%,
+    var(--woo-color-bg-cream) 100%);
+}
+
+/* 本文 */
+.woo-lp-solution__text {
+  font-size: 0.93rem;
+  color: var(--woo-color-text);
+  line-height: 1.85;
+}
+
+.woo-lp-solution__text strong {
+  color: var(--woo-color-primary);
+  font-weight: 700;
+}
+
+/* PC: 各要素を一回り大きく + 余白を増やす (レイアウトは縦並びのまま) */
+@media (min-width: 768px) {
+  .woo-lp-solution {
+    padding: 96px 0;
+  }
+
+  .woo-lp-solution__list {
+    gap: 40px;
+  }
+
+  .woo-lp-solution__item {
+    padding: 44px 40px;
+  }
+
+  .woo-lp-solution__number {
+    font-size: 4rem;
+    margin-bottom: 18px;
+  }
+
+  .woo-lp-solution__title {
+    font-size: 1.35rem;
+    margin-bottom: 26px;
+  }
+
+  .woo-lp-solution__image {
+    margin-bottom: 28px;
+    box-shadow: 0 14px 30px rgba(88, 57, 10, 0.12);
+  }
+
+  .woo-lp-solution__text {
+    font-size: 1rem;
+  }
+}
+
+/* ============================================================
+   セクション5: 実績+スタッフの声 (Real Voices)
+   ------------------------------------------------------------
+   - 背景: 白 (ベージュ系セクション4とのリズム)
+   - ブロック1: 4つの実績数字グリッド (SP 2x2 / PC 4列)
+     - 数字は明朝ゴールド、単位は <small> で小さく
+   - ブロック2: スタッフの声 (中央寄せ・読みやすい幅・左にゴールド縦線で引用感)
+   ============================================================ */
+.woo-lp-stats-voice {
+  padding: 64px 0;
+  background: var(--woo-color-bg);
+}
+
+.woo-lp-stats-voice__inner {
+  max-width: var(--woo-max-width);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* === ブロック共通: サブ見出し === */
+.woo-lp-stats__title,
+.woo-lp-voice__heading {
+  font-family: var(--woo-font-display);
+  font-size: 1.15rem;
+  color: var(--woo-color-heading);
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 28px;
+  letter-spacing: 0.02em;
+}
+
+/* === YouTube動画埋め込み (スタッフの声セクション上部) === */
+.youtube-embed {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto 40px;
+  padding-bottom: 56.25%; /* 16:9 比率 */
+  height: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.youtube-embed iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* === ブロック1: 4つの実績数字 === */
+.woo-lp-stats {
+  margin-bottom: 64px;
+}
+
+.woo-lp-stats__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.woo-lp-stats__item {
+  background: var(--woo-color-bg-soft);
+  border: 1px solid var(--woo-color-line);
+  border-radius: var(--woo-radius);
+  padding: 24px 14px;
+  text-align: center;
+}
+
+.woo-lp-stats__value {
+  display: block;
+  font-family: var(--woo-font-display);
+  font-size: 2.4rem;
+  color: var(--woo-color-primary);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  margin-bottom: 12px;
+}
+
+/* 単位 (%以上 / 名 / 年以上 / 週間) は数字より小さく */
+.woo-lp-stats__value small {
+  font-size: 0.48em;
+  font-weight: 500;
+  margin: 0 1px;
+  letter-spacing: 0;
+}
+
+.woo-lp-stats__label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--woo-color-text);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+/* === ブロック2: 先輩スタッフの声 === */
+.woo-lp-voice__article {
+  background: var(--woo-color-bg-soft);
+  border: 1px solid var(--woo-color-line);
+  border-radius: var(--woo-radius);
+  padding: 30px 22px;
+}
+
+/* 2人目以降のカード上に余白を入れて区切り感を出す (隣接セレクタで先頭は除外) */
+.woo-lp-voice__article + .woo-lp-voice__article {
+  margin-top: 28px;
+}
+
+.woo-lp-voice__title {
+  font-family: var(--woo-font-display);
+  font-size: 1.15rem;
+  color: var(--woo-color-heading);
+  font-weight: 600;
+  line-height: 1.65;
+  text-align: center;
+  margin-bottom: 22px;
+  letter-spacing: 0.02em;
+}
+
+/* タイトルの長文を「、」など意味の区切れ目で自然に改行
+   - 各 span は塊として扱い、文中で勝手に折り返さない
+   - 画面幅が狭いと span と span の境目で改行される
+   - 画面幅に余裕がある場合は1行に収まる */
+.woo-lp-voice__title-part {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.woo-lp-voice__profile {
+  text-align: center;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--woo-color-line);
+}
+
+.woo-lp-voice__age {
+  font-size: 0.85rem;
+  color: var(--woo-color-text-soft);
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.woo-lp-voice__career {
+  font-size: 0.88rem;
+  color: var(--woo-color-text);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.woo-lp-voice__image {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  display: block;
+  margin: 0 auto 24px;
+  border-radius: var(--woo-radius);
+  box-shadow: 0 10px 24px rgba(88, 57, 10, 0.10);
+  background: linear-gradient(135deg,
+    var(--woo-color-primary-soft) 0%,
+    var(--woo-color-fv-light) 60%,
+    var(--woo-color-bg-cream) 100%);
+}
+
+/* 本文 */
+.woo-lp-voice__body {
+  padding-left: 0;
+}
+
+.woo-lp-voice__body p {
+  font-size: 0.93rem;
+  color: var(--woo-color-text);
+  line-height: 1.95;
+  margin-bottom: 1.2em;
+}
+
+.woo-lp-voice__body p:last-child {
+  margin-bottom: 0;
+}
+
+.woo-lp-voice__body strong {
+  color: var(--woo-color-primary);
+  font-weight: 700;
+}
+
+/* === レスポンシブ (768px以上) === */
+@media (min-width: 768px) {
+  .woo-lp-stats-voice {
+    padding: 96px 0;
+  }
+
+  .woo-lp-stats__title,
+  .woo-lp-voice__heading {
+    font-size: 1.3rem;
+    margin-bottom: 40px;
+  }
+
+  .woo-lp-stats {
+    margin-bottom: 96px;
+  }
+
+  .woo-lp-stats__grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .woo-lp-stats__item {
+    padding: 32px 14px;
+  }
+
+  .woo-lp-stats__value {
+    font-size: 3rem;
+  }
+
+  .woo-lp-stats__label {
+    font-size: 0.92rem;
+  }
+
+  /* スタッフの声カードは中央寄せ + 読みやすい幅 */
+  .woo-lp-voice__article {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 48px 40px;
+  }
+
+  /* PC: 2人目以降のカード上余白を広めに (SP より大きく) */
+  .woo-lp-voice__article + .woo-lp-voice__article {
+    margin-top: 40px;
+  }
+
+  .woo-lp-voice__title {
+    font-size: 1.4rem;
+    margin-bottom: 26px;
+  }
+
+  .woo-lp-voice__profile {
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+  }
+
+  .woo-lp-voice__image {
+    max-width: 360px;
+    margin-bottom: 32px;
+    box-shadow: 0 14px 30px rgba(88, 57, 10, 0.12);
+  }
+
+  .woo-lp-voice__body {
+    padding-left: 0;
+  }
+
+  .woo-lp-voice__body p {
+    font-size: 1rem;
+  }
+}
+
+/* ============================================================
+   セクション6A: 1日の流れ (A Day at woo)
+   セクション6B: 募集要項 (Job Details)
+   ------------------------------------------------------------
+   - 元は1セクション(2ブロック)だったが、それぞれ独立したセクションに分割
+   - 両セクション共通: 薄ベージュ背景、白テーブルカード
+   - 左列(時間/項目): 明朝・ゴールド、右列(内容): 丸ゴシック・茶
+   - ストライプなし・控えめな罫線でやわらかい印象に
+   ============================================================ */
+.woo-lp-schedule,
+.woo-lp-recruit {
+  padding: 64px 0;
+  background: var(--woo-color-bg-soft);
+}
+
+.woo-lp-schedule__inner,
+.woo-lp-recruit__inner {
+  max-width: var(--woo-max-width);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* 共通テーブル: 6A・6B 両セクションで使い回す */
+.woo-lp-info-table {
+  width: 100%;
+  background: var(--woo-color-bg);
+  border: 1px solid var(--woo-color-line);
+  border-radius: var(--woo-radius);
+  border-collapse: separate; /* border-radius を保つために collapse は避ける */
+  border-spacing: 0;
+  overflow: hidden; /* 角丸の内側を整える */
+  font-size: 0.93rem;
+}
+
+.woo-lp-info-table th,
+.woo-lp-info-table td {
+  padding: 16px 16px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--woo-color-line);
+}
+
+/* 最終行は罫線なし */
+.woo-lp-info-table tr:last-child th,
+.woo-lp-info-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* 左列: 明朝ゴールド + ごく薄い帯 */
+.woo-lp-info-table th {
+  font-family: var(--woo-font-display);
+  color: var(--woo-color-primary);
+  font-weight: 600;
+  width: 32%;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+  background: rgba(205, 172, 78, 0.05);
+}
+
+/* 右列: 丸ゴシック茶色 */
+.woo-lp-info-table td {
+  color: var(--woo-color-text);
+  line-height: 1.75;
+}
+
+/* 強調 (給与金額・「無料」「ほぼなし」など) */
+.woo-lp-info-table strong {
+  color: var(--woo-color-primary);
+  font-weight: 700;
+}
+
+/* td内の※印補足 (給与の各種手当・歩合給など)
+   - 本体より少し小さく・薄めの文字色で控えめに
+   - 3行縦並びで読みやすく */
+.woo-lp-info-table__notes {
+  margin: 10px 0 0;
+  font-size: 0.85em;
+  color: var(--woo-color-text-soft);
+  line-height: 1.7;
+  font-weight: 400;
+}
+
+/* ============================================================
+   福利厚生欄: 3カテゴリの小見出し+リスト構成
+   ------------------------------------------------------------
+   - 1つの td 内に「保険・手当」「健康スキル」「家族特典」の3ブロック
+   - SP: 1列の縦並び
+   - PC (768px+): 2列グリッド、3カテゴリ目は全幅で配置
+   - 小見出しは ◆ (薄ゴールド) + 明朝こげ茶
+   - 項目は ・ (ゴールド) + 通常テキスト、補足は <small> で薄く
+   ============================================================ */
+.woo-lp-benefit-cat {
+  margin-bottom: 16px;
+}
+
+.woo-lp-benefit-cat:last-child {
+  margin-bottom: 0;
+}
+
+/* カテゴリ小見出し: ◆ + 明朝こげ茶 */
+.woo-lp-benefit-cat__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--woo-font-display);
+  font-size: 0.95rem;
+  color: var(--woo-color-heading);
+  font-weight: 600;
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+
+.woo-lp-benefit-cat__mark {
+  font-size: 0.78em;
+  color: var(--woo-color-primary);
+  opacity: 0.9;
+}
+
+/* 項目リスト: ・ 区切りで簡潔に */
+.woo-lp-benefit-cat__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.woo-lp-benefit-cat__list li {
+  position: relative;
+  padding-left: 14px;
+  line-height: 1.75;
+}
+
+.woo-lp-benefit-cat__list li::before {
+  content: "・";
+  position: absolute;
+  left: 0;
+  color: var(--woo-color-primary);
+}
+
+/* 補足 (「単身者」「参加自由」など) */
+.woo-lp-benefit-cat__list small {
+  font-size: 0.82em;
+  color: var(--woo-color-text-soft);
+  margin-left: 2px;
+}
+
+/* === レスポンシブ (768px以上) === */
+@media (min-width: 768px) {
+  .woo-lp-schedule,
+  .woo-lp-recruit {
+    padding: 96px 0;
+  }
+
+  .woo-lp-info-table {
+    font-size: 1rem;
+  }
+
+  .woo-lp-info-table th,
+  .woo-lp-info-table td {
+    padding: 22px 28px;
+  }
+
+  .woo-lp-info-table th {
+    width: 28%;
+  }
+
+  /* PC: 福利厚生を2列レイアウト (カテゴリ3を全幅で整列) */
+  .woo-lp-info-table__benefits {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 28px;
+    row-gap: 14px;
+  }
+
+  .woo-lp-info-table__benefits .woo-lp-benefit-cat {
+    margin-bottom: 0;
+  }
+
+  .woo-lp-info-table__benefits .woo-lp-benefit-cat:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  .woo-lp-benefit-cat__heading {
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+}
+
+/* ============================================================
+   セクション7: オーナーメッセージ (Message from Owner)
+   ------------------------------------------------------------
+   - 背景: 白 (セクション6Bの薄ベージュとリズム)
+   - カード: 薄アイボリー + max 700px 中央寄せ
+   - 角に大きな「」を半透明ゴールドで配置 (引用感の演出)
+   - タイトル: 明朝大きめ、"くつろげる時間" 部分をゴールド強調
+   - 本文: 行間広め (line-height 2)、数字・キーワードをゴールド <strong>
+   - 署名: 右寄せ・明朝 (お手紙の差出人風)
+   ============================================================ */
+.woo-lp-owner {
+  padding: 64px 0;
+  background: var(--woo-color-bg);
+}
+
+.woo-lp-owner__inner {
+  max-width: var(--woo-max-width);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.woo-lp-owner__message {
+  position: relative;
+  max-width: 700px;
+  margin: 0 auto;
+  background: var(--woo-color-bg-soft);
+  border: 1px solid var(--woo-color-line);
+  border-radius: var(--woo-radius);
+  padding: 44px 24px;
+  overflow: hidden; /* 大きな「」が角の外にはみ出ないように */
+}
+
+/* 装飾用の「」(引用感) */
+.woo-lp-owner__quote {
+  position: absolute;
+  font-family: var(--woo-font-display);
+  font-size: 5rem;
+  color: var(--woo-color-primary);
+  line-height: 1;
+  font-weight: 600;
+  opacity: 0.28;
+  pointer-events: none;
+  user-select: none;
+}
+
+.woo-lp-owner__quote--open {
+  top: 4px;
+  left: 8px;
+}
+
+.woo-lp-owner__quote--close {
+  bottom: 4px;
+  right: 8px;
+}
+
+/* メッセージタイトル */
+.woo-lp-owner__title {
+  position: relative;
+  font-family: var(--woo-font-display);
+  font-size: 1.3rem;
+  color: var(--woo-color-heading);
+  font-weight: 600;
+  line-height: 1.75;
+  text-align: center;
+  margin-top: 24px;
+  margin-bottom: 24px;
+  letter-spacing: 0.02em;
+}
+
+/* タイトル内の "くつろげる時間" をゴールド強調 */
+.woo-lp-owner__title-em {
+  color: var(--woo-color-primary);
+  font-weight: 700;
+}
+
+/* プロフィール */
+.woo-lp-owner__profile {
+  position: relative;
+  text-align: center;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--woo-color-line);
+}
+
+/* オーナー写真 (縦長なので max-width で抑えて中央寄せ) */
+.woo-lp-owner__image {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  margin: 0 auto 28px;
+  border-radius: var(--woo-radius);
+  box-shadow: 0 10px 24px rgba(88, 57, 10, 0.10);
+  background: linear-gradient(135deg,
+    var(--woo-color-primary-soft) 0%,
+    var(--woo-color-fv-light) 60%,
+    var(--woo-color-bg-cream) 100%);
+}
+
+.woo-lp-owner__name {
+  font-family: var(--woo-font-display);
+  font-size: 1rem;
+  color: var(--woo-color-heading);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+/* プロフィール名: 「役職」と「氏名」を inline-block で塊として扱い、
+   画面幅に応じて間の半角スペースで自然に改行させる
+   - PC: 「くつろぎサロン woo オーナー 吉本 由紀」(1行)
+   - SP: 「くつろぎサロン woo オーナー / 吉本 由紀」(2行) */
+.woo-lp-owner__name-part {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.woo-lp-owner__meta {
+  font-size: 0.85rem;
+  color: var(--woo-color-text-soft);
+  letter-spacing: 0.06em;
+}
+
+/* 本文 */
+.woo-lp-owner__body {
+  position: relative;
+  margin-bottom: 28px;
+}
+
+.woo-lp-owner__body p {
+  font-size: 0.93rem;
+  color: var(--woo-color-text);
+  line-height: 2;
+  margin-bottom: 1.2em;
+}
+
+.woo-lp-owner__body p:last-child {
+  margin-bottom: 0;
+}
+
+.woo-lp-owner__body strong {
+  color: var(--woo-color-primary);
+  font-weight: 700;
+}
+
+/* 署名 (右寄せ・お手紙の差出人風) */
+.woo-lp-owner__signature {
+  position: relative;
+  text-align: right;
+  padding-top: 24px;
+  border-top: 1px solid var(--woo-color-line);
+}
+
+.woo-lp-owner__signature-name {
+  font-family: var(--woo-font-display);
+  font-size: 0.95rem;
+  color: var(--woo-color-heading);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+/* === レスポンシブ (768px以上) === */
+@media (min-width: 768px) {
+  .woo-lp-owner {
+    padding: 96px 0;
+  }
+
+  .woo-lp-owner__message {
+    padding: 64px 56px;
+  }
+
+  .woo-lp-owner__quote {
+    font-size: 7rem;
+  }
+
+  .woo-lp-owner__quote--open {
+    top: 10px;
+    left: 20px;
+  }
+
+  .woo-lp-owner__quote--close {
+    bottom: 10px;
+    right: 20px;
+  }
+
+  .woo-lp-owner__title {
+    font-size: 1.55rem;
+    margin-top: 32px;
+    margin-bottom: 32px;
+  }
+
+  .woo-lp-owner__profile {
+    margin-bottom: 36px;
+    padding-bottom: 32px;
+  }
+
+  .woo-lp-owner__name {
+    font-size: 1.05rem;
+  }
+
+  .woo-lp-owner__image {
+    max-width: 360px;
+    margin-bottom: 36px;
+    box-shadow: 0 14px 30px rgba(88, 57, 10, 0.12);
+  }
+
+  .woo-lp-owner__body {
+    margin-bottom: 36px;
+  }
+
+  .woo-lp-owner__body p {
+    font-size: 1rem;
+  }
+
+  .woo-lp-owner__signature {
+    padding-top: 32px;
+  }
+
+  .woo-lp-owner__signature-name {
+    font-size: 1.05rem;
+  }
+}
+
+/* ============================================================
+   セクション8: FAQ (よくあるご質問)
+   ------------------------------------------------------------
+   - 背景: 薄ベージュ (セクション7の白とリズム)
+   - <details>/<summary> でJavaScriptなしアコーディオン実装
+   - <details name="faq"> で他のFAQが開いたら自動で閉じる排他制御
+   - +/- アイコンは擬似要素で実装 (CSS transitionで滑らか開閉)
+   - 開いた時のフェードイン展開アニメーション
+   ============================================================ */
+.woo-lp-faq {
+  padding: 64px 0;
+  background: var(--woo-color-bg-soft);
+}
+
+.woo-lp-faq__inner {
+  max-width: var(--woo-max-width);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.woo-lp-faq__list {
+  display: grid;
+  gap: 12px;
+}
+
+/* 各FAQ項目 (details要素自体) */
+.woo-lp-faq__item {
+  background: var(--woo-color-bg);
+  border: 1px solid var(--woo-color-line);
+  border-radius: var(--woo-radius);
+  overflow: hidden;
+}
+
+/* ブラウザデフォルトの三角マーカーを隠す */
+.woo-lp-faq__item summary {
+  list-style: none;
+}
+.woo-lp-faq__item summary::-webkit-details-marker {
+  display: none;
+}
+
+/* 質問行 (タップで開閉) */
+.woo-lp-faq__question {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 20px;
+  cursor: pointer;
+  user-select: none;
+  font-family: var(--woo-font-display);
+  color: var(--woo-color-heading);
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  transition: background-color 0.2s ease;
+}
+
+.woo-lp-faq__question:hover {
+  background-color: rgba(205, 172, 78, 0.05);
+}
+
+/* Q. / A. マーク (共通: 明朝ゴールド) */
+.woo-lp-faq__mark {
+  flex-shrink: 0;
+  font-family: var(--woo-font-display);
+  color: var(--woo-color-primary);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+}
+
+/* 質問・回答の本文部分 (flex で残り幅を使う) */
+.woo-lp-faq__text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* +/- アイコン (右端) */
+.woo-lp-faq__icon {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.woo-lp-faq__icon::before,
+.woo-lp-faq__icon::after {
+  content: "";
+  position: absolute;
+  background: var(--woo-color-primary);
+  border-radius: 1px;
+}
+
+/* 横棒 (常に表示) */
+.woo-lp-faq__icon::before {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  transform: translateY(-50%);
+}
+
+/* 縦棒 (開いた時に消える) */
+.woo-lp-faq__icon::after {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* 開いた時: 縦棒を回転して消す → + が − に */
+.woo-lp-faq__item[open] .woo-lp-faq__icon::after {
+  transform: translateX(-50%) rotate(90deg);
+  opacity: 0;
+}
+
+/* 回答行 (本文は丸ゴシック) */
+.woo-lp-faq__answer {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 20px 22px;
+  border-top: 1px solid var(--woo-color-line);
+  font-family: var(--woo-font-body);
+  color: var(--woo-color-text);
+  font-size: 0.92rem;
+  line-height: 1.95;
+  animation: faq-expand 0.32s ease-out;
+}
+
+/* 回答内のキーワード強調 */
+.woo-lp-faq__answer strong {
+  color: var(--woo-color-primary);
+  font-weight: 700;
+}
+
+/* 開いた時のフェードイン展開 (CSS だけで滑らかに) */
+@keyframes faq-expand {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === レスポンシブ (768px以上) === */
+@media (min-width: 768px) {
+  .woo-lp-faq {
+    padding: 96px 0;
+  }
+
+  .woo-lp-faq__list {
+    gap: 14px;
+  }
+
+  .woo-lp-faq__question {
+    padding: 22px 28px;
+    gap: 16px;
+    font-size: 1.05rem;
+  }
+
+  .woo-lp-faq__mark {
+    font-size: 1.2rem;
+  }
+
+  .woo-lp-faq__icon {
+    margin-top: 7px;
+  }
+
+  .woo-lp-faq__answer {
+    padding: 22px 28px 28px;
+    gap: 16px;
+    font-size: 1rem;
+  }
+}
+
+/* ============================================================
+   セクション共通: ヘッダー (英文サブタイトル + 日本語見出し)
+   ------------------------------------------------------------
+   - デザイントーン統一方針に沿う共通部品
+   - 全セクションの見出しでこの構造を使う
+   ============================================================ */
+.woo-lp-section-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.woo-lp-section-header__sub {
+  display: block;
+  font-family: var(--woo-font-display);
+  font-size: 0.78rem;
+  color: var(--woo-color-primary);
+  letter-spacing: 0.3em;
+  font-weight: 500;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.woo-lp-section-header__heading {
+  font-family: var(--woo-font-display);
+  font-size: 1.55rem;
+  color: var(--woo-color-heading);
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   セクション2: 良い未来 (4カードグリッド)
+   ------------------------------------------------------------
+   - 背景: 白
+   - カード: 淡いアイボリーで温かみ
+   - アイコン: 薄ゴールド円 + ゴールドの線画SVG
+   - 数字は <strong> でゴールド強調
+   ============================================================ */
+.woo-lp-future {
+  /* SP: セクション上部を詰めて、FVから素早く視線が落ちるように (旧: 64px 0 → 32px 0 48px) */
+  padding: 32px 0 48px;
+  background: var(--woo-color-bg);
+}
+
+.woo-lp-future__inner {
+  max-width: var(--woo-max-width);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* セクション2のみ: 英文サブタイトル「Your Days at woo」を非表示 */
+.woo-lp-future .woo-lp-section-header__sub {
+  display: none;
+}
+
+/* セクション2のみ: サブタイトルがなくなった分、見出し下の余白を詰める */
+.woo-lp-future .woo-lp-section-header {
+  margin-bottom: 20px;
+}
+
+.woo-lp-future__grid {
+  display: grid;
+  /* SPから2列×2行。未経験者向けの4つの安心を一画面で把握できるようにする */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.woo-lp-future__card {
+  background: var(--woo-color-bg-soft);
+  border: 1px solid var(--woo-color-line);
+  border-radius: var(--woo-radius);
+  /* SP: カードを更にコンパクトに (旧: 22px 20px → 14px 18px) */
+  padding: 14px 18px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+/* ホバー: マウス操作の端末でのみ反応 (スマホで誤発火しない) */
+@media (hover: hover) {
+  .woo-lp-future__card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 28px rgba(88, 57, 10, 0.08);
+    border-color: var(--woo-color-primary-soft);
+  }
+}
+
+/* アイコン円 (SP: 56px → 44px に更に縮小、確実に中央寄せ) */
+.woo-lp-future__icon {
+  display: flex;                  /* inline-flex → flex で確実な中央寄せ */
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--woo-color-primary-soft);
+  color: var(--woo-color-primary);
+  margin: 0 auto 8px;             /* 左右 auto で完全中央 */
+}
+
+.woo-lp-future__icon svg {
+  /* SP: 28px → 22px に縮小 */
+  width: 22px;
+  height: 22px;
+}
+
+/* カード見出し (SP: 1.1rem → 1rem に縮小・margin詰め) */
+.woo-lp-future__card-title {
+  font-family: var(--woo-font-display);
+  font-size: 1rem;
+  color: var(--woo-color-heading);
+  font-weight: 600;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+/* カード本文 (SP: 0.9rem → 0.85rem に縮小・行間も詰める) */
+.woo-lp-future__card-body {
+  font-size: 0.85rem;
+  color: var(--woo-color-text);
+  line-height: 1.65;
+}
+
+/* 数字・キーワード強調 (ゴールド) */
+.woo-lp-future__card-body strong {
+  color: var(--woo-color-primary);
+  font-weight: 700;
+}
+
+/* ============================================================
+   レスポンシブ:
+   - SP (〜767px)        : 1カラム・最コンパクト (上で定義済み)
+   - タブレット (768〜1023px): 2カラム・余白広めで通常サイズ
+   - PC (1024px〜)        : 4カラム横並び
+   ============================================================ */
+@media (min-width: 768px) {
+  .woo-lp-future {
+    /* タブレット以上も上部余白を抑える (旧: 96px 0 → 64px 0 88px) */
+    padding: 64px 0 88px;
+  }
+
+  .woo-lp-section-header {
+    margin-bottom: 56px;
+  }
+
+  .woo-lp-section-header__sub {
+    font-size: 0.88rem;
+    margin-bottom: 16px;
+  }
+
+  .woo-lp-section-header__heading {
+    font-size: 2rem;
+  }
+
+  /* セクション2のみ: タブレット以上でも見出し下の余白を控えめに */
+  .woo-lp-future .woo-lp-section-header {
+    margin-bottom: 32px;
+  }
+
+  /* タブレット以上: 2カラム + 通常サイズに戻す */
+  .woo-lp-future__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .woo-lp-future__card {
+    padding: 36px 28px;
+  }
+
+  .woo-lp-future__icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+  }
+
+  .woo-lp-future__icon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .woo-lp-future__card-title {
+    font-size: 1.25rem;
+    margin-bottom: 10px;
+  }
+
+  .woo-lp-future__card-body {
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+}
+
+@media (min-width: 1024px) {
+  .woo-lp-future__grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .woo-lp-future__card {
+    padding: 36px 20px;
+  }
+}
+
+/* ============================================================
+   セクション9: 応募の流れ (タイムライン)
+   ------------------------------------------------------------
+   - 背景: 白 (セクション8の薄ベージュとリズム)
+   - 縦並びタイムライン (4ステップ)
+   - 左: ゴールド円バッジ (01〜04・明朝)
+   - 右: 白カード (ステップの説明)
+   - バッジ間: 薄ゴールドの縦線で「次のステップ」を視覚化
+   ============================================================ */
+.woo-lp-flow {
+  padding: 64px 0;
+  background: var(--woo-color-bg);
+}
+
+.woo-lp-flow__inner {
+  max-width: var(--woo-max-width);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* リード文 (見出しの下・タイムラインの上) */
+.woo-lp-flow__lead {
+  text-align: center;
+  font-family: var(--woo-font-body);
+  color: var(--woo-color-text);
+  font-size: 0.95rem;
+  line-height: 1.95;
+  margin: -8px 0 36px;
+}
+
+/* タイムライン全体 (ol) */
+.woo-lp-flow__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 20px;
+  position: relative;
+}
+
+/* 各ステップ (li) — 左バッジ + 右カードの2カラム */
+.woo-lp-flow__step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* バッジ間の縦線 (最後のステップだけ非表示) */
+.woo-lp-flow__step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 27px;            /* バッジ中央 (56/2 - 1) */
+  top: 56px;             /* バッジの直下から */
+  bottom: -20px;         /* 次のステップのバッジまで繋ぐ */
+  width: 2px;
+  background: var(--woo-color-primary-soft);
+  border-radius: 2px;
+}
+
+/* ゴールド円バッジ (番号) */
+.woo-lp-flow__badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--woo-color-primary);
+  color: var(--woo-color-text-inverse);
+  font-family: var(--woo-font-display);
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 14px rgba(205, 172, 78, 0.32);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+/* ステップの内容カード */
+.woo-lp-flow__card {
+  background: var(--woo-color-bg);
+  border: 1px solid var(--woo-color-line);
+  border-radius: var(--woo-radius);
+  padding: 18px 20px 20px;
+}
+
+.woo-lp-flow__heading {
+  font-family: var(--woo-font-display);
+  color: var(--woo-color-heading);
+  font-weight: 600;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin: 0 0 8px;
+}
+
+.woo-lp-flow__body {
+  font-family: var(--woo-font-body);
+  color: var(--woo-color-text);
+  font-size: 0.92rem;
+  line-height: 1.9;
+  margin: 0;
+}
+
+/* 本文内のキーワード強調 */
+.woo-lp-flow__body strong {
+  color: var(--woo-color-primary);
+  font-weight: 700;
+}
+
+/* === レスポンシブ (768px以上) === */
+@media (min-width: 768px) {
+  .woo-lp-flow {
+    padding: 96px 0;
+  }
+
+  .woo-lp-flow__lead {
+    font-size: 1rem;
+    margin: -12px 0 48px;
+  }
+
+  .woo-lp-flow__list {
+    gap: 28px;
+  }
+
+  .woo-lp-flow__step {
+    grid-template-columns: 72px 1fr;
+    gap: 24px;
+  }
+
+  /* PCではバッジが大きくなる分、縦線の位置も合わせる */
+  .woo-lp-flow__step:not(:last-child)::before {
+    left: 35px;          /* 72/2 - 1 */
+    top: 72px;
+    bottom: -28px;
+  }
+
+  .woo-lp-flow__badge {
+    width: 72px;
+    height: 72px;
+    font-size: 1.35rem;
+  }
+
+  .woo-lp-flow__card {
+    padding: 24px 28px 26px;
+  }
+
+  .woo-lp-flow__heading {
+    font-size: 1.2rem;
+    margin: 0 0 10px;
+  }
+
+  .woo-lp-flow__body {
+    font-size: 1rem;
+  }
+}
+
+/* ============================================================
+   セクション10: 最終CTA (LPの締めくくり)
+   ------------------------------------------------------------
+   - 背景: ベージュのグラデーション (特別感・余韻)
+   - 中央寄せ・ゆったりした余白
+   - 装飾: 上下に小さなゴールドの罫線アクセント (雑誌風)
+   - メイン見出し: 明朝、ゴールド強調パートあり
+     * SP: 3行 (各フレーズを <span> で改行)
+     * PC: 2行 (前2フレーズが横並び・強調パートだけ別行)
+   - CTAボタン: --large モディファイアで一回り大きく
+   - 署名: 明朝で「お手紙の差出人」風
+   ============================================================ */
+.woo-lp-final-cta {
+  position: relative;
+  padding: 80px 0 96px;
+  background: linear-gradient(180deg,
+    var(--woo-color-bg-soft) 0%,
+    var(--woo-color-bg-beige) 100%);
+  overflow: hidden;
+  text-align: center;
+}
+
+.woo-lp-final-cta__inner {
+  max-width: var(--woo-max-width);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* 上下の罫線アクセント (細い金色のライン + 小さなドット) */
+.woo-lp-final-cta__ornament {
+  display: block;
+  width: 56px;
+  height: 1px;
+  margin: 0 auto 28px;
+  background: var(--woo-color-primary);
+  opacity: 0.6;
+  position: relative;
+}
+
+.woo-lp-final-cta__ornament::before,
+.woo-lp-final-cta__ornament::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--woo-color-primary);
+  transform: translateY(-50%);
+}
+
+.woo-lp-final-cta__ornament::before {
+  left: -14px;
+}
+
+.woo-lp-final-cta__ornament::after {
+  right: -14px;
+}
+
+/* 下側のオーナメントは上に余白を持たせる */
+.woo-lp-final-cta__inner > .woo-lp-final-cta__ornament:last-child {
+  margin: 40px auto 0;
+}
+
+/* ヘッダー (英文サブ + 日本語見出し) */
+.woo-lp-final-cta__header {
+  margin-bottom: 28px;
+}
+
+.woo-lp-final-cta__sub {
+  display: block;
+  font-family: var(--woo-font-display);
+  font-size: 0.78rem;
+  color: var(--woo-color-primary);
+  letter-spacing: 0.3em;
+  font-weight: 500;
+  margin-bottom: 18px;
+  text-transform: uppercase;
+}
+
+/* メイン見出し */
+.woo-lp-final-cta__heading {
+  font-family: var(--woo-font-display);
+  color: var(--woo-color-heading);
+  font-weight: 600;
+  font-size: 1.4rem;
+  line-height: 1.75;
+  letter-spacing: 0.03em;
+  margin: 0;
+}
+
+/* SP: 各フレーズを別行に */
+.woo-lp-final-cta__phrase {
+  display: block;
+}
+
+/* 強調パート: 1歩踏み出してみませんか? */
+.woo-lp-final-cta__heading-em {
+  display: block;
+  color: var(--woo-color-primary);
+  font-weight: 600;
+  font-size: 1.55rem;
+  margin-top: 6px;
+  letter-spacing: 0.02em;
+}
+
+/* サブメッセージ (不安への寄り添い) */
+.woo-lp-final-cta__subtitle {
+  font-family: var(--woo-font-body);
+  color: var(--woo-color-text);
+  font-size: 0.92rem;
+  line-height: 2.05;
+  margin: 0 0 32px;
+}
+
+/* CTAボタンの中央寄せラッパー
+   - LINE化パッケージ適用後: ボタン + 補足リストを縦積み中央寄せ */
+.woo-lp-final-cta__btn-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+/* 締めの言葉 */
+.woo-lp-final-cta__closing {
+  font-family: var(--woo-font-display);
+  color: var(--woo-color-heading);
+  font-size: 1rem;
+  line-height: 1.8;
+  margin: 0 0 28px;
+  letter-spacing: 0.04em;
+}
+
+/* オーナーの署名 (お手紙の差出人風) */
+.woo-lp-final-cta__signature {
+  font-family: var(--woo-font-display);
+  color: var(--woo-color-text-soft);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  margin: 0;
+  letter-spacing: 0.06em;
+}
+
+/* ============================================================
+   最終CTA: 集合写真ブロック (社員旅行など職場の雰囲気写真)
+   ------------------------------------------------------------
+   - 画像は中央寄せ・角丸+薄影でアルバム写真風
+   - PCは max-width: 600px (主役のCTAより主張しない)
+   - SPは横幅100% (親 __inner の padding 20px が左右余白に)
+   - キャプションは右下・薄グレーで控えめ
+   ============================================================ */
+.woo-lp-final-cta__group-photo {
+  margin: 32px auto 0;
+  max-width: 600px;
+  width: 100%;
+  padding: 0;
+}
+
+.woo-lp-final-cta__group-photo-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(88, 57, 10, 0.15);
+}
+
+.woo-lp-final-cta__group-photo-caption {
+  margin-top: 6px;
+  text-align: right;
+  font-size: 12px;
+  color: #888;
+  font-family: var(--woo-font-body);
+  letter-spacing: 0.04em;
+}
+
+/* PC (768px+): 上余白を少し広げて主役のCTAから距離を取る */
+@media (min-width: 768px) {
+  .woo-lp-final-cta__group-photo {
+    margin-top: 44px;
+  }
+
+  .woo-lp-final-cta__group-photo-img {
+    border-radius: 12px;
+    box-shadow: 0 10px 24px rgba(88, 57, 10, 0.18);
+  }
+}
+
+/* ============================================================
+   大きめCTAボタン (--large モディファイア)
+   - 最終CTA専用。他セクションのボタンより一回り大きい
+   - 強調のためわずかに浮いた影
+   ============================================================ */
+.woo-lp-cta-btn--large {
+  font-size: 1rem;
+  padding: 18px 28px;
+  border-radius: var(--woo-radius-pill);
+  min-width: 280px;
+  box-shadow:
+    0 12px 28px rgba(205, 172, 78, 0.42),
+    0 2px 6px rgba(88, 57, 10, 0.12);
+}
+
+.woo-lp-cta-btn--large:hover {
+  box-shadow:
+    0 16px 34px rgba(205, 172, 78, 0.52),
+    0 2px 6px rgba(88, 57, 10, 0.12);
+}
+
+.woo-lp-cta-btn--large .woo-lp-cta-btn__icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* === レスポンシブ (768px以上) === */
+@media (min-width: 768px) {
+  .woo-lp-final-cta {
+    padding: 120px 0 132px;
+  }
+
+  .woo-lp-final-cta__ornament {
+    width: 72px;
+    margin-bottom: 36px;
+  }
+
+  .woo-lp-final-cta__inner > .woo-lp-final-cta__ornament:last-child {
+    margin: 56px auto 0;
+  }
+
+  .woo-lp-final-cta__header {
+    margin-bottom: 36px;
+  }
+
+  .woo-lp-final-cta__sub {
+    font-size: 0.88rem;
+    margin-bottom: 22px;
+  }
+
+  .woo-lp-final-cta__heading {
+    font-size: 1.85rem;
+    line-height: 1.75;
+  }
+
+  /* PC: 前2フレーズを横並びに */
+  .woo-lp-final-cta__phrase {
+    display: inline;
+  }
+
+  .woo-lp-final-cta__heading-em {
+    font-size: 2.1rem;
+    margin-top: 10px;
+  }
+
+  .woo-lp-final-cta__subtitle {
+    font-size: 1rem;
+    margin-bottom: 44px;
+  }
+
+  .woo-lp-final-cta__btn-wrap {
+    margin-bottom: 36px;
+  }
+
+  .woo-lp-final-cta__closing {
+    font-size: 1.1rem;
+    margin-bottom: 32px;
+  }
+
+  .woo-lp-final-cta__signature {
+    font-size: 0.95rem;
+  }
+
+  .woo-lp-cta-btn--large {
+    font-size: 1.1rem;
+    padding: 22px 40px;
+    min-width: 340px;
+  }
+}
+
+/* ============================================================
+   追従ヘッダーバー (FV通過後にフェードインで出現・テキスト中央)
+   ------------------------------------------------------------
+   - position: fixed で画面上端に固定
+   - 初期: 上にズラして opacity:0
+   - JSが scrollY > 600px で .is-visible 付与 → フェードイン
+   - 中身: テキスト2行のみ・中央寄せ (LINEボタンなし)
+   - SP/PC共通で表示動作、文字サイズだけ切替
+   ============================================================ */
+.woo-lp-sticky-header {
+  /* 表示・配置の基本 (SP/PC共通) */
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 9999;          /* 最前面 (Cocoonのモバイルメニュー等より上) */
+  background: var(--woo-color-bg);
+  border-bottom: 1px solid var(--woo-color-line);
+  box-shadow: 0 4px 12px rgba(88, 57, 10, 0.08);
+
+  /* 初期状態: 非表示 (上にズラした位置でフェードアウト) */
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* JSが付与する表示状態 */
+.woo-lp-sticky-header.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* バー表示中は body に padding-top を付与してコンテンツの被りを回避 */
+body.woo-lp-has-sticky {
+  padding-top: 48px;     /* SP: バー高さ目安 */
+  transition: padding-top 0.3s ease;
+}
+
+/* 内側コンテナ: テキストを中央寄せ */
+.woo-lp-sticky-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 9px 12px;               /* SP: 縦8-10 / 横10-16 */
+}
+
+/* テキスト2行を縦並び中央寄せ */
+.woo-lp-sticky-header__text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;                        /* 1行目と2行目の間: 2-4 */
+  text-align: center;
+  max-width: 100%;                 /* はみ出し防止 */
+}
+
+.woo-lp-sticky-header__catch {
+  font-family: var(--woo-font-body);
+  font-size: 0.68rem;              /* SP: ~10.9px (10-11px) */
+  color: var(--woo-color-text-soft);
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  white-space: nowrap;             /* 1行に収める */
+}
+
+.woo-lp-sticky-header__title {
+  font-family: var(--woo-font-display);
+  font-size: 0.88rem;              /* SP: ~14px (13-14px) */
+  font-weight: 700;
+  color: var(--woo-color-heading);
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* PC (768px〜): 文字一回り大きく・余白広め */
+@media (min-width: 768px) {
+  body.woo-lp-has-sticky {
+    padding-top: 56px;             /* PC: バー高さ目安 */
+  }
+
+  .woo-lp-sticky-header__inner {
+    padding: 12px 24px;
+  }
+
+  .woo-lp-sticky-header__catch {
+    font-size: 0.8rem;             /* PC: ~12.8px (12-13px) */
+  }
+
+  .woo-lp-sticky-header__title {
+    font-size: 1.1rem;             /* PC: ~17.6px (16-18px) */
+  }
+}
+
+/* ============================================================
+   6. 追従CTA (FVを通過したらフェードイン表示)
+   ------------------------------------------------------------
+   - position: fixed で画面下端に固定
+   - 初期状態は非表示 + 少し下にズラしている
+   - .is-visible が付くと opacity:1 + translateY(0) でフェードイン
+   - JSは main.js が制御 (IntersectionObserver)
+   ============================================================ */
+.woo-lp-sticky-cta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  padding: 12px 16px;
+  /* iPhone のホームインジケータ領域を避ける */
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(8px);
+          backdrop-filter: blur(8px);
+  border-top: 1px solid var(--woo-color-line);
+  box-shadow: 0 -8px 24px rgba(88, 57, 10, 0.10);
+
+  /* 初期状態: 非表示 (下にズラしてフェードアウト状態) */
+  opacity: 0;
+  transform: translateY(100%);
+  pointer-events: none;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+/* JSが付与する表示状態 */
+.woo-lp-sticky-cta.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* 中央寄せ + PCでは幅制限 */
+.woo-lp-sticky-cta__inner {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ボタン自体の浮き感を強める (追従CTA特有) */
+.woo-lp-sticky-cta .woo-lp-cta-btn--primary {
+  box-shadow:
+    0 10px 24px rgba(205, 172, 78, 0.42),
+    0 2px 6px rgba(88, 57, 10, 0.15);
+}
+
+.woo-lp-sticky-cta .woo-lp-cta-btn--primary:hover {
+  box-shadow:
+    0 14px 30px rgba(205, 172, 78, 0.52),
+    0 2px 6px rgba(88, 57, 10, 0.15);
+}
+
+/* ============================================================
+   7. レスポンシブ調整
+   ============================================================ */
+@media (min-width: 768px) {
+  /* 追従CTA: PCでは中央寄せ + 余白多め + ボタン幅もスマホより小さく */
+  .woo-lp-sticky-cta {
+    padding: 14px 24px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+
+  .woo-lp-sticky-cta__inner {
+    max-width: 480px;
+  }
+
+  .woo-lp-cta-btn--primary {
+    font-size: 1rem;
+    padding: 16px 26px;
+  }
+}
+
+/* ============================================================
+   LP専用ページ (page-id-12) の Cocoon装飾を非表示
+   ------------------------------------------------------------
+   - 対象: 求人LP固定ページ (URL の ?page_id=12 のページ)
+   - ヘッダー / フッター / サイドバー / シェアボタン / 関連記事 等を
+     **このページだけ** 非表示にして、LPを全画面で見せる
+   - 他のページ (トップ・ブログ等) には影響しない
+   - ページIDが変わった場合は .page-id-12 の "12" を書き換える
+   ============================================================ */
+
+/* ▼ ヘッダー・グローバルナビ ▼ */
+body.page-id-12 #header-container,
+body.page-id-12 #header,
+body.page-id-12 #navi,
+body.page-id-12 .navi-in {
+  display: none !important;
+}
+
+/* ▼ フッター・フッターナビ・モバイル下部固定ボタン ▼ */
+body.page-id-12 #footer-container,
+body.page-id-12 #footer,
+body.page-id-12 #navi-footer,
+body.page-id-12 .footer-mobile-buttons,
+body.page-id-12 .navi-footer-in {
+  display: none !important;
+}
+
+/* ▼ サイドバー (CSS でも保険として非表示) ▼ */
+body.page-id-12 #sidebar,
+body.page-id-12 .sidebar {
+  display: none !important;
+}
+
+/* ▼ シェアボタン・フォローボタン・関連記事・コメント・著者情報 ▼ */
+body.page-id-12 .sns-share,
+body.page-id-12 .sns-share-buttons,
+body.page-id-12 .sns-share-message,
+body.page-id-12 .sns-follow,
+body.page-id-12 .sns-follow-buttons,
+body.page-id-12 .related-entries,
+body.page-id-12 .comment-area,
+body.page-id-12 .comments,
+body.page-id-12 .author-info,
+body.page-id-12 .author-box {
+  display: none !important;
+}
+
+/* ▼ パンくず・記事タイトル・記事メタ情報 ▼ */
+body.page-id-12 .breadcrumb,
+body.page-id-12 .pankuzu,
+body.page-id-12 .entry-meta-info,
+body.page-id-12 .date-tags,
+body.page-id-12 .article-header,
+body.page-id-12 .entry-title,
+body.page-id-12 .page-title {
+  display: none !important;
+}
+
+/* ============================================================
+   ▼ Cocoonの2カラム構造を解除してLPを中央寄せ ▼
+   ------------------------------------------------------------
+   問題: サイドバーを display:none にしても、Cocoon は
+        「main + sidebar」の2カラム構造で main の幅を固定するため、
+        LP コンテンツが画面の左寄り or 右寄りになってしまう。
+   対策: #content-in の flex/grid を解除して block 化 →
+        .main を float:none / flex:1 / width:100% で全幅化 →
+        LP の __inner が画面中央に正しく寄るようにする
+   ============================================================ */
+
+/* ▼ 親コンテナの flex/grid を block 化 (2カラム構造を破棄) ▼ */
+body.page-id-12 #content-in,
+body.page-id-12 .content-in {
+  display: block !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+  max-width: none !important;
+  width: 100% !important;
+}
+
+/* ▼ メインコンテンツを全幅化・中央寄せ ▼ */
+body.page-id-12 #main,
+body.page-id-12 #content,
+body.page-id-12 .main {
+  padding: 0 !important;
+  margin: 0 auto !important;     /* 中央寄せ */
+  width: 100% !important;
+  max-width: none !important;
+  float: none !important;        /* Cocoonの float:left を解除 */
+  flex: 1 1 100% !important;     /* flex環境でも全幅 */
+}
+
+/* ▼ 記事本文ラッパーの余白・装飾をリセット ▼ */
+body.page-id-12 .article,
+body.page-id-12 article.article,
+body.page-id-12 .entry-content {
+  padding: 0 !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ▼ さらに外側のラッパーも全幅化 ▼ */
+body.page-id-12 #wrap,
+body.page-id-12 #container,
+body.page-id-12 .wrap {
+  padding: 0 !important;
+  margin: 0 auto !important;
+  max-width: none !important;
+  width: 100% !important;
+}
+
+/* ▼ 念のため body 自体の左右余白もリセット ▼ */
+body.page-id-12 {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ============================================================
+   ▼ 中央寄せの追加保険: Cocoon・Gutenbergのその他ラッパーもリセット ▼
+   ------------------------------------------------------------
+   左右の余白バランスが崩れる原因として、上記以外にも以下の
+   ラッパー要素が auto 中央寄せを邪魔している可能性がある。
+   すべて padding/margin の左右をリセットして 100% 幅で中央寄せ。
+   ============================================================ */
+body.page-id-12 .cf,
+body.page-id-12 .body,
+body.page-id-12 .body-l,
+body.page-id-12 .body-r,
+body.page-id-12 .page,
+body.page-id-12 .page-inner,
+body.page-id-12 .post-content,
+body.page-id-12 .wp-block-group,
+body.page-id-12 .wp-block-group__inner-container,
+body.page-id-12 .wp-block-html {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  max-width: none !important;
+  width: 100% !important;
+}
+
+/* ▼ LP の各セクション (.woo-lp-*) を確実に画面中央へ ▼ */
+body.page-id-12 [class^="woo-lp-"]__inner,
+body.page-id-12 [class*=" woo-lp-"][class$="__inner"] {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* ▼ セクションの背景はビューポート全幅、内側コンテンツは中央 ▼ */
+body.page-id-12 .woo-lp-fv,
+body.page-id-12 .woo-lp-future,
+body.page-id-12 .woo-lp-worry,
+body.page-id-12 .woo-lp-solution,
+body.page-id-12 .woo-lp-stats-voice,
+body.page-id-12 .woo-lp-schedule,
+body.page-id-12 .woo-lp-recruit,
+body.page-id-12 .woo-lp-owner,
+body.page-id-12 .woo-lp-faq,
+body.page-id-12 .woo-lp-flow,
+body.page-id-12 .woo-lp-final-cta {
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* ============================================================
+   ▼ 追従ヘッダーバーをスマホでも確実に表示 (Cocoon上書き対策) ▼
+   ------------------------------------------------------------
+   Cocoon のモバイル用CSSが `position: fixed` を `relative` に
+   上書きする・z-index が低く Cocoon メニュー等で隠れる・
+   親要素の transform/overflow:hidden で固定位置が壊れる
+   …といった事例への対策。
+   `body.page-id-12` スコープで強制的に固定+最前面化する。
+   ============================================================ */
+body.page-id-12 .woo-lp-sticky-header {
+  display: block !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  z-index: 9999 !important;
+  background: var(--woo-color-bg) !important;
+  border-bottom: 1px solid var(--woo-color-line) !important;
+  box-shadow: 0 4px 12px rgba(88, 57, 10, 0.08) !important;
+}
+
+/* JSが付与する表示状態 (スマホでも !important で確実に上書き) */
+body.page-id-12 .woo-lp-sticky-header.is-visible {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+}
+
+/* 内側 flex を強制 (Cocoonのリセットで display:block にされても上書き) */
+body.page-id-12 .woo-lp-sticky-header__inner {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* テキスト縦並び中央寄せを強制 */
+body.page-id-12 .woo-lp-sticky-header__text {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+
+    /* 未経験アイリスト採用LP：FVと不安セクションの再設計 */
+    .woo-lp-fv__dummy { width:100%; min-height:620px; background:#d6d6d6; }
+    .woo-lp-fv__image--team { display:block; width:100%; max-width:none; height:620px; object-fit:cover; object-position:center 46%; }
+    .woo-lp-fv__mobile-photo { display:none; }
+    .woo-lp-solution__placeholder { width:100%; min-height:230px; margin-bottom:22px; border-radius:var(--woo-radius); background:#d6d6d6; }
+    .woo-lp-fv__content { position:absolute; z-index:1; inset:0; width:min(1200px,100%); margin:auto; padding:clamp(38px,8vw,110px) clamp(24px,7vw,96px); display:flex; flex-direction:column; align-items:flex-start; justify-content:center; color:#4b3727; pointer-events:none; background:linear-gradient(90deg,rgba(255,253,251,.96) 0%,rgba(255,253,251,.85) 35%,rgba(255,253,251,.24) 64%,rgba(255,253,251,0) 100%); }
+    .woo-lp-fv__eyebrow,.woo-lp-worry__sub { margin:0 0 12px; color:#9a7045; font-size:.72rem; font-weight:700; letter-spacing:.16em; }
+    .woo-lp-fv__area-label { margin:0 0 13px; padding:8px 14px; border-radius:999px; background:#a66e51; color:#fffdfb; font-size:clamp(.72rem,1.3vw,.86rem); font-weight:700; letter-spacing:.12em; line-height:1; }
+    .woo-lp-fv__lead { margin:0 0 4px; font-family:var(--woo-font-display); font-size:clamp(1.05rem,2vw,1.45rem); }
+    .woo-lp-fv__content h2 { margin:0; font-family:var(--woo-font-display); font-size:clamp(2.45rem,6vw,5rem); line-height:1.22; letter-spacing:.04em; }
+    .woo-lp-fv__content h2 em { color:#a66e51; font-style:normal; }
+    .woo-lp-fv__copy { margin:18px 0 24px; font-size:clamp(.88rem,1.8vw,1.08rem); font-weight:500; line-height:1.8; }
+    .woo-lp-fv__proof { margin:14px 0 -6px; padding:8px 13px; border:1px solid rgba(166,110,81,.35); border-radius:999px; background:rgba(255,253,251,.8); color:#86563d; font-size:clamp(.75rem,1.5vw,.92rem); font-weight:700; line-height:1.4; }
+    .woo-lp-fv__cta { display:inline-flex; max-width:330px; padding:14px 22px; border-radius:999px; background:#24bd63; color:#fff; font-size:.9rem; font-weight:700; line-height:1.4; text-align:center; box-shadow:0 8px 18px rgba(25,111,57,.22); pointer-events:auto; }
+    .woo-lp-worry { padding:72px 20px; background:#f8f2ec; }
+    .woo-lp-worry__inner { max-width:760px; margin:auto; text-align:center; }
+    .woo-lp-worry h2 { margin:0 0 26px; font-family:var(--woo-font-display); font-size:clamp(1.65rem,4vw,2.3rem); color:var(--woo-color-heading); }
+    .woo-lp-worry__list { display:grid; gap:10px; margin:0; text-align:left; }
+    .woo-lp-worry__list li { padding:13px 16px 13px 42px; border:1px solid #eadace; border-radius:10px; background:#fffdfb; position:relative; font-size:.93rem; line-height:1.55; }
+    .woo-lp-worry__list li::before { content:'?'; position:absolute; left:14px; top:10px; width:21px; height:21px; border-radius:50%; background:#b78363; color:#fff; font-weight:700; line-height:21px; text-align:center; }
+    .woo-lp-worry__closing { margin:28px auto 0; max-width:650px; font-size:.96rem; line-height:1.9; }
+    .woo-lp-roadmap { padding:72px 20px; background:#fffdfb; }
+    .woo-lp-roadmap__inner { max-width:920px; margin:auto; }
+    .woo-lp-roadmap__lead { max-width:680px; margin:-6px auto 34px; text-align:center; line-height:1.9; }
+    .woo-lp-roadmap__list { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:0; padding:0; list-style:none; counter-reset:roadmap; }
+    .woo-lp-roadmap__item { position:relative; min-height:225px; padding:24px 18px 20px; border:1px solid #eadace; border-radius:12px; background:#fff; counter-increment:roadmap; }
+    .woo-lp-roadmap__item::before { content:"STEP " counter(roadmap, decimal-leading-zero); display:block; margin-bottom:12px; color:#a66e51; font-size:.7rem; font-weight:700; letter-spacing:.12em; }
+    .woo-lp-roadmap__item:not(:last-child)::after { content:"→"; position:absolute; z-index:1; top:50%; right:-13px; width:26px; height:26px; border-radius:50%; background:#b78363; color:#fff; font-weight:700; line-height:26px; text-align:center; transform:translateY(-50%); }
+    .woo-lp-roadmap__title { margin:0 0 12px; color:var(--woo-color-heading); font-family:var(--woo-font-display); font-size:1.07rem; line-height:1.5; }
+    .woo-lp-roadmap__text { margin:0; font-size:.88rem; line-height:1.75; }
+    .woo-lp-roadmap__note { max-width:700px; margin:22px auto 0; color:var(--woo-color-text-soft); font-size:.78rem; line-height:1.7; text-align:center; }
+    .woo-lp-gallery { padding:72px 20px; background:#f8f2ec; }
+    .woo-lp-gallery__inner { max-width:920px; margin:auto; }
+    .woo-lp-gallery__lead { max-width:640px; margin:-6px auto 30px; text-align:center; line-height:1.85; }
+    .woo-lp-gallery__grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:0; }
+    .woo-lp-gallery__item { overflow:hidden; margin:0; border-radius:12px; background:#e7ddd5; }
+    .woo-lp-gallery__item--wide { grid-column:1 / -1; }
+    .woo-lp-gallery__image { display:block; width:100%; height:255px; object-fit:cover; object-position:center; }
+    .woo-lp-gallery__item:not(.woo-lp-gallery__item--wide) .woo-lp-gallery__image { height:245px; }
+    .woo-lp-gallery__placeholder { display:flex; align-items:center; justify-content:center; width:100%; height:255px; background:#d6d6d6; color:#777; font-size:.78rem; letter-spacing:.05em; }
+    .woo-lp-gallery__item:not(.woo-lp-gallery__item--wide) .woo-lp-gallery__placeholder { height:245px; }
+    .woo-lp-gallery__caption { padding:10px 12px 12px; color:var(--woo-color-text); font-size:.78rem; line-height:1.55; }
+    .woo-lp-salary-simulation { padding:72px 20px; background:var(--woo-color-bg); }
+    .woo-lp-salary-simulation__inner { max-width:640px; margin:auto; }
+    .woo-lp-salary-simulation__lead { margin:-6px auto 26px; text-align:center; line-height:1.85; }
+    .woo-lp-salary-simulation__placeholder { display:flex; align-items:center; justify-content:center; width:min(100%,520px); aspect-ratio:4 / 5; margin:auto; border:1px solid var(--woo-color-line); border-radius:12px; background:#d6d6d6; color:#777; font-size:.83rem; letter-spacing:.06em; text-align:center; }
+    .woo-lp-final-cta__after-line { max-width:520px; margin:18px auto 0; color:var(--woo-color-text-soft); font-size:.85rem; line-height:1.75; text-align:center; }
+    @media (min-width:1024px) { .woo-lp-fv__dummy { min-height:760px; } .woo-lp-fv__image--team { height:760px; } }
+    html, body { overflow-x:clip; }
+    .woo-lp-voice__title-part { max-width:100%; overflow-wrap:anywhere; }
+    @media (min-width:701px) { .woo-lp-gallery__image,.woo-lp-gallery__placeholder { height:360px; } .woo-lp-gallery__item:not(.woo-lp-gallery__item--wide) .woo-lp-gallery__image,.woo-lp-gallery__item:not(.woo-lp-gallery__item--wide) .woo-lp-gallery__placeholder { height:310px; } }
+    @media (max-width:700px) { .woo-lp-roadmap { padding:60px 20px; } .woo-lp-roadmap__list { grid-template-columns:1fr; gap:14px; } .woo-lp-roadmap__item { min-height:0; padding:20px 18px; } .woo-lp-roadmap__item:not(:last-child)::after { top:auto; right:auto; bottom:-20px; left:50%; transform:translateX(-50%) rotate(90deg); } .woo-lp-gallery,.woo-lp-salary-simulation { padding:60px 20px; } }
+    /* スマホを基準に、コピーと写真を縦積みにする。写真を切り抜かずスタッフ全員を見せる。 */
+    @media (max-width:600px) {
+      body { padding-bottom:82px; }
+      .woo-lp__wrap { padding-right:18px; padding-left:18px; }
+      .woo-lp-fv { display:flex; flex-direction:column; background:#fffdf9; }
+      .woo-lp-fv__dummy { min-height:0; }
+      .woo-lp-fv__image--team { display:none; }
+      .woo-lp-fv__content { position:relative; inset:auto; width:100%; margin:0; padding:32px 20px 25px; align-items:flex-start; justify-content:flex-start; color:#4b3727; pointer-events:auto; background:#fffdf9; }
+      .woo-lp-fv__eyebrow { margin-bottom:10px; font-size:.75rem; }
+      .woo-lp-fv__area-label { margin-bottom:12px; font-size:.8rem; }
+      .woo-lp-fv__content h2 { font-size:clamp(2.12rem,10.2vw,2.48rem); line-height:1.28; }
+      .woo-lp-fv__copy { max-width:none; margin:13px 0 16px; font-size:.88rem; }
+      .woo-lp-fv__mobile-photo { display:block; width:100%; height:auto; margin:0 0 18px; border-radius:12px; }
+      .woo-lp-fv__proof { margin:0 0 13px; font-size:.74rem; }
+      .woo-lp-fv__cta { width:100%; max-width:none; justify-content:center; padding:13px 15px; font-size:.8rem; }
+    }
+    @media (min-width:601px) and (max-width:767px) { body { padding-bottom:82px; } }
+    @media (min-width:768px) { body { padding-bottom:0; } .woo-lp__wrap { padding-right:28px; padding-left:28px; } }
+  </style>
+</head>
+<body>
+<div class="woo-lp-sticky-header" id="stickyHeader" aria-hidden="true">
+    <div class="woo-lp-sticky-header__inner">
+      <div class="woo-lp-sticky-header__text">
+        <!-- ACF: sticky_header_catch -->
+        <span class="woo-lp-sticky-header__catch">未経験アイリストが安心してプロになれるサロン</span>
+        <!-- ACF: sticky_header_title -->
+        <span class="woo-lp-sticky-header__title">アイリスト１名募集中</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       ▼ セクション1：FV (ファーストビュー) ここから
+       方針: ヒーロー画像のみで構成 (画像内に全コピー含む)
+            HTMLテキストはSEO用のh1(sr-only)のみ
+       ========================================================= -->
+  <section class="woo-lp-fv" id="fv">
+
+    <!-- SEO用: Google・スクリーンリーダーには読まれるが画面には表示しない -->
+    <!-- ACF: fv_main_catch -->
+    <h1 class="woo-lp-sr-only">
+      プライベートも、美容の仕事も。くつろぎサロン woo アイデザイナー・脱毛スタッフ募集
+    </h1>
+
+    <!-- ACF: fv_hero_image -->
+    <img decoding="async" class="woo-lp-fv__image woo-lp-fv__image--team" src="assets/images/fv-staff-team.webp" alt="くつろぎサロン wooのスタッフ集合写真">
+    <div class="woo-lp-fv__content">
+      <p class="woo-lp-fv__eyebrow">HOFU / EYELIST RECRUIT</p>
+      <p class="woo-lp-fv__area-label">防府市のアイサロン求人</p>
+      <p class="woo-lp-fv__lead">美容師免許を活かして、</p>
+      <h2>未経験から<br><em>アイリストへ。</em></h2>
+      <p class="woo-lp-fv__copy">動画マニュアルと勤務中研修で、<br>一歩ずつデビューを目指せます。</p>
+      <img decoding="async" class="woo-lp-fv__mobile-photo" src="assets/images/fv-staff-team.webp" alt="くつろぎサロン wooのスタッフ集合写真">
+      <p class="woo-lp-fv__proof">現在のスタッフは、全員未経験で入社しています</p>
+      <!-- CLIENT CHECK: LINE登録後に求人説明動画を送る運用を確認してください。 -->
+      <a class="woo-lp-fv__cta" href="https://lin.ee/wQd2hTm">LINE登録して、求人説明動画を視聴する →</a>
+    </div>
+
+  </section>
+  <!-- ▲ セクション1：FV ここまで -->
+
+  <!-- =========================================================
+       ▼ セクション2: 良い未来 (こんな働き方が待っている) ここから
+       ========================================================= -->
+  <section class="woo-lp-future" id="future">
+    <div class="woo-lp-future__inner">
+
+      <header class="woo-lp-section-header">
+        <span class="woo-lp-section-header__sub">Why You Can Start at woo</span>
+        <!-- ACF: future_section_heading -->
+        <h2 class="woo-lp-section-header__heading">美容師免許をお持ちの方へ。<br>未経験から、アイリストを目指せます</h2>
+      </header>
+
+      <ul class="woo-lp-future__grid">
+
+        <!-- カード1: プライベートが守れる -->
+        <li class="woo-lp-future__card">
+          <span class="woo-lp-future__icon" aria-hidden="true">
+            <!-- ホーム + ハートのアイコン (家=プライベート、ハート=大切に守る) -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 11l9-8 9 8"></path>
+              <path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"></path>
+              <path d="M12 17.2s-2.6-1.5-2.6-3.3a1.6 1.6 0 0 1 2.6-1.2 1.6 1.6 0 0 1 2.6 1.2c0 1.8-2.6 3.3-2.6 3.3z"></path>
+            </svg>
+          </span>
+          <!-- ACF: future_card_01_heading -->
+          <h3 class="woo-lp-future__card-title">アイリスト経験は不問</h3>
+          <!-- ACF: future_card_01_body -->
+          <p class="woo-lp-future__card-body">必要なのは<strong>美容師免許</strong>です</p>
+        </li>
+
+        <!-- カード2: 1人のお客様に集中 -->
+        <li class="woo-lp-future__card">
+          <span class="woo-lp-future__icon" aria-hidden="true">
+            <!-- 人物 + ハートのアイコン (お客様一人に思いやりを) -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="3.5"></circle>
+              <path d="M5.5 20.5c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"></path>
+              <path d="M17.5 5.5s.5-1.2 1.6-1.2c1 0 1.6.8 1.6 1.6 0 1.3-1.6 2.5-1.6 2.5s-1.6-1.2-1.6-2.5c0-.8.5-1.4 0-0.4z" transform="translate(0.5 0)"></path>
+            </svg>
+          </span>
+          <!-- ACF: future_card_02_heading -->
+          <h3 class="woo-lp-future__card-title">現在のスタッフは全員未経験入社</h3>
+          <!-- ACF: future_card_02_body -->
+          <p class="woo-lp-future__card-body">だから、初めての不安を分かっています</p>
+        </li>
+
+        <!-- カード3: 自分も家族もキレイに -->
+        <li class="woo-lp-future__card">
+          <span class="woo-lp-future__icon" aria-hidden="true">
+            <!-- キラキラのアイコン (大小2つの輝き) -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 3l1.6 5.4L17 10l-5.4 1.6L10 17l-1.6-5.4L3 10l5.4-1.6z"></path>
+              <path d="M18 14l.6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6z"></path>
+            </svg>
+          </span>
+          <!-- ACF: future_card_03_heading -->
+          <h3 class="woo-lp-future__card-title">動画で何度でも復習</h3>
+          <!-- ACF: future_card_03_body -->
+          <p class="woo-lp-future__card-body">分からないまま進ませない学習環境</p>
+        </li>
+
+        <!-- カード4: 安定した収入 -->
+        <li class="woo-lp-future__card">
+          <span class="woo-lp-future__icon" aria-hidden="true">
+            <!-- コイン + 円マークのアイコン -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M9 8l3 4 3-4"></path>
+              <path d="M12 12v6"></path>
+              <path d="M9 14h6"></path>
+              <path d="M9 17h6"></path>
+            </svg>
+          </span>
+          <!-- ACF: future_card_04_heading -->
+          <h3 class="woo-lp-future__card-title">研修は勤務時間内</h3>
+          <!-- ACF: future_card_04_body -->
+          <p class="woo-lp-future__card-body">時間外練習に頼らず学べる</p>
+        </li>
+
+      </ul>
+
+    </div>
+  </section>
+  <!-- ▲ セクション2: 良い未来 ここまで -->
+
+
+  <!-- =========================================================
+       ▼ セクション3: お悩み ここから
+       方針: ヒーロー画像のみで構成 (画像内に全コピー含む)
+            HTMLテキストはSEO用のh2(sr-only)のみ
+       ========================================================= -->
+  <section class="woo-lp-worry" id="worry">
+
+    <!-- SEO用: 画面非表示・Googleには認識される -->
+    <!-- ACF: worry_seo_text -->
+    <div class="woo-lp-worry__inner">
+      <p class="woo-lp-worry__sub">FOR YOUR FIRST STEP</p>
+      <h2>こんな不安、ありませんか？</h2>
+      <ul class="woo-lp-worry__list">
+        <li>美容師免許はあるけれど、アイリスト経験はゼロ</li>
+        <li>手先に自信がなく、技術を覚えられるか心配</li>
+        <li>30代・40代から新しい技術に挑戦しても遅くないか不安</li>
+        <li>研修についていけず、置いていかれないか心配</li>
+        <li>子どもがいても新しい仕事に挑戦できるか不安</li>
+      </ul>
+      <p class="woo-lp-worry__closing">未経験だから不安なのは当然です。だからこそwooでは、<strong>できるようになる順番</strong>と、<strong>分からない時に相談できる環境</strong>を大切にしています。</p>
+    </div>
+
+  </section>
+  <!-- ▲ セクション3: お悩み ここまで -->
+
+  <!-- 未経験者向け: 早さよりも「できることを増やす順番」を示すロードマップ -->
+  <section class="woo-lp-roadmap" id="roadmap">
+    <div class="woo-lp-roadmap__inner">
+      <header class="woo-lp-section-header">
+        <span class="woo-lp-section-header__sub">Your Roadmap to Eyelist</span>
+        <h2 class="woo-lp-section-header__heading">焦らなくて大丈夫。<br>デビューまでのロードマップ</h2>
+      </header>
+      <p class="woo-lp-roadmap__lead">いきなりお客様の施術に入ることはありません。見学の段階から不安を確認し、基礎・練習・モデル施術を一つずつ積み重ねて、納得してからデビューを目指します。</p>
+      <ol class="woo-lp-roadmap__list">
+        <li class="woo-lp-roadmap__item">
+          <h3 class="woo-lp-roadmap__title">まずは知る・相談する</h3>
+          <p class="woo-lp-roadmap__text">LINEの求人説明動画と、見学・お仕事体験で、仕事内容や研修の進み方を確認します。</p>
+        </li>
+        <li class="woo-lp-roadmap__item">
+          <h3 class="woo-lp-roadmap__title">基礎を一つずつ身につける</h3>
+          <p class="woo-lp-roadmap__text">道具の扱い方から動画で確認。分からないところは先輩と見直し、できるまで繰り返します。</p>
+        </li>
+        <li class="woo-lp-roadmap__item">
+          <h3 class="woo-lp-roadmap__title">練習・モデル施術で自信をつける</h3>
+          <p class="woo-lp-roadmap__text">技術だけでなく、お客様への声かけや施術の流れも、確認を受けながら少しずつ経験します。</p>
+        </li>
+        <li class="woo-lp-roadmap__item">
+          <h3 class="woo-lp-roadmap__title">準備が整ってからデビュー</h3>
+          <p class="woo-lp-roadmap__text">できることを確認してからお客様へ。デビュー後も、一人で不安を抱え込まないようフォローします。</p>
+        </li>
+      </ol>
+      <p class="woo-lp-roadmap__note">※進み方や内容は、これまでの経験・習得ペース・勤務日数に合わせて異なります。無理に急がせることはありません。</p>
+    </div>
+  </section>
+
+
+  <!-- =========================================================
+       ▼ セクション4: 3つの解決策 (wooが選ばれる3つの理由) ここから
+       ========================================================= -->
+  <section class="woo-lp-solution" id="reasons">
+    <div class="woo-lp-solution__inner">
+
+      <header class="woo-lp-section-header">
+        <span class="woo-lp-section-header__sub">Training That Builds Confidence</span>
+        <!-- ACF: solution_section_heading -->
+        <h2 class="woo-lp-section-header__heading">一人で不安を抱え込まない、<br>3つの支え</h2>
+      </header>
+
+      <ol class="woo-lp-solution__list">
+
+        <!-- 解決策01: 余裕ある働き方 -->
+        <li class="woo-lp-solution__item">
+          <span class="woo-lp-solution__number" aria-hidden="true">01</span>
+          <!-- ACF: solution_01_heading -->
+          <h3 class="woo-lp-solution__title">先輩も全員、未経験からのスタート</h3>
+          <!-- ACF: solution_01_image -->
+          <img decoding="async" loading="lazy" class="woo-lp-solution__image" src="assets/images/training-mentor.jpeg" alt="先輩スタッフが未経験スタッフに施術を教えている様子">
+          <!-- ACF: solution_01_body -->
+          <p class="woo-lp-solution__text">現在いる先輩スタッフは<strong>全員、未経験入社</strong>です。だからこそ「分からない」をそのままにせず、基礎から確認しながら、あなたのペースで進めます。</p>
+        </li>
+
+        <!-- 解決策02: 動画での反復 -->
+        <li class="woo-lp-solution__item">
+          <span class="woo-lp-solution__number" aria-hidden="true">02</span>
+          <!-- ACF: solution_02_heading -->
+          <h3 class="woo-lp-solution__title">見て・練習して・振り返れる</h3>
+          <!-- ACF: solution_02_image -->
+          <!-- 仮画像: 素材到着前は _placeholder.svg にフォールバック -->
+          <img decoding="async" loading="lazy" class="woo-lp-solution__image" src="assets/images/training-practice.jpeg" alt="先輩の見守りのもと施術を練習するスタッフ">
+          <!-- ACF: solution_02_body -->
+          <p class="woo-lp-solution__text">全マニュアルを動画化。空き時間に見返せるので、口頭で聞いて終わりになりません。研修は<strong>勤務中</strong>に行い、困った時は先輩がフォローします。</p>
+        </li>
+
+        <!-- 解決策03: ライフステージ変化への対応 -->
+        <li class="woo-lp-solution__item">
+          <span class="woo-lp-solution__number" aria-hidden="true">03</span>
+          <!-- ACF: solution_03_heading -->
+          <h3 class="woo-lp-solution__title">生活と両立しながら続けられる</h3>
+          <!-- ACF: solution_03_image -->
+          <!-- 仮画像: 素材到着前は _placeholder.svg にフォールバック -->
+          <img decoding="async" loading="lazy" class="woo-lp-solution__image" src="assets/images/staff-team.jpeg" alt="くつろぎサロン wooで働くスタッフの集合写真">
+          <!-- ACF: solution_03_body -->
+          <p class="woo-lp-solution__text"><strong>18時閉店</strong>・残業ほぼゼロ・完全予約制。子育て中の方や、生活との両立を大切にしたい方も、働き方を相談しながら新しいキャリアを続けられます。</p>
+        </li>
+
+      </ol>
+
+    </div>
+  </section>
+  <!-- ▲ セクション4: 3つの解決策 ここまで -->
+
+  <!-- サロンの空気感を伝える実写ギャラリー -->
+  <section class="woo-lp-gallery" id="gallery">
+    <div class="woo-lp-gallery__inner">
+      <header class="woo-lp-section-header">
+        <span class="woo-lp-section-header__sub">Inside woo</span>
+        <h2 class="woo-lp-section-header__heading">サロンの雰囲気を、<br>写真で見る</h2>
+      </header>
+      <p class="woo-lp-gallery__lead">落ち着いた空間で、お客様にもスタッフにも寄り添う。<br>まずは、wooの日常の雰囲気を感じてみてください。</p>
+      <div class="woo-lp-gallery__grid">
+        <figure class="woo-lp-gallery__item woo-lp-gallery__item--wide">
+          <img decoding="async" loading="lazy" class="woo-lp-gallery__image" src="assets/images/salon-reception.jpeg" alt="くつろぎサロン wooの受付と店内">
+          <figcaption class="woo-lp-gallery__caption">落ち着いた空間で、お客様をお迎えします</figcaption>
+        </figure>
+        <figure class="woo-lp-gallery__item">
+          <img decoding="async" loading="lazy" class="woo-lp-gallery__image" src="assets/images/salon-treatment-space.jpeg" alt="くつろぎサロン wooの半個室の施術スペース">
+          <figcaption class="woo-lp-gallery__caption">ゆったり過ごせる半個室の施術スペース</figcaption>
+        </figure>
+        <figure class="woo-lp-gallery__item">
+          <img decoding="async" loading="lazy" class="woo-lp-gallery__image" src="assets/images/salon-team-welcome.jpeg" alt="くつろぎサロン wooのスタッフ集合写真">
+          <figcaption class="woo-lp-gallery__caption">スタッフ同士が声をかけ合える、あたたかな距離感</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- =========================================================
+       ▼ セクション5: 実績＋スタッフの声 (Real Voices) ここから
+       ========================================================= -->
+  <section class="woo-lp-stats-voice" id="numbers-voice">
+    <div class="woo-lp-stats-voice__inner">
+
+      <header class="woo-lp-section-header">
+        <span class="woo-lp-section-header__sub">Real Voices</span>
+        <!-- ACF: stats_voice_section_heading -->
+        <h2 class="woo-lp-section-header__heading">未経験からの一歩を、先輩の声で知る</h2>
+      </header>
+
+      <!-- ▼ ブロック1: 4つの実績数字 -->
+      <div class="woo-lp-stats">
+        <h3 class="woo-lp-stats__title">数字で見る、くつろぎサロン woo</h3>
+        <ul class="woo-lp-stats__grid">
+
+          <li class="woo-lp-stats__item">
+            <!-- ACF: stats_01_value -->
+            <span class="woo-lp-stats__value">90%<small>以上</small></span>
+            <!-- ACF: stats_01_label -->
+            <span class="woo-lp-stats__label">次回予約率</span>
+          </li>
+
+          <li class="woo-lp-stats__item">
+            <!-- ACF: stats_02_value -->
+            <span class="woo-lp-stats__value">全員</span>
+            <!-- ACF: stats_02_label -->
+            <span class="woo-lp-stats__label">現在のスタッフは未経験入社</span>
+          </li>
+
+          <li class="woo-lp-stats__item">
+            <!-- ACF: stats_03_value -->
+            <span class="woo-lp-stats__value">20<small>年以上</small></span>
+            <!-- ACF: stats_03_label -->
+            <span class="woo-lp-stats__label">オーナー経験</span>
+          </li>
+
+          <li class="woo-lp-stats__item">
+            <!-- ACF: stats_04_value -->
+            <span class="woo-lp-stats__value">一人<small>ひとり</small></span>
+            <!-- ACF: stats_04_label -->
+            <span class="woo-lp-stats__label">ペースに合わせた研修</span>
+          </li>
+
+        </ul>
+      </div>
+
+      <!-- ▼ ブロック2: 先輩スタッフの声 -->
+      <div class="woo-lp-voice">
+        <h3 class="woo-lp-voice__heading">先輩スタッフのキャリアストーリー</h3>
+
+        <!-- ▼ YouTube動画1: 働くスタッフの本音 -->
+        <div class="youtube-embed">
+          <div class="video-container"><div class="video"><iframe width="560" height="315" src="https://www.youtube.com/embed/gYjymIVvqII?si=_wGjQklcdWnwdyFf" title="求人説明動画 1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen=""></iframe></div></div>
+        </div>
+        <!-- ▲ YouTube動画1 ここまで -->
+
+        <!-- ▼ YouTube動画2: スタッフインタビュー -->
+        <div class="youtube-embed">
+          <div class="video-container"><div class="video"><iframe width="560" height="315" src="https://www.youtube.com/embed/Gh8KdA0xV3U?si=uMn4f1PTVjTSUwf6" title="求人説明動画 2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen=""></iframe></div></div>
+        </div>
+        <!-- ▲ YouTube動画2 ここまで -->
+
+        <article class="woo-lp-voice__article">
+
+          <!-- ACF: staff_voice_01_title -->
+          <h4 class="woo-lp-voice__title"><span class="woo-lp-voice__title-part">「美容師からアイリストへ。</span><span class="woo-lp-voice__title-part">新しい技術を身につけた先に見えたこと」</span></h4>
+
+          <!-- ACF: staff_voice_01_profile -->
+          <div class="woo-lp-voice__profile">
+            <p class="woo-lp-voice__age">20代 女性 / 2024年中途入社</p>
+            <p class="woo-lp-voice__career">美容師（スタイリスト）→ 保険会社事務 → アイリスト</p>
+          </div>
+
+          <!-- ACF: staff_voice_01_image -->
+          <!-- 仮画像: 素材到着前は _placeholder.svg にフォールバック -->
+          <img decoding="async" class="woo-lp-voice__image" src="assets/images/staff-voice-01.jpg" alt="先輩スタッフ（20代女性アイリスト）のインタビュー写真">
+
+          <!-- ACF: staff_voice_01_body -->
+          <div class="woo-lp-voice__body">
+            <p><strong>Before：</strong>美容師として働いていた頃は、まつ毛の施術は未経験。新しい技術を覚えられるか、最初は不安もありました。</p>
+            <p><strong>Training：</strong>動画で手順を繰り返し見返し、分からないところはその都度確認しながら、少しずつ練習を重ねました。</p>
+            <p><strong>After：</strong>今はアイリストとしてお客様に向き合いながら、できることを一つずつ増やしています。完全予約制なので、成長と自分の時間の両方を大切にできています。</p>
+            <p>「未経験だから」と止まるのではなく、まず相談してみることが最初の一歩になると思います。</p>
+          </div>
+
+        </article>
+
+        <!-- ▼ スタッフ2人目: 40代女性アイリスト・子育て中 -->
+        <article class="woo-lp-voice__article">
+
+          <!-- ACF: staff_voice_02_title -->
+          <h4 class="woo-lp-voice__title">保育園調理補助 <span aria-hidden="true">→</span> アイリストへの転身</h4>
+
+          <!-- ACF: staff_voice_02_profile -->
+          <div class="woo-lp-voice__profile">
+            <p class="woo-lp-voice__age">40代 女性 / 子育て中</p>
+            <p class="woo-lp-voice__career">保育園調理補助 → アイリスト</p>
+          </div>
+
+          <!-- ACF: staff_voice_02_image -->
+          <!-- 仮画像: 本番URL取得後 staff-voice-01 同様に検索置換 -->
+          <img decoding="async" class="woo-lp-voice__image" src="assets/images/staff-voice-02.jpg" alt="先輩スタッフ(40代女性アイリスト・子育て中)のインタビュー写真">
+
+          <!-- ACF: staff_voice_02_body -->
+          <div class="woo-lp-voice__body">
+            <p>子どもが3人いて習い事の送迎もありますが、<strong>週5日勤務</strong>でも<strong>時短勤務や早上がり</strong>に柔軟に対応してもらえて、とても助かっています。<strong>希望休や土日のお休み</strong>も相談しやすく、家庭と仕事を両立しながら安心して働ける環境です。</p>
+            <p>前職は保育園の調理補助を経験し、今は美容の仕事にやりがいを感じながら働いています。入社して感じた魅力は、自分の頑張りや成果を<strong>しっかり評価してもらえる</strong>こと。給与面はもちろん、努力がきちんと認められる環境が整っています。</p>
+            <p><strong>スタッフ同士の関係</strong>も良く、毎日楽しく仕事に向き合えるのも魅力のひとつです。</p>
+          </div>
+
+        </article>
+      </div>
+
+    </div>
+  </section>
+  <!-- ▲ セクション5: 実績＋スタッフの声 ここまで -->
+
+
+  <!-- =========================================================
+       ▼ セクション6A: 1日の流れ (A Day at woo) ここから
+       ========================================================= -->
+  <section class="woo-lp-schedule" id="schedule">
+    <div class="woo-lp-schedule__inner">
+
+      <header class="woo-lp-section-header">
+        <span class="woo-lp-section-header__sub">A Day for a Parent Staff Member</span>
+        <!-- ACF: schedule_section_heading -->
+        <h2 class="woo-lp-section-header__heading">子どもがいるスタッフの、ある1日</h2>
+      </header>
+
+      <p class="woo-lp-flow__lead">仕事も、子どもとの時間も。<br>1日を無理なく組み立てるイメージです。</p>
+
+      <!-- ACF: schedule_table (Phase 3 ではリピーターフィールド化) -->
+      <table class="woo-lp-info-table">
+        <tbody>
+          <tr>
+            <th scope="row">07:00</th>
+            <td>起床・朝食・子どもの準備</td>
+          </tr>
+          <tr>
+            <th scope="row">08:00</th>
+            <td>保育園・学校へ送り出し</td>
+          </tr>
+          <tr>
+            <th scope="row">08:30</th>
+            <td>出勤・開店準備</td>
+          </tr>
+          <tr>
+            <th scope="row">09:00</th>
+            <td>お客様の施術スタート</td>
+          </tr>
+          <tr>
+            <th scope="row">12:00</th>
+            <td>昼休憩</td>
+          </tr>
+          <tr>
+            <th scope="row">13:00</th>
+            <td>施術・空き時間に動画マニュアルで復習</td>
+          </tr>
+          <tr>
+            <th scope="row">18:00</th>
+            <td>片付け・退勤</td>
+          </tr>
+          <tr>
+            <th scope="row">18:30</th>
+            <td>お迎え・帰宅</td>
+          </tr>
+          <tr>
+            <th scope="row">19:00</th>
+            <td>夕食・家族との時間</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="woo-lp-info-table__notes">※時刻・送迎方法は、働き方やご家庭の状況により異なります。一例としてご覧ください。</p>
+
+    </div>
+  </section>
+  <!-- ▲ セクション6A: 1日の流れ ここまで -->
+
+
+  <!-- =========================================================
+       ▼ セクション6B: 募集要項 (Job Details) ここから
+       ========================================================= -->
+  <section class="woo-lp-recruit" id="requirements">
+    <div class="woo-lp-recruit__inner">
+
+      <header class="woo-lp-section-header">
+        <span class="woo-lp-section-header__sub">Job Details</span>
+        <!-- ACF: recruit_section_heading -->
+        <h2 class="woo-lp-section-header__heading">募集要項</h2>
+      </header>
+
+      <!-- ACF: recruit_terms_table (Phase 3 ではリピーターフィールド化) -->
+      <table class="woo-lp-info-table">
+        <tbody>
+          <tr>
+            <th scope="row">職種</th>
+            <td>アイリスト</td>
+          </tr>
+          <tr>
+            <th scope="row">応募資格</th>
+            <td><strong>美容師免許必須</strong><br>アイリスト経験は問いません。未経験から学びたい方を歓迎します。</td>
+          </tr>
+          <tr>
+            <th scope="row">給与</th>
+            <td>
+              ・週5日勤務／土日4日出勤 <strong>月給21万円〜</strong><br>
+              ・週5日勤務／土日5日以上出勤 <strong>月給23.5万円〜</strong>
+              <p class="woo-lp-info-table__notes">
+                ※各種手当別途支給<br>
+                ※歩合給は売上に応じて別途上乗せ<br>
+                ※入社初月から最低保証あり<br>
+                ※土日の出勤日数・勤務時間は、ご家庭や希望の働き方に合わせてご相談ください。給与条件は見学・面談時に丁寧にご説明します。
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">勤務時間</th>
+            <td>8:30〜18:00 (<strong>残業ほぼなし</strong>)</td>
+          </tr>
+          <tr>
+            <th scope="row">休日・休暇</th>
+            <td>
+              <strong>完全週休2日制</strong><br>
+              年末年始休暇 <strong>6日</strong><br>
+              夏季休暇 <strong>3日</strong><br>
+              有給休暇 (法定通り付与)
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">福利厚生</th>
+            <td class="woo-lp-info-table__benefits">
+              <!-- カテゴリ1: 保険・手当 (安心して働ける基盤) -->
+              <div class="woo-lp-benefit-cat">
+                <div class="woo-lp-benefit-cat__heading">
+                  <span class="woo-lp-benefit-cat__mark" aria-hidden="true">◆</span>保険・手当
+                </div>
+                <ul class="woo-lp-benefit-cat__list">
+                  <li>雇用保険</li>
+                  <li>社会保険</li>
+                  <li>労災</li>
+                  <li>通勤手当</li>
+                  <li>住宅手当<small>(単身者)</small></li>
+                </ul>
+              </div>
+
+              <!-- カテゴリ2: 健康・スキルアップ -->
+              <div class="woo-lp-benefit-cat">
+                <div class="woo-lp-benefit-cat__heading">
+                  <span class="woo-lp-benefit-cat__mark" aria-hidden="true">◆</span>健康・スキルアップ
+                </div>
+                <ul class="woo-lp-benefit-cat__list">
+                  <li>健康診断</li>
+                  <li>商品社割購入</li>
+                </ul>
+              </div>
+
+              <!-- カテゴリ3: 自分と家族への特典 -->
+              <div class="woo-lp-benefit-cat">
+                <div class="woo-lp-benefit-cat__heading">
+                  <span class="woo-lp-benefit-cat__mark" aria-hidden="true">◆</span>自分と家族への特典
+                </div>
+                <ul class="woo-lp-benefit-cat__list">
+                  <li>施術料<strong>無料</strong></li>
+                  <li>家族の施術<strong>無料</strong></li>
+                  <li>食事会<small>(参加自由)</small></li>
+                  <li>社員旅行<small>(参加自由)</small></li>
+                </ul>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </section>
+  <!-- ▲ セクション6B: 募集要項 ここまで -->
+
+
+  <!-- 給与シミュレーション画像の差し替え枠 -->
+  <section class="woo-lp-salary-simulation" id="salary-simulation">
+    <div class="woo-lp-salary-simulation__inner">
+      <header class="woo-lp-section-header">
+        <span class="woo-lp-section-header__sub">Salary Simulation</span>
+        <h2 class="woo-lp-section-header__heading">働き方別の<br>給与シミュレーション</h2>
+      </header>
+      <p class="woo-lp-salary-simulation__lead">土日の出勤日数や働き方による給与の目安を、画像で分かりやすくご案内します。</p>
+      <!-- 生成した給与シミュレーション画像に差し替え -->
+      <div class="woo-lp-salary-simulation__placeholder" role="img" aria-label="給与シミュレーション画像のプレースホルダー">SALARY SIMULATION<br>IMAGE</div>
+    </div>
+  </section>
+
+
+  <!-- =========================================================
+       ▼ セクション7: オーナーメッセージ (Message from Owner) ここから
+       ========================================================= -->
+  <section class="woo-lp-owner" id="owner">
+    <div class="woo-lp-owner__inner">
+
+      <header class="woo-lp-section-header">
+        <span class="woo-lp-section-header__sub">Message from Owner</span>
+        <!-- ACF: owner_section_heading -->
+        <h2 class="woo-lp-section-header__heading">未経験だけど<br>私もアイリストになりたいとおもっているあなたへ</h2>
+      </header>
+
+      <article class="woo-lp-owner__message">
+
+        <!-- 装飾の「」(引用感を出すため) -->
+        <span class="woo-lp-owner__quote woo-lp-owner__quote--open" aria-hidden="true">「</span>
+
+        <!-- ACF: owner_message_title -->
+        <h3 class="woo-lp-owner__title">未経験の不安を知っているから、<span class="woo-lp-owner__title-em">最初の一歩から一緒に確認します</span></h3>
+
+        <!-- ACF: owner_message_profile -->
+        <div class="woo-lp-owner__profile">
+          <p class="woo-lp-owner__name"><span class="woo-lp-owner__name-part">くつろぎサロン woo オーナー</span> <span class="woo-lp-owner__name-part">吉本 由紀</span></p>
+          <p class="woo-lp-owner__meta">アイリスト経験20年以上 / 未経験者の育成に関わってきました</p>
+        </div>
+
+        <!-- ACF: owner_image -->
+        <img decoding="async" class="woo-lp-owner__image" src="assets/images/owner-yoshimoto.jpg" alt="くつろぎサロン woo オーナー・吉本 由紀さんのお写真">
+
+        <!-- ACF: owner_message_body -->
+        <!-- CLIENT CHECK: 未経験者向けの仮原稿です。研修内容・育成実績の表現は公開前にご確認ください。 -->
+        <div class="woo-lp-owner__body">
+          <p>「美容師免許はあるけれど、アイリストの経験はない」「細かな技術を覚えられるか心配」——その不安を抱えたまま、応募を急がなくて大丈夫です。<strong>今いるスタッフは全員、未経験で入社しました。</strong>まずは仕事のこと、研修のこと、今の暮らしと両立できるかを、一つずつ知ってください。</p>
+          <p>wooでは、早くデビューすることよりも、<strong>できることを積み重ねて自信を持つこと</strong>を大切にしています。動画で確認し、練習し、分からないところは先輩と見直す。あなたの理解度や生活に合わせて、無理なく前に進めるように支えます。</p>
+          <p>完全予約制・半個室の環境だから、落ち着いてお客様に向き合えます。未経験から新しい仕事を始める時こそ、技術だけでなく「ここなら相談できそう」と思える人や場所が必要です。見学やお仕事体験で、まずはその雰囲気を感じてみてください。</p>
+        </div>
+
+        <span class="woo-lp-owner__quote woo-lp-owner__quote--close" aria-hidden="true">」</span>
+
+      </article>
+
+    </div>
+  </section>
+  <!-- ▲ セクション7: オーナーメッセージ ここまで -->
+
+
+  <!-- =========================================================
+       ▼ セクション8: FAQ (よくあるご質問) ここから
+       <details name="faq"> で他のFAQが開いたら自動で閉じる排他制御
+       ========================================================= -->
+  <section class="woo-lp-faq" id="faq">
+    <div class="woo-lp-faq__inner">
+
+      <header class="woo-lp-section-header">
+        <span class="woo-lp-section-header__sub">FAQ</span>
+        <!-- ACF: faq_section_heading -->
+        <h2 class="woo-lp-section-header__heading">よくあるご質問</h2>
+      </header>
+
+      <div class="woo-lp-faq__list">
+
+        <!-- Q1: 未経験デビュー -->
+        <details class="woo-lp-faq__item" name="faq">
+          <summary class="woo-lp-faq__question">
+            <span class="woo-lp-faq__mark">Q.</span>
+            <!-- ACF: faq_01_question -->
+            <span class="woo-lp-faq__text">未経験でもアイリストを目指せますか？技術についていけるか不安です。</span>
+            <span class="woo-lp-faq__icon" aria-hidden="true"></span>
+          </summary>
+          <div class="woo-lp-faq__answer">
+            <span class="woo-lp-faq__mark">A.</span>
+            <!-- ACF: faq_01_answer -->
+            <p class="woo-lp-faq__text">はい。美容師免許をお持ちであれば、アイリスト経験は問いません。現在のスタッフも<strong>全員、未経験で入社</strong>しています。動画マニュアルで予習・復習をし、基礎・練習・モデル施術を順番に確認してからデビューを目指します。進み方は一人ひとり異なるため、無理に急がせることはありません。困った時は先輩に相談しながら進められます。</p>
+          </div>
+        </details>
+
+        <!-- Q2: ブランク -->
+        <details class="woo-lp-faq__item" name="faq">
+          <summary class="woo-lp-faq__question">
+            <span class="woo-lp-faq__mark">Q.</span>
+            <!-- ACF: faq_02_question -->
+            <span class="woo-lp-faq__text">ブランクが長いのですが、応募しても大丈夫でしょうか？</span>
+            <span class="woo-lp-faq__icon" aria-hidden="true"></span>
+          </summary>
+          <div class="woo-lp-faq__answer">
+            <span class="woo-lp-faq__mark">A.</span>
+            <!-- ACF: faq_02_answer -->
+            <p class="woo-lp-faq__text">大丈夫です。スタッフの中には、一度業界を離れて他業種で働いたあと、wooで再スタートした方もいます。ブランクの長さよりも「お客様と長く向き合いたい」という気持ちを大切にしているサロンです。</p>
+          </div>
+        </details>
+
+        <!-- Q3: 子育て・土日 -->
+        <details class="woo-lp-faq__item" name="faq">
+          <summary class="woo-lp-faq__question">
+            <span class="woo-lp-faq__mark">Q.</span>
+            <!-- ACF: faq_03_question -->
+            <span class="woo-lp-faq__text">子育て中で土日にあまり入れないのですが、それでも採用してもらえますか？</span>
+            <span class="woo-lp-faq__icon" aria-hidden="true"></span>
+          </summary>
+          <div class="woo-lp-faq__answer">
+            <span class="woo-lp-faq__mark">A.</span>
+            <!-- ACF: faq_03_answer -->
+            <p class="woo-lp-faq__text">採用しています。土日の出勤日数は相談可能で、主婦のスタッフも多数活躍中です。「家庭優先で働きたい」気持ちを尊重する職場なので、面接時にご希望をお聞かせください。</p>
+          </div>
+        </details>
+
+        <!-- Q4: 時短社員・パート勤務 (新規追加) -->
+        <details class="woo-lp-faq__item" name="faq">
+          <summary class="woo-lp-faq__question">
+            <span class="woo-lp-faq__mark">Q.</span>
+            <!-- ACF: faq_04_question -->
+            <span class="woo-lp-faq__text">正社員だけではなく、時短社員やパート勤務も募集していますか？</span>
+            <span class="woo-lp-faq__icon" aria-hidden="true"></span>
+          </summary>
+          <div class="woo-lp-faq__answer">
+            <span class="woo-lp-faq__mark">A.</span>
+            <!-- ACF: faq_04_answer -->
+            <p class="woo-lp-faq__text">はい、募集しております。当店では時短社員やパートのママさんスタッフが多数活躍しており、それぞれのライフスタイルに合わせて働いています。皆様が今以上に働きやすい環境をご提供できればと思っております。</p>
+          </div>
+        </details>
+
+        <!-- Q5: 給与・歩合 (旧Q4) -->
+        <details class="woo-lp-faq__item" name="faq">
+          <summary class="woo-lp-faq__question">
+            <span class="woo-lp-faq__mark">Q.</span>
+            <!-- ACF: faq_05_question -->
+            <span class="woo-lp-faq__text">お給料はいつから歩合給がつきますか？最初は少ない月収になりますか？</span>
+            <span class="woo-lp-faq__icon" aria-hidden="true"></span>
+          </summary>
+          <div class="woo-lp-faq__answer">
+            <span class="woo-lp-faq__mark">A.</span>
+            <!-- ACF: faq_05_answer -->
+            <p class="woo-lp-faq__text">入社初月から<strong>月給21万円〜</strong>保証。<br>働き方に合わせて休日も相談できます。<br>歩合給は売上に応じて上乗せされる仕組みで、技術が身につくほど収入が伸びていきます。最初の月から最低保証があるので、生活面のご心配はいりません。</p>
+          </div>
+        </details>
+
+        <!-- Q6: 人間関係・雰囲気 (旧Q5) -->
+        <details class="woo-lp-faq__item" name="faq">
+          <summary class="woo-lp-faq__question">
+            <span class="woo-lp-faq__mark">Q.</span>
+            <!-- ACF: faq_06_question -->
+            <span class="woo-lp-faq__text">「人間関係に疲れて転職」したいのですが、職場の雰囲気は本当に良いですか？</span>
+            <span class="woo-lp-faq__icon" aria-hidden="true"></span>
+          </summary>
+          <div class="woo-lp-faq__answer">
+            <span class="woo-lp-faq__mark">A.</span>
+            <!-- ACF: faq_06_answer -->
+            <p class="woo-lp-faq__text">採用時に「お客様にもスタッフにも、<strong>思いやり</strong>を持って向き合える人かどうか」を最も重視しているため、穏やかで協力的なスタッフが集まっています。<strong>半個室</strong>なので個人の作業空間も確保されており、ピリピリした雰囲気はありません。気になる方は、<strong>見学</strong>だけでもお越しください。</p>
+          </div>
+        </details>
+
+        <!-- Q7: 見学 (旧Q6) -->
+        <details class="woo-lp-faq__item" name="faq">
+          <summary class="woo-lp-faq__question">
+            <span class="woo-lp-faq__mark">Q.</span>
+            <!-- ACF: faq_07_question -->
+            <span class="woo-lp-faq__text">応募前に職場の雰囲気を見ることはできますか？</span>
+            <span class="woo-lp-faq__icon" aria-hidden="true"></span>
+          </summary>
+          <div class="woo-lp-faq__answer">
+            <span class="woo-lp-faq__mark">A.</span>
+            <!-- ACF: faq_07_answer -->
+            <p class="woo-lp-faq__text">はい、いつでもご<strong>見学</strong>いただけます。「いきなり応募はちょっと…」という方も多いので、まずは店内を見て、スタッフの働き方を肌で感じていただくことをおすすめしています。LINEからお気軽にご連絡ください。</p>
+          </div>
+        </details>
+
+      </div>
+
+    </div>
+  </section>
+  <!-- ▲ セクション8: FAQ ここまで -->
+
+
+  <!-- ▼ セクション9: 応募の流れ ここから -->
+  <section class="woo-lp-flow" id="flow">
+    <div class="woo-lp-flow__inner">
+
+      <header class="woo-lp-section-header">
+        <span class="woo-lp-section-header__sub">Application Flow</span>
+        <!-- ACF: flow_section_heading -->
+        <h2 class="woo-lp-section-header__heading">応募から入社までの流れ</h2>
+      </header>
+
+      <!-- リードテキスト (「いきなり応募は…」という不安を解消) -->
+      <p class="woo-lp-flow__lead">
+        <!-- ACF: flow_lead_text -->
+        まずは求人説明動画で、仕事内容や研修の流れを確認。<br>
+        そのあと見学・お仕事体験を選べます。
+      </p>
+
+      <!-- タイムライン (ol で順序を意味づけ) -->
+      <ol class="woo-lp-flow__list">
+
+        <!-- CLIENT CHECK: LINEでの動画配信と見学・お仕事体験の受付運用を確認してください。 -->
+        <!-- STEP 1: 求人説明動画 -->
+        <li class="woo-lp-flow__step">
+          <span class="woo-lp-flow__badge" aria-hidden="true">01</span>
+          <div class="woo-lp-flow__card">
+            <!-- ACF: flow_step_01_heading -->
+            <h3 class="woo-lp-flow__heading">LINE登録・求人説明動画を視聴</h3>
+            <!-- ACF: flow_step_01_body -->
+            <p class="woo-lp-flow__body">
+              登録後、まずは求人説明動画で仕事内容・研修・働き方を確認します。<strong>応募前の質問だけ</strong>でも大丈夫です。
+            </p>
+          </div>
+        </li>
+
+        <!-- STEP 2: 店舗見学・お仕事体験 -->
+        <li class="woo-lp-flow__step">
+          <span class="woo-lp-flow__badge" aria-hidden="true">02</span>
+          <div class="woo-lp-flow__card">
+            <!-- ACF: flow_step_02_heading -->
+            <h3 class="woo-lp-flow__heading">サロン見学＋お仕事体験</h3>
+            <!-- ACF: flow_step_02_body -->
+            <p class="woo-lp-flow__body">
+              サロンの雰囲気や働くスタッフを見て、未経験から学ぶイメージを具体的にします。<strong>待遇や働き方</strong>もここでご説明します。
+            </p>
+          </div>
+        </li>
+
+        <!-- STEP 3: 応募について話す -->
+        <li class="woo-lp-flow__step">
+          <span class="woo-lp-flow__badge" aria-hidden="true">03</span>
+          <div class="woo-lp-flow__card">
+            <!-- ACF: flow_step_03_heading -->
+            <h3 class="woo-lp-flow__heading">応募について話す・面談</h3>
+            <!-- ACF: flow_step_03_body -->
+            <p class="woo-lp-flow__body">
+              「ここで挑戦したい」と思えたら、働き方の希望や大切にしたいことをお聞かせください。あなたとサロンの双方が納得できるかを、丁寧に確認します。
+            </p>
+          </div>
+        </li>
+
+        <!-- STEP 4: 採用決定・研修スタート -->
+        <li class="woo-lp-flow__step">
+          <span class="woo-lp-flow__badge" aria-hidden="true">04</span>
+          <div class="woo-lp-flow__card">
+            <!-- ACF: flow_step_04_heading -->
+            <h3 class="woo-lp-flow__heading">採用決定・研修スタート</h3>
+            <!-- ACF: flow_step_04_body -->
+            <p class="woo-lp-flow__body">
+              入社日を決めて、動画マニュアルと勤務中の研修からスタート。できることを一つずつ増やし、<strong>準備が整ってから</strong>デビューを目指します。
+            </p>
+          </div>
+        </li>
+
+      </ol>
+
+    </div>
+  </section>
+  <!-- ▲ セクション9: 応募の流れ ここまで -->
+
+
+  <!-- ▼ セクション10: 最終CTA ここから -->
+  <section class="woo-lp-final-cta" id="final-cta">
+    <div class="woo-lp-final-cta__inner">
+
+      <!-- 装飾: 上の小さなゴールドの罫線アクセント (雑誌風) -->
+      <span class="woo-lp-final-cta__ornament" aria-hidden="true"></span>
+
+      <header class="woo-lp-final-cta__header">
+        <span class="woo-lp-final-cta__sub">Take the First Step</span>
+        <!-- ACF: final_cta_heading -->
+        <h2 class="woo-lp-final-cta__heading">
+          <span class="woo-lp-final-cta__phrase">未経験からアイリストを</span>
+          <span class="woo-lp-final-cta__phrase">目指したいと思ったら、</span>
+          <strong class="woo-lp-final-cta__heading-em">まずは求人説明動画で、知ることから。</strong>
+        </h2>
+      </header>
+
+      <!-- サブメッセージ (不安への寄り添い) -->
+      <p class="woo-lp-final-cta__subtitle">
+        <!-- ACF: final_cta_subtitle -->
+        「私にもできる？」「子どもがいても大丈夫？」など、<br>
+        応募前の不安は、まず求人説明動画でゆっくり確認できます。<br>
+        視聴後に、相談・見学・お仕事体験を選べます。
+      </p>
+
+      <!-- メインCTAボタン (LINE緑・大きめ・サブテキスト＋補足リスト付き) -->
+      <div class="woo-lp-final-cta__btn-wrap">
+        <!-- ACF: final_cta_button_url -->
+        <a href="https://lin.ee/wQd2hTm" class="woo-lp-cta-line woo-lp-cta-line--final" aria-label="LINE登録して、求人説明動画を視聴する">
+          <img decoding="async" src="assets/images/line-me.png" alt="LINE" class="woo-lp-cta-line__icon">
+          <span class="woo-lp-cta-line__body">
+            <!-- ACF: final_cta_button_text -->
+            <span class="woo-lp-cta-line__main">LINE登録して、求人説明動画を視聴する →</span>
+            <!-- ACF: final_cta_button_sub -->
+            <span class="woo-lp-cta-line__sub">視聴後に見学・お仕事体験も選べます</span>
+          </span>
+        </a>
+        <!-- ACF: final_cta_notes (見学のみOK / お悩みご相談OK / 無理な勧誘なし) -->
+        <ul class="woo-lp-cta-line__notes" aria-label="ご安心ポイント">
+          <li>応募前の質問OK</li>
+          <li>見学・お仕事体験OK</li>
+          <li>無理な勧誘なし</li>
+        </ul>
+        <p class="woo-lp-final-cta__after-line">LINE登録後、まずは求人説明動画をお送りします。動画を見てから、応募について話すか・見学やお仕事体験を希望するかを選べます。</p>
+      </div>
+
+      <!-- 締めの言葉 -->
+      <p class="woo-lp-final-cta__closing">
+        <!-- ACF: final_cta_closing_message -->
+        スタッフ一同、笑顔でお待ちしています
+      </p>
+
+      <!-- オーナーの署名 (お手紙の差出人風) -->
+      <p class="woo-lp-final-cta__signature">
+        <!-- ACF: final_cta_owner_signature -->
+        くつろぎサロン woo オーナー　吉本 由紀
+      </p>
+
+      <!-- ▼ 集合写真ブロック (新規追加: 楽しそうな職場の実証写真) -->
+      <figure class="woo-lp-final-cta__group-photo">
+        <!-- ACF: final_cta_group_photo_image -->
+        <!-- 本番URL適用済み (2026/07/closing-trip.jpg) -->
+        <img decoding="async" class="woo-lp-final-cta__group-photo-img" src="assets/images/closing-trip.jpg" alt="くつろぎサロン woo 2026年社員旅行の集合写真">
+        <!-- ACF: final_cta_group_photo_caption -->
+        <figcaption class="woo-lp-final-cta__group-photo-caption">※2026年社員旅行</figcaption>
+      </figure>
+
+      <!-- 装飾: 下の小さなゴールドの罫線アクセント -->
+      <span class="woo-lp-final-cta__ornament" aria-hidden="true"></span>
+
+    </div>
+  </section>
+  <!-- ▲ セクション10: 最終CTA ここまで -->
+
+
+  <!-- =========================================================
+       ▼ 追従CTA (FVを通過したらフェードイン)
+       スマホ: 横幅いっぱい / PC: 中央寄せ・幅制限
+       ========================================================= -->
+  <div class="woo-lp-sticky-cta" id="stickyCta" aria-hidden="true">
+    <div class="woo-lp-sticky-cta__inner">
+      <!-- ACF: fv_cta_url (LINE公式アカウントのURLに差し替え) -->
+      <a href="https://lin.ee/wQd2hTm" class="woo-lp-cta-line woo-lp-cta-line--sticky" aria-label="LINE登録して求人説明動画を視聴する">
+        <img decoding="async" src="assets/images/line-me.png" alt="LINE" class="woo-lp-cta-line__icon">
+        <span class="woo-lp-cta-line__text">LINE登録して、求人説明動画を視聴する →</span>
+      </a>
+    </div>
+  </div>
+
+<!-- ▼ LP専用: 追従ヘッダー + 追従CTA 制御JS -->
+<!--    Cocoon の JS を dequeue しているため、この JS だけを LP テンプレート内で直接埋め込みます。
+        cocoon-add-js.js と同一内容 (2026-06-14 版) -->
+<script>
+(function () {
+  'use strict';
+
+  // ==========================================================
+  // 1) 追従CTA(下端): FV / 最終CTA の出入りで制御
+  // ==========================================================
+  var fv = document.getElementById('fv');
+  var finalCta = document.getElementById('final-cta');
+  var sticky = document.getElementById('stickyCta');
+
+  if (sticky) {
+    var state = {
+      fvInView: !!fv,
+      finalCtaInView: false
+    };
+
+    function setStickyVisibility(shouldShow) {
+      if (shouldShow) {
+        sticky.classList.add('is-visible');
+        sticky.setAttribute('aria-hidden', 'false');
+      } else {
+        sticky.classList.remove('is-visible');
+        sticky.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    function updateSticky() {
+      var shouldShow = !state.fvInView && !state.finalCtaInView;
+      setStickyVisibility(shouldShow);
+    }
+
+    function watch(el, stateKey) {
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          state[stateKey] = entry.isIntersecting;
+          updateSticky();
+        });
+      }, {
+        threshold: 0,
+        rootMargin: '0px'
+      });
+      observer.observe(el);
+    }
+
+    if (fv) watch(fv, 'fvInView');
+    if (finalCta) watch(finalCta, 'finalCtaInView');
+  }
+
+  // ==========================================================
+  // 2) 追従ヘッダーバー(上端): スクロール量で制御 + body padding
+  // ==========================================================
+  var stickyHeader = document.getElementById('stickyHeader');
+
+  if (stickyHeader) {
+    var STICKY_HEADER_TRIGGER = 600;  // px: FV通過の目安
+
+    function updateStickyHeader() {
+      var visible = window.scrollY > STICKY_HEADER_TRIGGER;
+      stickyHeader.classList.toggle('is-visible', visible);
+      stickyHeader.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      document.body.classList.toggle('woo-lp-has-sticky', visible);
+    }
+
+    window.addEventListener('scroll', updateStickyHeader, { passive: true });
+    updateStickyHeader();
+  }
+})();
+</script>
+
+</body>
+</html>
