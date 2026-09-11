@@ -1,0 +1,15 @@
+{
+  "name": "ailp-vps-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check src/worker/index.js && node --check src/worker/job-runner.js && node --check src/worker/openai.js && node --check src/worker/git.js && node --check src/guards/path-guard.js && node --check src/logging/job-log.js",
+    "worker:once": "node src/worker/index.js --once",
+    "worker": "node src/worker/index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.56.0",
+    "openai": "4.104.0"
+  }
+}

@@ -1,0 +1,23 @@
+[Unit]
+Description=AILP VPS Worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ailp-worker
+Group=ailp-worker
+WorkingDirectory=/srv/ailp/worker
+EnvironmentFile=/srv/ailp/worker/.env
+ExecStart=/usr/bin/node src/worker/index.js
+Restart=always
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/srv/ailp/workspaces
+ReadWritePaths=/srv/ailp/worker
+
+[Install]
+WantedBy=multi-user.target
+
