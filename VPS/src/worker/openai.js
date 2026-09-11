@@ -27,13 +27,45 @@ export async function createImprovementProposal({ config, context }) {
     {
       role: 'user',
       content: JSON.stringify({
-        task: 'Create practical improvement proposals for this landing page based on GA4 metrics.',
+        task: [
+          'Act as a professional LP marketer.',
+          'Create improvement proposals from GA4 metrics and the current HTML/CSS signals.',
+          'Then review your own proposals and keep only realistic, testable draft changes.',
+          'Avoid narrow cosmetic-only ideas unless the metrics strongly justify them.',
+          'Avoid full redesigns unless the current HTML evidence makes them unavoidable.',
+        ].join(' '),
         required_json_shape: {
           score: 'integer 0-100',
           summary: 'short Japanese summary',
-          findings: [{ title: 'Japanese title', body: 'evidence from metrics' }],
-          recommendations: [{ title: 'Japanese action', body: 'specific change proposal', priority: 'high|medium|low' }],
+          diagnosis: {
+            primary_issue: 'traffic|interest|read|action|measurement',
+            reason: 'Japanese reason based on GA4 and HTML/CSS',
+          },
+          findings: [{
+            title: 'Japanese title',
+            body: 'evidence from metrics and current LP source',
+            evidence: ['GA4 evidence', 'HTML/CSS evidence'],
+          }],
+          recommendations: [{
+            title: 'Japanese action',
+            body: 'specific change proposal',
+            priority: 'high|medium|low',
+            target_area: 'hero|cta|offer|proof|faq|measurement|other',
+            target_selector_or_text: 'section/class/text to change if known',
+            expected_effect: 'what should improve',
+            implementation_scope: 'small|medium|large',
+            approved_for_draft: true,
+            review_note: 'self-review result: not too narrow, realistic, testable',
+          }],
+          rejected_ideas: [{ title: 'Japanese rejected idea', reason: 'why it was rejected' }],
         },
+        review_rules: [
+          'Reject ideas that are too narrow, such as changing only color or one word without a metric reason.',
+          'Reject ideas that are too broad for one draft, such as rebuilding the whole LP.',
+          'If conversions are zero or suspicious, include measurement verification as a recommendation.',
+          'Prefer changes that can be implemented in the current HTML/CSS within one draft.',
+          'Tie each recommendation to a GA4 fact and a current LP source signal.',
+        ],
         context,
       }),
     },
@@ -93,12 +125,24 @@ export async function createDraftChangePlan({ config, context, analysis }) {
     {
       role: 'user',
       content: JSON.stringify({
-        task: 'Create a concise draft update plan for a landing page preview. The plan will be inserted into a draft-only preview section, not production.',
+        task: [
+          'Create a concise draft update plan for a landing page preview.',
+          'Use only recommendations that passed self-review.',
+          'Prefer natural LP edits to hero, CTA, offer, proof, FAQ, or measurement notes.',
+          'For now the worker may render this as a draft-only improvement section, but the plan must specify real target areas for future direct HTML edits.',
+        ].join(' '),
         required_json_shape: {
           headline: 'Japanese headline for the draft improvement section',
           lead: 'short Japanese lead copy',
-          changes: [{ title: 'Japanese change title', body: 'specific LP copy or section direction' }],
+          changes: [{
+            title: 'Japanese change title',
+            body: 'specific LP copy or section direction',
+            target_area: 'hero|cta|offer|proof|faq|measurement|other',
+            target_selector_or_text: 'section/class/text to change if known',
+            edit_intent: 'replace_copy|add_cta|add_section|reorder|measurement_check|other',
+          }],
           cta_label: 'Japanese CTA label',
+          self_review_summary: 'why these changes are realistic and not too narrow',
         },
         context,
         analysis: {

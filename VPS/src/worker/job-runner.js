@@ -1,7 +1,68 @@
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { ensureLpWorkspace } from '../guards/path-guard.js'
 import { writeJobStep } from '../logging/job-log.js'
 import { applyDraftChanges, createPreviewFolder, prepareRepo, pushBranch, writeDraftProposal } from './git.js'
 import { createDraftChangePlan, createImprovementProposal, estimateCost } from './openai.js'
+
+
+function stripHtmlForAi(html) {
+  return String(html || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<!--([\s\S]*?)-->/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function extractHtmlSignals(html) {
+  const source = String(html || '')
+  const headings = [...source.matchAll(/<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi)]
+    .map(match => ({ level: Number(match[1]), text: stripHtmlForAi(match[2]).slice(0, 140) }))
+    .filter(item => item.text)
+    .slice(0, 30)
+  const links = [...source.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)]
+    .map(match => {
+      const href = (match[1].match(/href=["']([^"']+)["']/i) || [])[1] || ''
+      return { text: stripHtmlForAi(match[2]).slice(0, 100), href: href.slice(0, 180) }
+    })
+    .filter(item => item.text || item.href)
+    .slice(0, 40)
+  const sections = [...source.matchAll(/<section\b([^>]*)>/gi)]
+    .map(match => {
+      const attrs = match[1]
+      const id = (attrs.match(/id=["']([^"']+)["']/i) || [])[1] || ''
+      const klass = (attrs.match(/class=["']([^"']+)["']/i) || [])[1] || ''
+      return { id, class: klass }
+    })
+    .filter(item => item.id || item.class)
+    .slice(0, 40)
+  return { headings, links, sections, text_sample: stripHtmlForAi(source).slice(0, 5000) }
+}
+
+async function loadLpSourceContext(workspace, folderPath) {
+  const normalizedFolder = String(folderPath || '').replace(/^\/+|\/+$/g, '')
+  const htmlPath = join(workspace.repo, normalizedFolder, 'index.html')
+  let html = ''
+  try {
+    html = await readFile(htmlPath, 'utf8')
+  } catch {
+    html = ''
+  }
+  const cssCandidates = ['style.css', 'styles.css', 'main.css', 'css/style.css']
+  const css = []
+  for (const name of cssCandidates) {
+    try {
+      const content = await readFile(join(workspace.repo, normalizedFolder, name), 'utf8')
+      css.push({ file: name, sample: content.slice(0, 4000) })
+    } catch {}
+  }
+  return {
+    html_file: html ? `${normalizedFolder}/index.html` : null,
+    html_signals: extractHtmlSignals(html),
+    css_files: css,
+  }
+}
 
 function dateDaysAgo(days) {
   const date = new Date()
@@ -198,6 +259,9 @@ async function saveAiResults({ config, supabase, job, context, proposal }) {
         ai_analysis_result_id: analysis.id,
         ai_interaction_id: interaction.id,
         recommendation_count: normalized.recommendations.length,
+        diagnosis: proposal.parsed?.diagnosis ?? null,
+        rejected_ideas: Array.isArray(proposal.parsed?.rejected_ideas) ? proposal.parsed.rejected_ideas : [],
+        improvement_logic_version: 'docs/ai-improvement-logic.md',
       },
     })
     .eq('id', job.id)
@@ -299,14 +363,31 @@ export async function runJob({ config, supabase, job }) {
       return
     }
 
+    await writeJobStep(supabase, job.id, 'source_context_load', {
+      status: 'running',
+      summary: 'Loading current LP HTML/CSS signals for marketer review',
+      lp_project_id: job.lp_project_id,
+      folder_path: context.overview.folder_path,
+    })
+
+    await prepareRepo({ config, workspace, branchName: `ailp/${context.overview.folder_path}/analysis-context`.replace(/[^A-Za-z0-9/_-]/g, '-') })
+    const sourceContext = await loadLpSourceContext(workspace, context.overview.folder_path)
+
     await writeJobStep(supabase, job.id, 'ai_proposal_start', {
       status: 'running',
-      summary: 'Requesting LP improvement proposals from OpenAI',
+      summary: 'Requesting LP improvement proposals from OpenAI with GA4 and current HTML/CSS signals',
       lp_project_id: job.lp_project_id,
       model: config.openAiModel,
     })
 
-    const proposal = await createImprovementProposal({ config, context: context.aiContext })
+    const proposal = await createImprovementProposal({
+      config,
+      context: {
+        ...context.aiContext,
+        current_lp_source: sourceContext,
+        improvement_logic_version: 'docs/ai-improvement-logic.md',
+      },
+    })
     const saved = await saveAiResults({ config, supabase, job, context, proposal })
 
     await writeJobStep(supabase, job.id, 'ai_proposal_saved', {
