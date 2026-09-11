@@ -1,7 +1,7 @@
 import { ensureLpWorkspace } from '../guards/path-guard.js'
 import { writeJobStep } from '../logging/job-log.js'
-import { createPreviewFolder, prepareRepo, pushBranch, writeDraftProposal } from './git.js'
-import { createImprovementProposal, estimateCost } from './openai.js'
+import { applyDraftChanges, createPreviewFolder, prepareRepo, pushBranch, writeDraftProposal } from './git.js'
+import { createDraftChangePlan, createImprovementProposal, estimateCost } from './openai.js'
 
 function dateDaysAgo(days) {
   const date = new Date()
@@ -484,6 +484,181 @@ export async function runJob({ config, supabase, job }) {
       preview_url: preview.previewUrl,
       pushed,
       diff_summary: preview.diffSummary,
+    })
+    return
+  }
+
+
+  if (job.job_type === 'apply_to_draft') {
+    const context = await loadLpContext(supabase, job.lp_project_id)
+    const analysis = job.payload?.ai_analysis_result_id
+      ? await (async () => {
+          const { data, error } = await supabase
+            .from('ai_analysis_results')
+            .select('*')
+            .eq('id', job.payload.ai_analysis_result_id)
+            .eq('lp_project_id', job.lp_project_id)
+            .maybeSingle()
+          if (error) throw new Error(error.message)
+          return data
+        })()
+      : await latestAnalysis(supabase, job.lp_project_id)
+    if (!analysis) {
+      throw new Error('No ai_analysis_results found. Run propose_improvements first.')
+    }
+
+    const versionSlug = job.payload?.version_slug || `draft-${job.id.slice(0, 8)}`
+    const branchName = `ailp/${context.overview.folder_path}/${versionSlug}`.replace(/[^A-Za-z0-9/_-]/g, '-')
+
+    await writeJobStep(supabase, job.id, 'draft_apply_prepare', {
+      status: 'running',
+      summary: 'Preparing draft-only LP changes without touching production folder or main',
+      lp_project_id: job.lp_project_id,
+      branch: branchName,
+      version_slug: versionSlug,
+      ai_analysis_result_id: analysis.id,
+    })
+
+    if (config.dryRun) {
+      await writeJobStep(supabase, job.id, 'dry_run_complete', {
+        summary: 'Dry run skipped draft apply',
+        lp_project_id: job.lp_project_id,
+        branch: branchName,
+      })
+      return
+    }
+
+    const planResponse = await createDraftChangePlan({ config, context: context.aiContext, analysis })
+    const cost = estimateCost(config, planResponse.usage)
+
+    await prepareRepo({ config, workspace, branchName })
+    const draft = await applyDraftChanges({
+      config,
+      workspace,
+      folderPath: context.overview.folder_path,
+      branchName,
+      versionSlug,
+      plan: planResponse.parsed,
+      analysisId: analysis.id,
+    })
+
+    let pushed = false
+    if (job.payload?.push !== false) {
+      await writeJobStep(supabase, job.id, 'draft_branch_push', {
+        status: 'running',
+        summary: 'Pushing draft branch to GitHub',
+        lp_project_id: job.lp_project_id,
+        branch: branchName,
+      })
+      await pushBranch({ config, workspace, branchName })
+      pushed = true
+    }
+
+    const { data: interaction, error: interactionError } = await supabase
+      .from('lp_ai_interactions')
+      .insert({
+        job_id: job.id,
+        lp_project_id: job.lp_project_id,
+        model: planResponse.model,
+        action_type: job.job_type,
+        prompt_summary: 'Latest LP-scoped AI analysis was converted into a draft-only LP update plan.',
+        response_summary: planResponse.parsed?.headline || analysis.summary,
+        input_refs: [{ table: 'ai_analysis_results', id: analysis.id }],
+        output_refs: [{ git_branch: draft.branchName, commit_sha: draft.commitSha, file_path: draft.previewPath }],
+        input_tokens: cost.inputTokens,
+        output_tokens: cost.outputTokens,
+        cached_input_tokens: cost.cachedInputTokens,
+        reasoning_tokens: cost.reasoningTokens,
+        total_tokens: cost.totalTokens,
+        estimated_cost_usd: cost.estimatedCostUsd,
+        estimated_cost_jpy: cost.estimatedCostJpy,
+        status: 'succeeded',
+      })
+      .select('id')
+      .single()
+    if (interactionError) throw new Error(interactionError.message)
+
+    const { error: usageError } = await supabase.from('lp_ai_usage_logs').insert({
+      client_id: context.overview.client_id,
+      lp_project_id: job.lp_project_id,
+      job_id: job.id,
+      ai_interaction_id: interaction.id,
+      model: planResponse.model,
+      action_type: job.job_type,
+      input_tokens: cost.inputTokens,
+      output_tokens: cost.outputTokens,
+      cached_input_tokens: cost.cachedInputTokens,
+      reasoning_tokens: cost.reasoningTokens,
+      total_tokens: cost.totalTokens,
+      input_unit_price_usd: config.openAiInputUsdPerMillion,
+      output_unit_price_usd: config.openAiOutputUsdPerMillion,
+      cached_input_unit_price_usd: config.openAiCachedInputUsdPerMillion,
+      estimated_cost_usd: cost.estimatedCostUsd,
+      estimated_cost_jpy: cost.estimatedCostJpy,
+      pricing_source: 'env',
+      pricing_version: 'manual',
+      status: 'succeeded',
+    })
+    if (usageError) throw new Error(usageError.message)
+
+    const { error: versionError } = await supabase.from('git_versions').insert({
+      lp_project_id: job.lp_project_id,
+      version_label: versionSlug,
+      branch: draft.branchName,
+      commit_sha: draft.commitSha,
+      folder_path: draft.previewPath,
+      change_summary: planResponse.parsed?.headline || analysis.summary,
+      is_production: false,
+    })
+    if (versionError) throw new Error(versionError.message)
+
+    const { error: artifactError } = await supabase.from('lp_job_artifacts').insert({
+      job_id: job.id,
+      lp_project_id: job.lp_project_id,
+      artifact_type: 'draft_lp_update',
+      file_path: draft.previewPath,
+      git_branch: draft.branchName,
+      commit_sha: draft.commitSha,
+      preview_url: draft.previewUrl,
+      diff_summary: draft.diffSummary,
+      metadata: {
+        production_unchanged: true,
+        main_unchanged: true,
+        pushed,
+        github_branch_url: draft.githubBranchUrl,
+        netlify_preview_status: draft.netlifyPreviewStatus,
+        ai_analysis_result_id: analysis.id,
+        ai_interaction_id: interaction.id,
+      },
+    })
+    if (artifactError) throw new Error(artifactError.message)
+
+    const { error: jobUpdateError } = await supabase.from('lp_jobs').update({
+      result_summary: `Draft ${draft.previewPath} updated from AI proposal. Production folder and main were not changed.${pushed ? ' Branch was pushed.' : ' Branch was not pushed.'}`,
+      git_branch: draft.branchName,
+      commit_sha: draft.commitSha,
+      preview_url: draft.previewUrl,
+      payload: {
+        ...(job.payload ?? {}),
+        ai_analysis_result_id: analysis.id,
+        ai_interaction_id: interaction.id,
+        github_branch_url: draft.githubBranchUrl,
+        netlify_preview_status: draft.netlifyPreviewStatus,
+      },
+    }).eq('id', job.id)
+    if (jobUpdateError) throw new Error(jobUpdateError.message)
+
+    await writeJobStep(supabase, job.id, 'draft_applied', {
+      summary: 'Draft-only LP update commit was created',
+      lp_project_id: job.lp_project_id,
+      branch: draft.branchName,
+      commit_sha: draft.commitSha,
+      preview_path: draft.previewPath,
+      preview_url: draft.previewUrl,
+      github_branch_url: draft.githubBranchUrl,
+      netlify_preview_status: draft.netlifyPreviewStatus,
+      pushed,
+      diff_summary: draft.diffSummary,
     })
     return
   }

@@ -77,3 +77,53 @@ export function estimateCost(config, usage) {
     estimatedCostJpy: Number.isFinite(usd) ? usd * config.usdJpyRate : null,
   }
 }
+
+export async function createDraftChangePlan({ config, context, analysis }) {
+  const openai = createOpenAi(config)
+  const messages = [
+    {
+      role: 'system',
+      content: [
+        'You are an LP editor for AILP.',
+        'Use only the provided LP-scoped context and analysis.',
+        'Do not mention or infer other LPs, clients, secrets, tokens, or unrelated projects.',
+        'Return strict JSON only.',
+      ].join(' '),
+    },
+    {
+      role: 'user',
+      content: JSON.stringify({
+        task: 'Create a concise draft update plan for a landing page preview. The plan will be inserted into a draft-only preview section, not production.',
+        required_json_shape: {
+          headline: 'Japanese headline for the draft improvement section',
+          lead: 'short Japanese lead copy',
+          changes: [{ title: 'Japanese change title', body: 'specific LP copy or section direction' }],
+          cta_label: 'Japanese CTA label',
+        },
+        context,
+        analysis: {
+          summary: analysis?.summary,
+          findings: analysis?.findings,
+          recommendations: analysis?.recommendations,
+          score: analysis?.score,
+        },
+      }),
+    },
+  ]
+
+  const response = await openai.chat.completions.create({
+    model: config.openAiModel,
+    messages,
+    temperature: 0.2,
+    response_format: { type: 'json_object' },
+  })
+
+  const content = response.choices[0]?.message?.content ?? '{}'
+  const parsed = jsonFromText(content)
+  return {
+    parsed,
+    rawText: content,
+    usage: response.usage ?? {},
+    model: response.model ?? config.openAiModel,
+  }
+}

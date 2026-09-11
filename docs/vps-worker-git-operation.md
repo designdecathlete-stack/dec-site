@@ -44,3 +44,20 @@ ailp-previews/marr/draft-4389fa82/
 ```
 
 The production URL `https://dec-site.netlify.app/ailp-previews/marr/draft-4389fa82/` returned 404 because this folder is on a draft branch, not `main`. To view it publicly before merge, use Netlify Deploy Preview or Branch Deploy.
+
+## Draft apply flow
+
+`apply_to_draft` converts the latest LP-scoped AI analysis into a draft-only LP update. It copies the production LP folder into `ailp-previews/{lp-folder}/{version_slug}`, injects a draft improvement section into the copied `index.html`, commits the result on a branch such as `ailp/marr/draft-xxxxxxxx`, and pushes the branch when the job payload does not set `push: false`.
+
+This job intentionally leaves the production LP folder, for example `marr/`, and `main` unchanged. During the current verification phase, approval means updating the draft side only.
+
+Verified test job:
+
+```text
+job: d23613be-3c76-4b14-8428-dfa053f0927a
+branch: ailp/marr/draft-d23613be
+commit: ab5ec9e487cc068b22c3f685c4ea5fec28082382
+folder: ailp-previews/marr/draft-d23613be/
+```
+
+The saved `preview_url` still uses the production Netlify domain as a placeholder until Netlify Deploy Preview or Branch Deploy is configured. The job metadata stores `netlify_preview_status=pending_netlify_deploy_preview` and the GitHub branch URL for review.

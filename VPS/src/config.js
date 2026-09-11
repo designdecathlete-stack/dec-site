@@ -18,6 +18,7 @@ export function loadConfig() {
     gitRepoUrl: env('GIT_REPO_URL', ''),
     gitAuthorName: env('GIT_AUTHOR_NAME', 'hd-fluxion'),
     gitAuthorEmail: env('GIT_AUTHOR_EMAIL', 'h.dazai0316@gmail.com'),
+    netlifyPreviewUrlPattern: env('NETLIFY_PREVIEW_URL_PATTERN', ''),
     workspaceRoot: env('WORKSPACE_ROOT', '/srv/ailp/workspaces'),
     pollIntervalMs: Number(env('JOB_POLL_INTERVAL_MS', '10000')),
     maxJobsPerTick: Number(env('MAX_JOBS_PER_TICK', '1')),
@@ -28,5 +29,3 @@ export function loadConfig() {
     openAiCachedInputUsdPerMillion: Number(env('OPENAI_CACHED_INPUT_USD_PER_MILLION', '0')),
   }
 }
-
-
