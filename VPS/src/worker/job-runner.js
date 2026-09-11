@@ -1,6 +1,6 @@
 import { ensureLpWorkspace } from '../guards/path-guard.js'
 import { writeJobStep } from '../logging/job-log.js'
-import { prepareRepo, writeDraftProposal } from './git.js'
+import { createPreviewFolder, prepareRepo, pushBranch, writeDraftProposal } from './git.js'
 import { createImprovementProposal, estimateCost } from './openai.js'
 
 function dateDaysAgo(days) {
@@ -393,6 +393,97 @@ export async function runJob({ config, supabase, job }) {
       commit_sha: artifact.commitSha,
       file_path: artifact.filePath,
       diff_summary: artifact.diffSummary,
+    })
+    return
+  }
+
+  if (job.job_type === 'create_preview_folder') {
+    const context = await loadLpContext(supabase, job.lp_project_id)
+    const versionSlug = job.payload?.version_slug || `draft-${job.id.slice(0, 8)}`
+    const branchName = `ailp/${context.overview.folder_path}/${versionSlug}`.replace(/[^A-Za-z0-9/_-]/g, '-')
+
+    await writeJobStep(supabase, job.id, 'preview_repo_prepare', {
+      status: 'running',
+      summary: 'Preparing preview folder branch without touching main',
+      lp_project_id: job.lp_project_id,
+      branch: branchName,
+      version_slug: versionSlug,
+    })
+
+    if (config.dryRun) {
+      await writeJobStep(supabase, job.id, 'dry_run_complete', {
+        summary: 'Dry run skipped preview folder creation',
+        lp_project_id: job.lp_project_id,
+        branch: branchName,
+      })
+      return
+    }
+
+    await prepareRepo({ config, workspace, branchName })
+    const preview = await createPreviewFolder({
+      config,
+      workspace,
+      folderPath: context.overview.folder_path,
+      branchName,
+      versionSlug,
+    })
+
+    let pushed = false
+    if (job.payload?.push === true) {
+      await writeJobStep(supabase, job.id, 'preview_branch_push', {
+        status: 'running',
+        summary: 'Pushing preview branch to GitHub',
+        lp_project_id: job.lp_project_id,
+        branch: branchName,
+      })
+      await pushBranch({ config, workspace, branchName })
+      pushed = true
+    }
+
+    const { error: versionError } = await supabase.from('git_versions').insert({
+      lp_project_id: job.lp_project_id,
+      version_label: versionSlug,
+      branch: preview.branchName,
+      commit_sha: preview.commitSha,
+      folder_path: preview.previewPath,
+      change_summary: `Preview folder created from ${context.overview.folder_path}.`,
+      is_production: false,
+    })
+    if (versionError) throw new Error(versionError.message)
+
+    const { error: artifactError } = await supabase.from('lp_job_artifacts').insert({
+      job_id: job.id,
+      lp_project_id: job.lp_project_id,
+      artifact_type: 'preview_folder',
+      file_path: preview.previewPath,
+      git_branch: preview.branchName,
+      commit_sha: preview.commitSha,
+      preview_url: preview.previewUrl,
+      diff_summary: preview.diffSummary,
+      metadata: {
+        production_unchanged: true,
+        pushed,
+      },
+    })
+    if (artifactError) throw new Error(artifactError.message)
+
+    const { error: jobUpdateError } = await supabase.from('lp_jobs').update({
+      result_summary: `Preview folder ${preview.previewPath} created. Production main was not changed.${pushed ? ' Branch was pushed.' : ' Branch was not pushed.'}`,
+      git_branch: preview.branchName,
+      commit_sha: preview.commitSha,
+      preview_url: preview.previewUrl,
+    }).eq('id', job.id)
+    if (jobUpdateError) throw new Error(jobUpdateError.message)
+
+    await writeJobStep(supabase, job.id, 'preview_folder_created', {
+      summary: 'Preview folder commit was created',
+      lp_project_id: job.lp_project_id,
+      branch: preview.branchName,
+      commit_sha: preview.commitSha,
+      preview_path: preview.previewPath,
+      preview_url: preview.previewUrl,
+      pushed,
+      diff_summary: preview.diffSummary,
     })
     return
   }

@@ -52,3 +52,9 @@ The worker validates resolved paths before reading or writing files.
 
 See `.env.example`.
 
+
+## Preview folder jobs
+
+`create_preview_folder` creates a copy of one LP under `ailp-previews/{lp-folder}/{version_slug}` on a dedicated branch such as `ailp/marr/draft-xxxxxxxx`. The production LP folder, for example `marr/`, is left unchanged.
+
+Use payload `{ "push": false }` for local VPS verification only. Use `{ "push": true, "version_slug": "ver001" }` after adding a GitHub token or deploy key with write access to the repository. The job records the branch, commit SHA, preview folder path, and preview URL in `lp_jobs`, `lp_job_artifacts`, and `git_versions`.
