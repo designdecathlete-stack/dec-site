@@ -2498,6 +2498,17 @@ body.page-id-12 .woo-lp-sticky-header__text {
     .woo-lp-fv__dummy { width:100%; min-height:620px; background:#d6d6d6; }
     .woo-lp-fv__image--team { display:block; width:100%; max-width:none; height:620px; object-fit:cover; object-position:center 46%; }
     .woo-lp-fv__mobile-photo { display:none; }
+    .woo-lp-fv__mobile-visual { display:none; }
+    @media (max-width:600px) {
+      .woo-lp-fv .woo-lp-fv__content { display:none; }
+      .woo-lp-fv__mobile-visual { display:block; position:relative; width:100%; }
+      .woo-lp-fv__mobile-art { display:block; width:100%; height:auto; }
+      .woo-lp-fv__mobile-link { position:absolute; left:4%; bottom:3%; width:92%; display:block; animation:woo-fv-cta-float 3s ease-in-out infinite; }
+      .woo-lp-fv__mobile-link img { display:block; width:100%; height:auto; clip-path:inset(16% 1.5% 19% round 999px); }
+      .woo-lp-fv__mobile-link:focus-visible { outline:3px solid #4b3727; outline-offset:2px; border-radius:20px; }
+      .woo-lp-fv__mobile-link:hover, .woo-lp-fv__mobile-link:focus-visible { animation-play-state:paused; }
+    }
+    @media (prefers-reduced-motion:reduce) { .woo-lp-fv__mobile-link { animation:none; } }
     .woo-lp-solution__placeholder { width:100%; min-height:230px; margin-bottom:22px; border-radius:var(--woo-radius); background:#d6d6d6; }
     .woo-lp-fv__content { position:absolute; z-index:1; inset:0; width:min(1200px,100%); margin:auto; padding:clamp(38px,8vw,110px) clamp(24px,7vw,96px); display:flex; flex-direction:column; align-items:flex-start; justify-content:center; color:#4b3727; pointer-events:none; background:linear-gradient(90deg,rgba(255,253,251,.96) 0%,rgba(255,253,251,.85) 35%,rgba(255,253,251,.24) 64%,rgba(255,253,251,0) 100%); }
     .woo-lp-fv__eyebrow,.woo-lp-worry__sub { margin:0 0 12px; color:#9a7045; font-size:.72rem; font-weight:700; letter-spacing:.16em; }
@@ -2596,6 +2607,12 @@ body.page-id-12 .woo-lp-sticky-header__text {
     </h1>
 
     <!-- ACF: fv_hero_image -->
+    <div class="woo-lp-fv__mobile-visual">
+      <img class="woo-lp-fv__mobile-art" src="assets/images/fv-mobile-recruit.webp" width="941" height="1672" fetchpriority="high" alt="防府市のアイサロン新店舗 オープニングスタッフ募集。美容師免許を活かして、未経験からアイリストへ。動画マニュアルと勤務中研修で、一歩ずつデビューを目指せます。全員未経験から入社。">
+      <a class="woo-lp-fv__mobile-link" href="https://lin.ee/ZVD436S" aria-label="LINEで見学会・採用エントリーへ">
+        <img src="assets/images/fv-line-entry-cta.webp" width="2160" height="728" alt="見学会・採用エントリーへ">
+      </a>
+    </div>
     <img decoding="async" class="woo-lp-fv__image woo-lp-fv__image--team" src="assets/images/fv-staff-team.webp" alt="くつろぎサロン wooのスタッフ集合写真">
     <div class="woo-lp-fv__content">
       <p class="woo-lp-fv__eyebrow">HOFU / EYELIST RECRUIT</p>
@@ -2606,7 +2623,7 @@ body.page-id-12 .woo-lp-sticky-header__text {
       <img decoding="async" class="woo-lp-fv__mobile-photo" src="assets/images/fv-staff-team.webp" alt="くつろぎサロン wooのスタッフ集合写真">
       <p class="woo-lp-fv__proof">現在のスタッフは、全員未経験で入社しています</p>
       <!-- CLIENT CHECK: LINE登録後に求人説明動画を送る運用を確認してください。 -->
-      <a class="woo-lp-fv__cta" href="https://lin.ee/ZVD436S">LINE登録して、求人説明動画を視聴する →</a>
+      <a class="woo-lp-fv__cta" href="https://lin.ee/ZVD436S">見学会・採用エントリーへ →</a>
     </div>
 
   </section>
@@ -3403,7 +3420,7 @@ body.page-id-12 .woo-lp-sticky-header__text {
         <h2 class="woo-lp-final-cta__heading">
           <span class="woo-lp-final-cta__phrase">未経験からアイリストを</span>
           <span class="woo-lp-final-cta__phrase">目指したいと思ったら、</span>
-          <strong class="woo-lp-final-cta__heading-em">まずは求人説明動画で、知ることから。</strong>
+          <strong class="woo-lp-final-cta__heading-em">見学会で知ることから、はじめませんか。</strong>
         </h2>
       </header>
 
@@ -3411,20 +3428,20 @@ body.page-id-12 .woo-lp-sticky-header__text {
       <p class="woo-lp-final-cta__subtitle">
         <!-- ACF: final_cta_subtitle -->
         「私にもできる？」「子どもがいても大丈夫？」など、<br>
-        応募前の不安は、まず求人説明動画でゆっくり確認できます。<br>
-        視聴後に、無料施術会・Zoom相談・応募から選べます。
+        応募前の不安は、見学会やLINEでご相談ください。<br>
+        応募を決めている方は、そのまま採用エントリーへ進めます。
       </p>
 
       <!-- メインCTAボタン (LINE緑・大きめ・サブテキスト＋補足リスト付き) -->
       <div class="woo-lp-final-cta__btn-wrap">
         <!-- ACF: final_cta_button_url -->
-        <a href="https://lin.ee/ZVD436S" class="woo-lp-cta-line woo-lp-cta-line--final" aria-label="LINE登録して、求人説明動画を視聴する">
+        <a href="https://lin.ee/ZVD436S" class="woo-lp-cta-line woo-lp-cta-line--final" aria-label="LINEで見学会・採用エントリーへ">
           <img decoding="async" src="assets/images/line-me.webp" alt="LINE" class="woo-lp-cta-line__icon">
           <span class="woo-lp-cta-line__body">
             <!-- ACF: final_cta_button_text -->
-            <span class="woo-lp-cta-line__main">LINE登録して、求人説明動画を視聴する →</span>
+            <span class="woo-lp-cta-line__main">見学会・採用エントリーへ →</span>
             <!-- ACF: final_cta_button_sub -->
-            <span class="woo-lp-cta-line__sub">視聴後に無料施術会・Zoom相談も選べます</span>
+            <span class="woo-lp-cta-line__sub">LINEで受付中・見学や質問だけでもOK</span>
           </span>
         </a>
         <!-- ACF: final_cta_notes (見学のみOK / お悩みご相談OK / 無理な勧誘なし) -->
@@ -3433,7 +3450,7 @@ body.page-id-12 .woo-lp-sticky-header__text {
           <li>無料施術会・Zoom相談OK</li>
           <li>無理な勧誘なし</li>
         </ul>
-        <p class="woo-lp-final-cta__after-line">LINE登録後、まずは求人説明動画をお送りします。無料施術会・Zoom相談・応募のうち、ご希望をLINEでお知らせください。</p>
+        <p class="woo-lp-final-cta__after-line">LINE登録後、「見学会」または「採用エントリー」のご希望をお知らせください。応募前のご質問も受け付けています。</p>
       </div>
 
       <!-- 締めの言葉 -->
@@ -3472,9 +3489,9 @@ body.page-id-12 .woo-lp-sticky-header__text {
   <div class="woo-lp-sticky-cta" id="stickyCta" aria-hidden="true">
     <div class="woo-lp-sticky-cta__inner">
       <!-- ACF: fv_cta_url (LINE公式アカウントのURLに差し替え) -->
-      <a href="https://lin.ee/ZVD436S" class="woo-lp-cta-line woo-lp-cta-line--sticky" aria-label="LINE登録して求人説明動画を視聴する">
+      <a href="https://lin.ee/ZVD436S" class="woo-lp-cta-line woo-lp-cta-line--sticky" aria-label="LINEで見学会・採用エントリーへ">
         <img decoding="async" src="assets/images/line-me.webp" alt="LINE" class="woo-lp-cta-line__icon">
-        <span class="woo-lp-cta-line__text">LINE登録して、求人説明動画を視聴する →</span>
+        <span class="woo-lp-cta-line__text">見学会・採用エントリーへ →</span>
       </a>
     </div>
   </div>
