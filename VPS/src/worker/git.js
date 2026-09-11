@@ -47,6 +47,8 @@ export async function prepareRepo({ config, workspace, branchName }) {
     await git(['clone', '--depth', '1', repoUrl(config), workspace.repo], { config })
   }
 
+  await git(['config', 'user.name', config.gitAuthorName], { cwd: workspace.repo, config })
+  await git(['config', 'user.email', config.gitAuthorEmail], { cwd: workspace.repo, config })
   await git(['fetch', 'origin', 'main'], { cwd: workspace.repo, config })
   await git(['checkout', '-B', branchName, 'origin/main'], { cwd: workspace.repo, config })
   return workspace.repo
@@ -116,4 +118,5 @@ export async function pushBranch({ config, workspace, branchName }) {
     config,
   })
 }
+
 
