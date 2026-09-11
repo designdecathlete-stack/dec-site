@@ -7,6 +7,7 @@ import { assertInside } from '../guards/path-guard.js'
 const execFileAsync = promisify(execFile)
 
 function repoUrl(config) {
+  if (config.gitRepoUrl) return config.gitRepoUrl
   if (config.githubToken) {
     return `https://x-access-token:${config.githubToken}@github.com/${config.githubRepository}.git`
   }
@@ -110,12 +111,9 @@ export async function createPreviewFolder({ config, workspace, folderPath, branc
 }
 
 export async function pushBranch({ config, workspace, branchName }) {
-  if (!config.githubToken) {
-    throw new Error('GITHUB_TOKEN is required to push draft branches')
-  }
-
   await git(['push', repoUrl(config), `HEAD:${branchName}`], {
     cwd: workspace.repo,
     config,
   })
 }
+

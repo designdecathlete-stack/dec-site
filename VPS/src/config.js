@@ -15,6 +15,7 @@ export function loadConfig() {
     openAiModel: env('OPENAI_MODEL', 'gpt-5.1'),
     githubToken: env('GITHUB_TOKEN', ''),
     githubRepository: env('GITHUB_REPOSITORY', 'designdecathlete-stack/dec-site'),
+    gitRepoUrl: env('GIT_REPO_URL', ''),
     workspaceRoot: env('WORKSPACE_ROOT', '/srv/ailp/workspaces'),
     pollIntervalMs: Number(env('JOB_POLL_INTERVAL_MS', '10000')),
     maxJobsPerTick: Number(env('MAX_JOBS_PER_TICK', '1')),
@@ -25,3 +26,4 @@ export function loadConfig() {
     openAiCachedInputUsdPerMillion: Number(env('OPENAI_CACHED_INPUT_USD_PER_MILLION', '0')),
   }
 }
+
