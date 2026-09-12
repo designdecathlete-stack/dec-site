@@ -57,6 +57,98 @@ function draftSectionHtml({ plan, analysisId, generatedAt }) {
 </section>`
 }
 
+
+function directEditStyles() {
+  return `
+<style id="ailp-direct-edit-styles">
+.ailp-direct-edit{margin:22px auto;padding:20px;border:1px solid rgba(201,168,108,.42);border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(250,245,236,.92));box-shadow:0 12px 34px rgba(44,37,32,.12);color:#2A2520;max-width:calc(var(--content-width,480px) - 48px);font-family:var(--font-body,'Noto Sans JP',sans-serif)}
+.ailp-direct-edit__label{display:inline-block;margin-bottom:8px;color:#8B6F36;font-size:11px;font-weight:900;letter-spacing:.12em}.ailp-direct-edit h3{font-size:18px;line-height:1.55;margin:0 0 8px;color:#2C2520}.ailp-direct-edit p{font-size:13px;line-height:1.9;color:#5C5045;margin:0}.ailp-direct-edit--cta{text-align:center;background:#fff8e8}.ailp-direct-edit--measurement{background:#f7fbff;border-color:#bdd7ff}.ailp-direct-edit--hero{margin-top:0;border-radius:0 0 18px 18px;max-width:100%}
+</style>`
+}
+
+function directEditBlock(change, index) {
+  const area = String(change?.target_area || 'other').toLowerCase()
+  return `<div class="ailp-direct-edit ailp-direct-edit--${escapeHtmlFragment(area)}" data-ailp-direct-edit="${escapeHtmlFragment(area)}">
+  <span class="ailp-direct-edit__label">AI改善 ${index + 1}</span>
+  <h3>${escapeHtmlFragment(change?.title || '改善ポイント')}</h3>
+  <p>${escapeHtmlFragment(change?.body || '')}</p>
+</div>`
+}
+
+function removePriorDirectEdits(html) {
+  return String(html || '')
+    .replace(/<style id="ailp-direct-edit-styles">[\s\S]*?<\/style>\s*/g, '')
+    .replace(/<div class="ailp-direct-edit[\s\S]*?<\/div>\s*/g, '')
+}
+
+function insertAfterClosingSection(html, sectionId, block) {
+  const pattern = new RegExp(`(<section\\b[^>]*id=["']${sectionId}["'][^>]*>[\\s\\S]*?<\\/section>)`, 'i')
+  if (!pattern.test(html)) return { html, applied: false }
+  return { html: html.replace(pattern, `$1\n${block}`), applied: true }
+}
+
+function insertBeforeClosingSection(html, sectionId, block) {
+  const pattern = new RegExp(`(<section\\b[^>]*id=["']${sectionId}["'][^>]*>[\\s\\S]*?)(<\\/section>)`, 'i')
+  if (!pattern.test(html)) return { html, applied: false }
+  return { html: html.replace(pattern, `$1\n${block}\n$2`), applied: true }
+}
+
+function safeCtaLabel(label) {
+  const value = String(label || '').trim()
+  if (!value || value.length > 32) return ''
+  if (/プレビュー|draft|改善案/i.test(value)) return ''
+  return value
+}
+
+function applyTargetedHtmlEdits(html, plan) {
+  let next = removePriorDirectEdits(html)
+  const applied = []
+  const changes = Array.isArray(plan?.changes) ? plan.changes : []
+  const approvedChanges = changes.filter(change => change && change.edit_intent !== 'measurement_check')
+  const ctaLabel = safeCtaLabel(plan?.cta_label)
+
+  if (ctaLabel) {
+    next = next.replace(/(<a\b[^>]*class=["'][^"']*(?:cta-btn--line|float-cta--line|sb-cta--line)[^"']*["'][^>]*>)([\s\S]*?)(<\/a>)/gi, (match, open, body, close) => {
+      if (!/LINE|相談/.test(body)) return match
+      applied.push({ type: 'cta_label', target_area: 'cta', label: ctaLabel })
+      return `${open}\n        ${escapeHtmlFragment(ctaLabel)}\n      ${close}`
+    })
+  }
+
+  const areaToSection = {
+    hero: { id: 'top', mode: 'after' },
+    cta: { id: 'top', mode: 'after' },
+    offer: { id: 'compare', mode: 'beforeEnd' },
+    proof: { id: 'reason', mode: 'beforeEnd' },
+    faq: { id: 'faq', mode: 'beforeEnd' },
+    measurement: { id: 'closing', mode: 'beforeEnd' },
+    other: { id: 'closing', mode: 'beforeEnd' },
+  }
+
+  approvedChanges.slice(0, 5).forEach((change, index) => {
+    const area = String(change.target_area || 'other').toLowerCase()
+    const target = areaToSection[area] || areaToSection.other
+    const block = directEditBlock(change, index)
+    const result = target.mode === 'after'
+      ? insertAfterClosingSection(next, target.id, block)
+      : insertBeforeClosingSection(next, target.id, block)
+    next = result.html
+    applied.push({
+      type: result.applied ? 'direct_block' : 'direct_block_unplaced',
+      target_area: area,
+      target_section: result.applied ? target.id : null,
+      title: change.title || '',
+    })
+  })
+
+  if (!next.includes('id="ailp-direct-edit-styles"')) {
+    if (next.includes('</head>')) next = next.replace('</head>', `${directEditStyles()}\n</head>`)
+    else next = `${directEditStyles()}\n${next}`
+  }
+
+  return { html: next, applied }
+}
+
 async function git(args, options = {}) {
   try {
     const result = await execFileAsync('git', args, {
@@ -184,6 +276,8 @@ export async function applyDraftChanges({ config, workspace, folderPath, branchN
   const htmlPath = assertInside(repoRoot, join(targetDir, 'index.html'))
   let html = await readFile(htmlPath, 'utf8')
   html = html.replace(/<section id="ailp-draft-improvement"[\s\S]*?<\/section>/, '')
+  const targeted = applyTargetedHtmlEdits(html, plan)
+  html = targeted.html
   const section = draftSectionHtml({ plan, analysisId, generatedAt: new Date().toISOString() })
   if (html.includes('</body>')) {
     html = html.replace('</body>', `${section}\n</body>`)
@@ -205,5 +299,6 @@ export async function applyDraftChanges({ config, workspace, folderPath, branchN
     githubBranchUrl: githubBranchUrl(config, branchName),
     netlifyPreviewStatus: configuredPreviewUrl ? 'configured' : 'pending_netlify_deploy_preview',
     diffSummary,
+    appliedEdits: targeted.applied,
   }
 }

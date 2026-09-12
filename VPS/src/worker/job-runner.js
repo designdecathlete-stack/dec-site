@@ -609,10 +609,19 @@ export async function runJob({ config, supabase, job }) {
       return
     }
 
-    const planResponse = await createDraftChangePlan({ config, context: context.aiContext, analysis })
+    await prepareRepo({ config, workspace, branchName })
+    const sourceContext = await loadLpSourceContext(workspace, context.overview.folder_path)
+    const planResponse = await createDraftChangePlan({
+      config,
+      context: {
+        ...context.aiContext,
+        current_lp_source: sourceContext,
+        improvement_logic_version: 'docs/ai-improvement-logic.md',
+      },
+      analysis,
+    })
     const cost = estimateCost(config, planResponse.usage)
 
-    await prepareRepo({ config, workspace, branchName })
     const draft = await applyDraftChanges({
       config,
       workspace,
@@ -710,6 +719,8 @@ export async function runJob({ config, supabase, job }) {
         netlify_preview_status: draft.netlifyPreviewStatus,
         ai_analysis_result_id: analysis.id,
         ai_interaction_id: interaction.id,
+        applied_edits: draft.appliedEdits,
+        direct_html_edit_enabled: true,
       },
     })
     if (artifactError) throw new Error(artifactError.message)
@@ -740,6 +751,7 @@ export async function runJob({ config, supabase, job }) {
       netlify_preview_status: draft.netlifyPreviewStatus,
       pushed,
       diff_summary: draft.diffSummary,
+      applied_edits: draft.appliedEdits,
     })
     return
   }
