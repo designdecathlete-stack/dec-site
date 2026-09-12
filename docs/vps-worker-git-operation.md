@@ -51,6 +51,8 @@ The production URL `https://dec-site.netlify.app/ailp-previews/marr/draft-4389fa
 
 This job intentionally leaves the production LP folder, for example `marr/`, and `main` unchanged. During the current verification phase, approval means updating the draft side only.
 
+The management UI can now send saved proposal edits directly to this job. The "改善点の洗い出し" screen stores the edited proposal text in the `lp_jobs.payload.override_recommendations` field when the user clicks "別LP制作へ進める" or "現LP改善へ進める". The worker uses those saved recommendations for the draft plan before falling back to the latest `ai_analysis_results` recommendations. The result URL is saved to `lp_jobs.preview_url` and `lp_job_artifacts.preview_url`, then displayed on the "修正実行" screen after refresh. For UI-triggered jobs, `publish_preview_folder=true` also copies only the generated `ailp-previews/...` folder to `main` so the Netlify URL can be opened without changing the production LP folder such as `/marr/`.
+
 Verified test job:
 
 ```text

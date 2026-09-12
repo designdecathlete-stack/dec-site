@@ -1129,6 +1129,54 @@ function saveProposalDraft(id){
   proposal.hypothesis=card.querySelector('[data-proposal-field="hypothesis"]')?.value.trim()||proposal.hypothesis
   notice('改善案を保存しました。修正実行タブで内容を確認できます。')
 }
+function saveAllProposalDrafts(){
+  editableProposals.forEach(item=>{
+    const card=document.querySelector(`[data-proposal-id="${item.id}"]`)
+    if(!card) return
+    item.title=card.querySelector('[data-proposal-field="title"]')?.value.trim()||item.title
+    item.evidence=card.querySelector('[data-proposal-field="evidence"]')?.value.trim()||item.evidence
+    item.hypothesis=card.querySelector('[data-proposal-field="hypothesis"]')?.value.trim()||item.hypothesis
+  })
+}
+function proposalDraftRecommendations(route='all'){
+  return editableProposals
+    .filter(item=>route==='all'||(route==='micro'?item.id==='cta':item.id!=='cta'))
+    .map(item=>({
+      title:item.title,
+      body:item.hypothesis,
+      evidence:[item.evidence],
+      priority:item.priority==='最優先'?'high':item.priority==='優先'?'medium':'low',
+      target_area:item.id==='cta'?'cta':item.id==='difference'?'proof':'hero',
+      target_selector_or_text:item.id==='cta'?'closing CTA':item.id==='difference'?'reason/compare section':'hero section',
+      expected_effect:item.impact,
+      implementation_scope:'medium',
+      approved_for_draft:true,
+      review_note:'管理画面で保存された改善案をdraft生成に使用',
+    }))
+}
+async function startDraftFromSavedProposals(route='macro'){
+  saveAllProposalDrafts()
+  const analysis=latestAnalysisResult()
+  if(!analysis){
+    notice('先にAI提案を作成してください。')
+    return
+  }
+  const now=new Date()
+  const stamp=`ui-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`
+  const job=await enqueueLpJob('apply_to_draft',{
+    push:true,
+    publish_preview_folder:true,
+    version_slug:stamp,
+    ai_analysis_result_id:analysis.id,
+    draft_source:'ui_saved_proposals',
+    route,
+    override_recommendations:proposalDraftRecommendations(route),
+  })
+  if(job){
+    notice('保存済み改善案からdraft生成ジョブを投入しました。')
+    go('execution')
+  }
+}
 function enhancedSummary(){
   const row=detailState.overview||getSelectedDashboardRow()
   const score=computeHealthScore(row)
@@ -1140,7 +1188,8 @@ function enhancedEditableProposals(){
   return enhancedDetailContext('proposals')+`<div class="improvement-page"><div class="heading-row"><div><div class="eyebrow">IMPROVEMENT DISCOVERY</div><h1>改善点の洗い出し</h1><p class="page-sub">GA,分析のダミー診断をもとに、改善すべき順番と仮説を整理・編集します。</p></div><button class="secondary" onclick="go('analysis')">GA,分析を確認</button></div><section class="improvement-summary"><div><span>診断結果</span><h2>マクロ課題を先に改善</h2><p>読了は一定水準にあるため、構成を大きく変える前に「何を選ぶ理由にするか」を再設計します。</p></div><div><span>今回の目的</span><b>読んだあとに<br>予約したくなる理由をつくる</b></div></section><div class="improvement-proposals">${editableProposals.map((item,index)=>`<section class="improvement-proposal ${item.tone}" data-proposal-id="${item.id}"><div class="improvement-proposal-top"><span class="improvement-priority">${item.priority}</span><span>改善 ${String(index+1).padStart(2,'0')} / 編集可</span></div><label class="proposal-editor"><span>改善内容</span><textarea data-proposal-field="title">${escapeHtml(item.title)}</textarea></label><label class="proposal-editor"><span>数値から見える事実</span><textarea data-proposal-field="evidence">${escapeHtml(item.evidence)}</textarea></label><label class="proposal-editor"><span>改善仮説</span><textarea data-proposal-field="hypothesis">${escapeHtml(item.hypothesis)}</textarea></label><div class="improvement-footer"><span>${item.impact}</span><div class="proposal-actions"><button class="secondary" data-action="save-proposal" data-proposal-id="${item.id}">保存</button><button class="primary" onclick="go('execution')">修正実行へ進める</button></div></div></section>`).join('')}</div></div>`
 }
 function enhancedRoutedProposals(){
-  return enhancedDetailContext('proposals')+`<div class="improvement-page"><div class="heading-row"><div><div class="eyebrow">IMPROVEMENT DISCOVERY</div><h1>改善点の洗い出し</h1><p class="page-sub">GA,分析のダミー診断をもとに、改善すべき順番と仮説を整理・編集します。</p></div><button class="secondary" onclick="go('analysis')">GA,分析を確認</button></div><section class="improvement-summary"><div><span>今回の診断</span><h2>マクロ課題：別LPを新規制作</h2><p>現LPは維持したまま、訴求・差別化・オファーを変えた別LPを作成して検証します。ミクロ課題の場合だけ、現LPの構成やCTAを細かく改善します。</p></div><div><span>今回の目的</span><b>別LPで<br>選ばれる理由を再設計</b></div></section><div class="route-guide"><div class="route-guide-card active"><b>マクロ課題</b><span>別LPを新規制作</span><small>訴求・コンセプト・差別化・オファー</small></div><i>→</i><div class="route-guide-card"><b>ミクロ課題</b><span>現LPを細かく改善</span><small>構成・情報順・CTA・読みやすさ</small></div></div><div class="improvement-proposals">${editableProposals.map((item,index)=>{const route=item.id==='cta'?'micro':'macro';return `<section class="improvement-proposal ${item.tone}" data-proposal-id="${item.id}"><div class="improvement-proposal-top"><span class="improvement-priority">${item.priority}</span><span>改善 ${String(index+1).padStart(2,'0')} / 編集可</span></div><span class="proposal-route ${route}">${route==='macro'?'マクロ：別LPを制作':'ミクロ：現LPを改善'}</span><label class="proposal-editor"><span>改善内容</span><textarea data-proposal-field="title">${escapeHtml(item.title)}</textarea></label><label class="proposal-editor"><span>数値から見える事実</span><textarea data-proposal-field="evidence">${escapeHtml(item.evidence)}</textarea></label><label class="proposal-editor"><span>改善仮説</span><textarea data-proposal-field="hypothesis">${escapeHtml(item.hypothesis)}</textarea></label><div class="improvement-footer"><span>${item.impact}</span><div class="proposal-actions"><button class="secondary" data-action="save-proposal" data-proposal-id="${item.id}">保存</button>${route==='macro'?`<button class="primary" onclick="go('execution')">別LP制作へ進める</button>`:`<button class="primary" onclick="go('execution')">現LP改善へ進める</button>`}</div></div></section>`}).join('')}</div></div>`
+  const analysis=latestAnalysisResult()
+  return enhancedDetailContext('proposals')+`<div class="improvement-page">${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="heading-row"><div><div class="eyebrow">IMPROVEMENT DISCOVERY</div><h1>改善点の洗い出し</h1><p class="page-sub">GA,分析の診断をもとに、改善すべき順番と仮説を整理・編集します。</p></div><button class="secondary" onclick="go('analysis')">GA,分析を確認</button></div>${!analysis?`<div class="panel ga4-empty">まだAI提案がありません。先に「GA,分析」または「修正実行」でAI提案を作成してください。</div>`:''}<section class="improvement-summary"><div><span>今回の診断</span><h2>マクロ課題：別LPを新規制作</h2><p>現LPは維持したまま、訴求・差別化・オファーを変えたdraftを作成して検証します。ミクロ課題の場合だけ、現LPの構成やCTAを細かく改善します。</p></div><div><span>今回の目的</span><b>別LPで<br>選ばれる理由を再設計</b></div></section><div class="route-guide"><div class="route-guide-card active"><b>マクロ課題</b><span>別LPを新規制作</span><small>訴求・コンセプト・差別化・オファー</small></div><i>→</i><div class="route-guide-card"><b>ミクロ課題</b><span>現LPを細かく改善</span><small>構成・情報順・CTA・読みやすさ</small></div></div><div class="improvement-proposals">${editableProposals.map((item,index)=>{const route=item.id==='cta'?'micro':'macro';return `<section class="improvement-proposal ${item.tone}" data-proposal-id="${item.id}"><div class="improvement-proposal-top"><span class="improvement-priority">${item.priority}</span><span>改善 ${String(index+1).padStart(2,'0')} / 編集可</span></div><span class="proposal-route ${route}">${route==='macro'?'マクロ：別LPを制作':'ミクロ：現LPを改善'}</span><label class="proposal-editor"><span>改善内容</span><textarea data-proposal-field="title">${escapeHtml(item.title)}</textarea></label><label class="proposal-editor"><span>数値から見える事実</span><textarea data-proposal-field="evidence">${escapeHtml(item.evidence)}</textarea></label><label class="proposal-editor"><span>改善仮説</span><textarea data-proposal-field="hypothesis">${escapeHtml(item.hypothesis)}</textarea></label><div class="improvement-footer"><span>${item.impact}</span><div class="proposal-actions"><button class="secondary" data-action="save-proposal" data-proposal-id="${item.id}">保存</button>${route==='macro'?`<button class="primary" data-action="draft-from-proposal" data-route="macro" ${analysis?'':'disabled'}>別LP制作へ進める</button>`:`<button class="primary" data-action="draft-from-proposal" data-route="micro" ${analysis?'':'disabled'}>現LP改善へ進める</button>`}</div></div></section>`}).join('')}</div></div>`
 }
 function enhancedVersionHistory(){
   const row=detailState.overview||getSelectedDashboardRow()
@@ -1259,6 +1308,7 @@ function enhancedButtons(){
       else if(action==='user-save'){ saveManagedUser(button) }
       else if(action==='user-delete'){ deleteManagedUser(button) }
       else if(action==='save-proposal'){ saveProposalDraft(button.dataset.proposalId) }
+      else if(action==='draft-from-proposal'){ startDraftFromSavedProposals(button.dataset.route||'macro') }
       else if(action==='preview-version'){
         selectedVersionPreview={
           url:button.dataset.previewUrl,
@@ -1358,7 +1408,7 @@ enhancedDetail = enhancedJapaneseSummary
 detail = enhancedDetail
 enhancedAnalysis = enhancedGaAnalysis
 enhancedProposals = enhancedRoutedProposals
-enhancedExecution = enhancedRoutedExecution
+enhancedExecution = enhancedExecution
 enhancedVersions = enhancedPreviewableVersionHistory
 analysis = enhancedAnalysis
 proposals = enhancedProposals

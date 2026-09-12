@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process'
-import { cp, mkdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { cp, mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
 import { assertInside } from '../guards/path-guard.js'
@@ -247,6 +248,35 @@ export async function pushBranch({ config, workspace, branchName }) {
     cwd: workspace.repo,
     config,
   })
+}
+
+export async function publishPreviewFolderToMain({ config, branchName, previewPath }) {
+  const normalizedPreviewPath = String(previewPath || '').replace(/^\/+|\/+$/g, '')
+  if (!normalizedPreviewPath.startsWith('ailp-previews/') || normalizedPreviewPath.includes('..')) {
+    throw new Error(`Invalid previewPath for main publish: ${previewPath}`)
+  }
+
+  const tempRoot = await mkdtemp(join(tmpdir(), 'ailp-preview-main-'))
+  try {
+    await git(['clone', repoUrl(config), tempRoot], { config })
+    await git(['config', 'user.name', config.gitAuthorName], { cwd: tempRoot, config })
+    await git(['config', 'user.email', config.gitAuthorEmail], { cwd: tempRoot, config })
+    await git(['fetch', 'origin', branchName], { cwd: tempRoot, config })
+    await git(['checkout', 'origin/main', '--', '.'], { cwd: tempRoot, config })
+    await git(['checkout', 'FETCH_HEAD', '--', normalizedPreviewPath], { cwd: tempRoot, config })
+    await git(['add', normalizedPreviewPath], { cwd: tempRoot, config })
+    const diffSummary = await git(['diff', '--cached', '--stat'], { cwd: tempRoot, config })
+    if (!diffSummary) {
+      const commitSha = await git(['rev-parse', 'HEAD'], { cwd: tempRoot, config })
+      return { published: false, commitSha, diffSummary: '' }
+    }
+    await git(['commit', '-m', `Publish AILP preview ${normalizedPreviewPath}`], { cwd: tempRoot, config })
+    const commitSha = await git(['rev-parse', 'HEAD'], { cwd: tempRoot, config })
+    await git(['push', repoUrl(config), 'HEAD:main'], { cwd: tempRoot, config })
+    return { published: true, commitSha, diffSummary }
+  } finally {
+    await rm(tempRoot, { recursive: true, force: true })
+  }
 }
 
 

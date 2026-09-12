@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { ensureLpWorkspace } from '../guards/path-guard.js'
 import { writeJobStep } from '../logging/job-log.js'
-import { applyDraftChanges, createPreviewFolder, prepareRepo, pushBranch, writeDraftProposal } from './git.js'
+import { applyDraftChanges, createPreviewFolder, prepareRepo, publishPreviewFolderToMain, pushBranch, writeDraftProposal } from './git.js'
 import { createDraftChangePlan, createImprovementProposal, estimateCost } from './openai.js'
 
 
@@ -587,6 +587,16 @@ export async function runJob({ config, supabase, job }) {
     if (!analysis) {
       throw new Error('No ai_analysis_results found. Run propose_improvements first.')
     }
+    const overrideRecommendations = Array.isArray(job.payload?.override_recommendations)
+      ? job.payload.override_recommendations
+      : null
+    const draftAnalysis = overrideRecommendations
+      ? {
+          ...analysis,
+          recommendations: overrideRecommendations,
+          summary: `${analysis.summary || 'AI analysis'} / 管理画面で保存された改善案をdraftに反映`,
+        }
+      : analysis
 
     const versionSlug = job.payload?.version_slug || `draft-${job.id.slice(0, 8)}`
     const branchName = `ailp/${context.overview.folder_path}/${versionSlug}`.replace(/[^A-Za-z0-9/_-]/g, '-')
@@ -617,8 +627,11 @@ export async function runJob({ config, supabase, job }) {
         ...context.aiContext,
         current_lp_source: sourceContext,
         improvement_logic_version: 'docs/ai-improvement-logic.md',
+        operator_saved_proposals: overrideRecommendations,
+        draft_source: job.payload?.draft_source || 'latest_ai_analysis',
+        route: job.payload?.route || null,
       },
-      analysis,
+      analysis: draftAnalysis,
     })
     const cost = estimateCost(config, planResponse.usage)
 
@@ -633,6 +646,7 @@ export async function runJob({ config, supabase, job }) {
     })
 
     let pushed = false
+    let mainPreviewPublish = null
     if (job.payload?.push !== false) {
       await writeJobStep(supabase, job.id, 'draft_branch_push', {
         status: 'running',
@@ -642,6 +656,20 @@ export async function runJob({ config, supabase, job }) {
       })
       await pushBranch({ config, workspace, branchName })
       pushed = true
+    }
+    if (pushed && job.payload?.publish_preview_folder === true) {
+      await writeJobStep(supabase, job.id, 'preview_folder_publish', {
+        status: 'running',
+        summary: 'Publishing preview folder to main without changing production LP folder',
+        lp_project_id: job.lp_project_id,
+        branch: branchName,
+        preview_path: draft.previewPath,
+      })
+      mainPreviewPublish = await publishPreviewFolderToMain({
+        config,
+        branchName,
+        previewPath: draft.previewPath,
+      })
     }
 
     const { data: interaction, error: interactionError } = await supabase
@@ -653,7 +681,7 @@ export async function runJob({ config, supabase, job }) {
         action_type: job.job_type,
         prompt_summary: 'Latest LP-scoped AI analysis was converted into a draft-only LP update plan.',
         response_summary: planResponse.parsed?.headline || analysis.summary,
-        input_refs: [{ table: 'ai_analysis_results', id: analysis.id }],
+        input_refs: [{ table: 'ai_analysis_results', id: analysis.id, draft_source: job.payload?.draft_source || 'latest_ai_analysis' }],
         output_refs: [{ git_branch: draft.branchName, commit_sha: draft.commitSha, file_path: draft.previewPath }],
         input_tokens: cost.inputTokens,
         output_tokens: cost.outputTokens,
@@ -721,6 +749,10 @@ export async function runJob({ config, supabase, job }) {
         ai_interaction_id: interaction.id,
         applied_edits: draft.appliedEdits,
         direct_html_edit_enabled: true,
+        draft_source: job.payload?.draft_source || 'latest_ai_analysis',
+        route: job.payload?.route || null,
+        preview_folder_published_to_main: Boolean(mainPreviewPublish?.published),
+        preview_folder_main_commit_sha: mainPreviewPublish?.commitSha || null,
       },
     })
     if (artifactError) throw new Error(artifactError.message)
@@ -736,6 +768,8 @@ export async function runJob({ config, supabase, job }) {
         ai_interaction_id: interaction.id,
         github_branch_url: draft.githubBranchUrl,
         netlify_preview_status: draft.netlifyPreviewStatus,
+        preview_folder_published_to_main: Boolean(mainPreviewPublish?.published),
+        preview_folder_main_commit_sha: mainPreviewPublish?.commitSha || null,
       },
     }).eq('id', job.id)
     if (jobUpdateError) throw new Error(jobUpdateError.message)
