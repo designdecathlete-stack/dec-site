@@ -53,6 +53,10 @@ This job intentionally leaves the production LP folder, for example `marr/`, and
 
 The management UI can now send saved proposal edits directly to this job. The "改善点の洗い出し" screen stores the edited proposal text in the `lp_jobs.payload.override_recommendations` field when the user clicks "別LP制作へ進める" or "現LP改善へ進める". The worker uses those saved recommendations for the draft plan before falling back to the latest `ai_analysis_results` recommendations. The result URL is saved to `lp_jobs.preview_url` and `lp_job_artifacts.preview_url`, then displayed on the "修正実行" screen after refresh. For UI-triggered jobs, `publish_preview_folder=true` also copies only the generated `ailp-previews/...` folder to `main` so the Netlify URL can be opened without changing the production LP folder such as `/marr/`.
 
+The "修正実行" screen summarizes the latest `apply_to_draft` job with processing state, failure reason, preview URL, GitHub branch, commit, applied edits, and AI usage cost. Clicking "このdraftでOK" records the selected draft as approved by prefixing the matching `git_versions.change_summary` with `[承認済みdraft]`. This is intentionally a draft approval only: it does not copy the draft back to the production LP folder and does not replace `/marr/`.
+
+The "改善履歴・バージョン" screen links `git_versions` with `lp_job_artifacts` and `lp_ai_usage_logs` by commit/job so each draft row can show its preview URL, source proposal type, branch/commit, and AI cost.
+
 Verified test job:
 
 ```text

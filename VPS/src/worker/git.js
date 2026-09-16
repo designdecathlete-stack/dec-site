@@ -63,7 +63,7 @@ function directEditStyles() {
   return `
 <style id="ailp-direct-edit-styles">
 .ailp-direct-edit{margin:22px auto;padding:20px;border:1px solid rgba(201,168,108,.42);border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(250,245,236,.92));box-shadow:0 12px 34px rgba(44,37,32,.12);color:#2A2520;max-width:calc(var(--content-width,480px) - 48px);font-family:var(--font-body,'Noto Sans JP',sans-serif)}
-.ailp-direct-edit__label{display:inline-block;margin-bottom:8px;color:#8B6F36;font-size:11px;font-weight:900;letter-spacing:.12em}.ailp-direct-edit h3{font-size:18px;line-height:1.55;margin:0 0 8px;color:#2C2520}.ailp-direct-edit p{font-size:13px;line-height:1.9;color:#5C5045;margin:0}.ailp-direct-edit--cta{text-align:center;background:#fff8e8}.ailp-direct-edit--measurement{background:#f7fbff;border-color:#bdd7ff}.ailp-direct-edit--hero{margin-top:0;border-radius:0 0 18px 18px;max-width:100%}
+.ailp-direct-edit__label{display:inline-block;margin-bottom:8px;color:#8B6F36;font-size:11px;font-weight:900;letter-spacing:.12em}.ailp-direct-edit h3{font-size:18px;line-height:1.55;margin:0 0 8px;color:#2C2520}.ailp-direct-edit p{font-size:13px;line-height:1.9;color:#5C5045;margin:0}.ailp-direct-edit--cta{text-align:center;background:#fff8e8}.ailp-direct-edit--measurement{background:#f7fbff;border-color:#bdd7ff}.ailp-direct-edit--hero{margin-top:0;border-radius:0 0 18px 18px;max-width:100%}.hero{position:relative}.ailp-hero-copy{position:absolute;left:18px;right:18px;bottom:20px;z-index:3;padding:16px 18px;border-radius:16px;background:rgba(44,37,32,.72);color:#fff;backdrop-filter:blur(6px);box-shadow:0 10px 32px rgba(0,0,0,.2)}.ailp-hero-copy strong{display:block;font-size:18px;line-height:1.55;letter-spacing:.04em}.ailp-hero-copy span{display:block;margin-top:6px;font-size:13px;line-height:1.8;color:rgba(255,255,255,.88)}.ailp-cta-support{margin:10px auto 0;font-size:13px;line-height:1.8;color:#6B5A47;text-align:center;max-width:360px}
 </style>`
 }
 
@@ -101,20 +101,145 @@ function safeCtaLabel(label) {
   return value
 }
 
+function stripInlineHtml(value) {
+  return String(value || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function sectionHtml(html, sectionId) {
+  const pattern = new RegExp(String.raw`<section\b[^>]*id=["']${sectionId}["'][^>]*>[\s\S]*?<\/section>`, 'i')
+  const match = String(html || '').match(pattern)
+  return match ? match[0] : ''
+}
+
+function replaceInSection(html, sectionId, replacer) {
+  const pattern = new RegExp(String.raw`(<section\b[^>]*id=["']${sectionId}["'][^>]*>[\s\S]*?<\/section>)`, 'i')
+  let applied = null
+  const next = String(html || '').replace(pattern, (section) => {
+    const result = replacer(section)
+    if (!result?.applied) return section
+    applied = result
+    return result.section
+  })
+  return applied ? { html: next, ...applied } : { html, applied: false }
+}
+
+function safeReplacementText(value, max = 90) {
+  const text = stripInlineHtml(value)
+  if (!text || text.length > max) return ''
+  if (/プレビュー|draft|改善案|AI改善/i.test(text)) return ''
+  return text
+}
+
+function replaceHeroCopy(html, change) {
+  const title = safeReplacementText(change?.title, 52)
+  const body = safeReplacementText(change?.body, 120)
+  if (!title) return { html, applied: false }
+  return replaceInSection(html, 'top', (section) => {
+    const headingPattern = /<(h1|h2)(\b[^>]*)>([\s\S]*?)<\/\1>/i
+    const headingMatch = section.match(headingPattern)
+    if (headingMatch) {
+      const beforeHeading = stripInlineHtml(headingMatch[3])
+      let nextSection = section.replace(headingPattern, `<${headingMatch[1]}${headingMatch[2]}>${escapeHtmlFragment(title)}</${headingMatch[1]}>`)
+      let beforeLead = ''
+      if (body) {
+        const leadPattern = /<p(\b[^>]*)>([\s\S]*?)<\/p>/i
+        const leadMatch = nextSection.match(leadPattern)
+        if (leadMatch) {
+          beforeLead = stripInlineHtml(leadMatch[2])
+          nextSection = nextSection.replace(leadPattern, `<p${leadMatch[1]}>${escapeHtmlFragment(body)}</p>`)
+        }
+      }
+      return {
+        applied: true,
+        section: nextSection,
+        type: 'replace_copy',
+        target_area: 'hero',
+        target_section: 'top',
+        title: change?.title || '',
+        before: beforeLead ? `${beforeHeading} / ${beforeLead}` : beforeHeading,
+        after: body ? `${title} / ${body}` : title,
+      }
+    }
+
+    const beforeAlt = (section.match(/<img\b[^>]*alt=["']([^"']*)["'][^>]*>/i) || [])[1] || ''
+    const heroCopy = `<div class="ailp-hero-copy"><strong>${escapeHtmlFragment(title)}</strong>${body ? `<span>${escapeHtmlFragment(body)}</span>` : ''}</div>`
+    const nextSection = section.includes('</section>')
+      ? section.replace('</section>', `${heroCopy}
+  </section>`)
+      : `${section}
+${heroCopy}`
+    return {
+      applied: true,
+      section: nextSection,
+      type: 'replace_hero_overlay',
+      target_area: 'hero',
+      target_section: 'top',
+      title: change?.title || '',
+      before: beforeAlt || '(image hero without text)',
+      after: body ? `${title} / ${body}` : title,
+    }
+  })
+}
+
+function replaceCtaCopy(html, change, ctaLabel) {
+  const label = safeCtaLabel(ctaLabel)
+  const support = safeReplacementText(change?.body, 110)
+  if (!label && !support) return { html, applied: false }
+  const linkPattern = /(<a\b[^>]*class=["'][^"']*(?:cta-btn--line|float-cta--line|sb-cta--line)[^"']*["'][^>]*>)([\s\S]*?)(<\/a>)/i
+  const linkMatch = String(html || '').match(linkPattern)
+  if (!linkMatch) return { html, applied: false }
+  const beforeLink = stripInlineHtml(linkMatch[2])
+  let next = label ? html.replace(linkPattern, `${linkMatch[1]}${escapeHtmlFragment(label)}${linkMatch[3]}`) : html
+  let beforeSupport = ''
+  if (support) {
+    const afterLinkPattern = /(<a\b[^>]*class=["'][^"']*(?:cta-btn--line|float-cta--line|sb-cta--line)[^"']*["'][^>]*>[\s\S]*?<\/a>\s*)(<p\b[^>]*>[\s\S]*?<\/p>|<small\b[^>]*>[\s\S]*?<\/small>)/i
+    const supportMatch = next.match(afterLinkPattern)
+    if (supportMatch) {
+      beforeSupport = stripInlineHtml(supportMatch[2])
+      next = next.replace(afterLinkPattern, `${supportMatch[1]}<p class="ailp-cta-support">${escapeHtmlFragment(support)}</p>`)
+    } else {
+      next = next.replace(linkPattern, `${linkMatch[1]}${escapeHtmlFragment(label || beforeLink)}${linkMatch[3]}
+<p class="ailp-cta-support">${escapeHtmlFragment(support)}</p>`)
+    }
+  }
+  return {
+    html: next,
+    applied: true,
+    type: 'replace_cta_copy',
+    target_area: 'cta',
+    target_section: 'cta-block',
+    title: change?.title || '',
+    before: beforeSupport ? `${beforeLink} / ${beforeSupport}` : beforeLink,
+    after: support ? `${label || beforeLink} / ${support}` : label,
+  }
+}
+
 function applyTargetedHtmlEdits(html, plan) {
   let next = removePriorDirectEdits(html)
   const applied = []
   const changes = Array.isArray(plan?.changes) ? plan.changes : []
   const approvedChanges = changes.filter(change => change && change.edit_intent !== 'measurement_check')
   const ctaLabel = safeCtaLabel(plan?.cta_label)
+  const replacedIndexes = new Set()
 
-  if (ctaLabel) {
-    next = next.replace(/(<a\b[^>]*class=["'][^"']*(?:cta-btn--line|float-cta--line|sb-cta--line)[^"']*["'][^>]*>)([\s\S]*?)(<\/a>)/gi, (match, open, body, close) => {
-      if (!/LINE|相談/.test(body)) return match
-      applied.push({ type: 'cta_label', target_area: 'cta', label: ctaLabel })
-      return `${open}\n        ${escapeHtmlFragment(ctaLabel)}\n      ${close}`
-    })
-  }
+  approvedChanges.slice(0, 5).forEach((change, index) => {
+    const area = String(change.target_area || 'other').toLowerCase()
+    let result = null
+    if (area === 'hero') result = replaceHeroCopy(next, change)
+    if (area === 'cta') result = replaceCtaCopy(next, change, ctaLabel)
+    if (result?.applied) {
+      next = result.html
+      replacedIndexes.add(index)
+      applied.push({
+        type: result.type,
+        target_area: result.target_area,
+        target_section: result.target_section,
+        title: result.title,
+        before: result.before,
+        after: result.after,
+      })
+    }
+  })
 
   const areaToSection = {
     hero: { id: 'top', mode: 'after' },
@@ -127,6 +252,7 @@ function applyTargetedHtmlEdits(html, plan) {
   }
 
   approvedChanges.slice(0, 5).forEach((change, index) => {
+    if (replacedIndexes.has(index)) return
     const area = String(change.target_area || 'other').toLowerCase()
     const target = areaToSection[area] || areaToSection.other
     const block = directEditBlock(change, index)
@@ -139,12 +265,16 @@ function applyTargetedHtmlEdits(html, plan) {
       target_area: area,
       target_section: result.applied ? target.id : null,
       title: change.title || '',
+      before: result.applied ? '(new inserted block)' : '',
+      after: result.applied ? stripInlineHtml(change.body || change.title || '') : '',
     })
   })
 
   if (!next.includes('id="ailp-direct-edit-styles"')) {
-    if (next.includes('</head>')) next = next.replace('</head>', `${directEditStyles()}\n</head>`)
-    else next = `${directEditStyles()}\n${next}`
+    if (next.includes('</head>')) next = next.replace('</head>', `${directEditStyles()}
+</head>`)
+    else next = `${directEditStyles()}
+${next}`
   }
 
   return { html: next, applied }
@@ -332,3 +462,6 @@ export async function applyDraftChanges({ config, workspace, folderPath, branchN
     appliedEdits: targeted.applied,
   }
 }
+
+
+

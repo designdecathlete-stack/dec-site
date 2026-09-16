@@ -31,7 +31,7 @@ function currentAuth(){return window.AILP_AUTH_CONTEXT||{user:null,roles:[],isAd
 const dashboardState={loading:false,loaded:false,error:'',rows:[]}
 const ga4AdminState={loading:false,loaded:false,error:'',rows:[],busy:{},configs:{}}
 const apiLogState={loading:false,loaded:false,error:'',rows:[]}
-const detailState={loading:false,loadedFor:null,error:'',overview:null,metrics:[],analysisResults:[],versions:[],deployments:[],jobs:[],artifacts:[]}
+const detailState={loading:false,loadedFor:null,error:'',overview:null,metrics:[],analysisResults:[],versions:[],deployments:[],jobs:[],artifacts:[],usageLogs:[]}
 const userSettingsState={loading:false,loaded:false,error:'',users:[],projects:[],memberships:[]}
 const uiState={apiLogLevel:'all',apiLogQuery:'',userSearchQuery:'',selectedAccessUserId:'',newUserRole:'lp_dashboard'}
 let selectedLpProjectId=null
@@ -481,7 +481,7 @@ async function loadDetailData(force=false){
   if(['detail','analysis','proposals','execution','versions','history'].includes(page)) renderWithDetailMenu()
   try{
     const lpProjectId=selectedRow.lp_project_id
-    const [overviewResult,metricResult,analysisResult,versionResult,deploymentResult,jobResult,artifactResult]=await Promise.all([
+    const [overviewResult,metricResult,analysisResult,versionResult,deploymentResult,jobResult,artifactResult,usageResult]=await Promise.all([
       auth.supabase.from('lp_dashboard_overview').select('*').eq('lp_project_id',lpProjectId).single(),
       auth.supabase.from('ga4_daily_metrics').select('metric_date,source_medium,sessions,total_users,screen_page_views,conversions,event_count,engagement_rate,synced_at').eq('lp_project_id',lpProjectId).order('metric_date',{ascending:true}).limit(1000),
       auth.supabase.from('ai_analysis_results').select('*').eq('lp_project_id',lpProjectId).order('created_at',{ascending:false}).limit(10),
@@ -489,6 +489,7 @@ async function loadDetailData(force=false){
       auth.supabase.from('production_deployments').select('*').eq('lp_project_id',lpProjectId).order('created_at',{ascending:false}).limit(30),
       auth.supabase.from('lp_jobs').select('*').eq('lp_project_id',lpProjectId).order('created_at',{ascending:false}).limit(20),
       auth.supabase.from('lp_job_artifacts').select('*').eq('lp_project_id',lpProjectId).order('created_at',{ascending:false}).limit(30),
+      auth.supabase.from('lp_ai_usage_logs').select('*').eq('lp_project_id',lpProjectId).order('created_at',{ascending:false}).limit(30),
     ])
     if(overviewResult.error) throw overviewResult.error
     if(metricResult.error) throw metricResult.error
@@ -497,6 +498,7 @@ async function loadDetailData(force=false){
     if(deploymentResult.error) throw deploymentResult.error
     if(jobResult.error) throw jobResult.error
     if(artifactResult.error) throw artifactResult.error
+    if(usageResult.error) throw usageResult.error
     detailState.overview=overviewResult.data||selectedRow
     detailState.metrics=metricResult.data||[]
     detailState.analysisResults=analysisResult.data||[]
@@ -504,6 +506,7 @@ async function loadDetailData(force=false){
     detailState.deployments=deploymentResult.data||[]
     detailState.jobs=jobResult.data||[]
     detailState.artifacts=artifactResult.data||[]
+    detailState.usageLogs=usageResult.data||[]
     detailState.loadedFor=lpProjectId
     setSelectedFromRow(detailState.overview)
   }catch(error){
@@ -550,6 +553,59 @@ async function enqueueLpJob(jobType,payload={}){
 }
 function latestDraftArtifact(){
   return (detailState.artifacts||[]).find(item=>['draft_lp_update','preview_folder'].includes(item.artifact_type))
+}
+function latestApplyJob(){
+  return (detailState.jobs||[]).find(job=>job.job_type==='apply_to_draft')||null
+}
+function artifactForJob(job){
+  if(!job) return null
+  return (detailState.artifacts||[]).find(item=>item.job_id===job.id)||null
+}
+function usageForJob(job){
+  if(!job) return null
+  return (detailState.usageLogs||[]).find(item=>item.job_id===job.id)||null
+}
+function versionForJob(job,artifact){
+  const commit=artifact?.commit_sha||job?.commit_sha
+  if(!commit) return null
+  return (detailState.versions||[]).find(item=>item.commit_sha===commit)||null
+}
+function draftStatusSummary(job){
+  if(!job) return {label:'未実行',tone:'warn',detail:'まだdraft生成ジョブはありません。'}
+  if(job.status==='succeeded') return {label:'成功',tone:'ok',detail:'draft生成が完了しています。'}
+  if(job.status==='failed') return {label:'失敗',tone:'error',detail:job.error_message||'draft生成に失敗しました。'}
+  if(job.status==='running') return {label:'処理中',tone:'warn',detail:'VPS workerがdraftを生成中です。'}
+  return {label:'待機中',tone:'warn',detail:'VPS workerの実行待ちです。'}
+}
+function appliedEditsList(artifact){
+  const edits=artifact?.metadata?.applied_edits
+  return Array.isArray(edits)?edits:[]
+}
+function costLabel(usage){
+  if(!usage) return '未記録'
+  const jpy=Number(usage.estimated_cost_jpy||0)
+  const tokens=Number(usage.total_tokens||0)
+  return `約${jpy.toFixed(2)}円 / ${formatCount(tokens)} tokens`
+}
+async function approveLatestDraft(){
+  const auth=currentAuth()
+  const job=latestApplyJob()
+  const artifact=artifactForJob(job)
+  const version=versionForJob(job,artifact)
+  if(!auth.supabase||!job||job.status!=='succeeded'){ notice('承認できる成功済みdraftがありません。'); return }
+  if(!version){ notice('承認対象のバージョンが見つかりません。'); return }
+  const summary=String(version.change_summary||'draft update').replace(/^\[承認済みdraft\]\s*/,'')
+  try{
+    const {error}=await auth.supabase.from('git_versions').update({
+      change_summary:`[承認済みdraft] ${summary}`
+    }).eq('id',version.id)
+    if(error) throw error
+    notice('draftを承認済みにしました。本番URLには反映していません。')
+    await loadDetailData(true)
+  }catch(error){
+    console.error(error)
+    notice(error?.message||'draft承認の記録に失敗しました。')
+  }
 }
 function jobStatusTone(status){
   if(status==='succeeded') return 'ok'
@@ -1203,11 +1259,29 @@ function versionImprovementSummary(version){
   if(!summary||summary.startsWith('Imported current live')) return '現行LPを管理対象として初期登録'
   return summary
 }
-function versionPreviewUrl(version,deployments,row){
+function versionPreviewUrl(version,deployments,row,artifacts=[]){
+  const artifact=(artifacts||[]).find(item=>item.commit_sha&&item.commit_sha===version.commit_sha)
+  if(artifact?.preview_url) return artifact.preview_url
   const deployment=(deployments||[]).find(item=>item.commit_sha&&item.commit_sha===version.commit_sha)
   const url=deployment?.deploy_url||deployment?.public_url||''
   if(url.includes('dec-site.site')) return lpPreviewUrl(row)
   return url
+}
+function artifactForVersion(version){
+  return (detailState.artifacts||[]).find(item=>item.commit_sha&&item.commit_sha===version?.commit_sha)||null
+}
+function usageForVersion(version){
+  const artifact=artifactForVersion(version)
+  const jobId=artifact?.job_id
+  if(!jobId) return null
+  return (detailState.usageLogs||[]).find(item=>item.job_id===jobId)||null
+}
+function sourceLabelForArtifact(artifact){
+  const source=artifact?.metadata?.draft_source||''
+  if(source.includes('ui_saved_proposals')) return '保存済み改善案'
+  if(source.includes('replacement_rule')) return '置換ルールテスト'
+  if(source) return source
+  return 'AI分析結果'
 }
 function enhancedPreviewableVersionHistory(){
   const row=detailState.overview||getSelectedDashboardRow()
@@ -1230,7 +1304,7 @@ function enhancedPreviewableVersionHistory(){
       }
     })
   ].sort((a,b)=>String(b.date).localeCompare(String(a.date)))
-  return enhancedDetailContext('versions')+`<div class="version-history-page"><div class="heading-row"><div><div class="eyebrow">IMPROVEMENT HISTORY</div><h1>改善履歴・バージョン</h1><p class="page-sub">${escapeHtml(row?.lp_name||selected.name)} の全バージョン、改善内容、公開履歴を確認します。</p></div><span class="version-history-count">${versions.length} versions</span></div><section class="panel table-panel"><div class="version-history-heading"><div><span>ALL VERSIONS</span><h2>LPの全バージョン</h2></div><small>URLをクリックすると、詳細のサマリーでその版をプレビューできます</small></div>${versions.length?`<table class="version-history-table"><thead><tr><th>バージョン</th><th>状態</th><th>何を改善したか</th><th>プレビューURL</th><th>作成 / 公開</th></tr></thead><tbody>${versions.map(version=>{const status=versionStatus(version);const previewUrl=versionPreviewUrl(version,deployments,row);return `<tr><td><b>${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'未設定')}</b>${version.is_production?'<small class="version-current">現行LP</small>':''}<div class="version-commit"><small>${escapeHtml(version.branch||'--')} / ${escapeHtml(version.commit_sha||'--')}</small></div></td><td>${statusBadge(status.label,status.tone)}</td><td>${escapeHtml(versionImprovementSummary(version))}</td><td>${previewUrl?`<button class="secondary version-preview-button" data-action="preview-version" data-preview-url="${escapeHtml(previewUrl)}" data-preview-version-label="${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'過去バージョン')}" data-preview-lp-project-id="${escapeHtml(row?.lp_project_id||selectedLpProjectId||'')}">URLを詳細でプレビュー</button>`:'<span class="version-no-preview">プレビューURL未発行</span>'}</td><td><div class="version-dates"><span>作成 ${escapeHtml(formatDisplayDate(version.created_at))}</span><span>公開 ${escapeHtml(formatDisplayDate(version.published_at))}</span></div></td></tr>`}).join('')}</tbody></table>`:`<div class="ga4-empty">バージョン情報がまだありません。</div>`}</section><section class="panel version-timeline"><div class="version-history-heading"><div><span>CHANGELOG</span><h2>改善・公開履歴</h2></div><small>${timeline.length} 件</small></div>${timeline.length?`<ol>${timeline.map(item=>`<li><span class="timeline-dot ${item.kind}"></span><div><b>${escapeHtml(item.title)}</b><p><span class="timeline-improvement-label">改善内容</span>${escapeHtml(item.improvement)}</p></div><time>${escapeHtml(formatDisplayDate(item.date))}</time></li>`).join('')}</ol>`:`<div class="ga4-empty">履歴がまだありません。</div>`}</section></div>`
+  return enhancedDetailContext('versions')+`<div class="version-history-page"><div class="heading-row"><div><div class="eyebrow">IMPROVEMENT HISTORY</div><h1>改善履歴・バージョン</h1><p class="page-sub">${escapeHtml(row?.lp_name||selected.name)} の全バージョン、改善内容、公開履歴を確認します。</p></div><span class="version-history-count">${versions.length} versions</span></div><section class="panel table-panel"><div class="version-history-heading"><div><span>ALL VERSIONS</span><h2>LPの全バージョン</h2></div><small>URLをクリックすると、詳細のサマリーでその版をプレビューできます</small></div>${versions.length?`<table class="version-history-table"><thead><tr><th>バージョン</th><th>状態</th><th>何を改善したか</th><th>プレビューURL</th><th>作成 / 公開</th></tr></thead><tbody>${versions.map(version=>{const status=versionStatus(version);const artifact=artifactForVersion(version);const usage=usageForVersion(version);const previewUrl=versionPreviewUrl(version,deployments,row,detailState.artifacts);return `<tr><td><b>${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'未設定')}</b>${version.is_production?'<small class="version-current">現行LP</small>':''}<div class="version-commit"><small>${escapeHtml(version.branch||'--')} / ${escapeHtml(version.commit_sha||'--')}</small></div></td><td>${statusBadge(status.label,status.tone)}</td><td>${escapeHtml(versionImprovementSummary(version))}<div class="version-commit"><small>元: ${escapeHtml(sourceLabelForArtifact(artifact))} / AI ${escapeHtml(costLabel(usage))}</small></div></td><td>${previewUrl?`<button class="secondary version-preview-button" data-action="preview-version" data-preview-url="${escapeHtml(previewUrl)}" data-preview-version-label="${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'過去バージョン')}" data-preview-lp-project-id="${escapeHtml(row?.lp_project_id||selectedLpProjectId||'')}">URLを詳細でプレビュー</button>`:'<span class="version-no-preview">プレビューURL未発行</span>'}</td><td><div class="version-dates"><span>作成 ${escapeHtml(formatDisplayDate(version.created_at))}</span><span>公開 ${escapeHtml(formatDisplayDate(version.published_at))}</span></div></td></tr>`}).join('')}</tbody></table>`:`<div class="ga4-empty">バージョン情報がまだありません。</div>`}</section><section class="panel version-timeline"><div class="version-history-heading"><div><span>CHANGELOG</span><h2>改善・公開履歴</h2></div><small>${timeline.length} 件</small></div>${timeline.length?`<ol>${timeline.map(item=>`<li><span class="timeline-dot ${item.kind}"></span><div><b>${escapeHtml(item.title)}</b><p><span class="timeline-improvement-label">改善内容</span>${escapeHtml(item.improvement)}</p></div><time>${escapeHtml(formatDisplayDate(item.date))}</time></li>`).join('')}</ol>`:`<div class="ga4-empty">履歴がまだありません。</div>`}</section></div>`
 }
 function enhancedRoutedExecution(){
   const steps=[
@@ -1270,14 +1344,17 @@ function enhancedExecution(){
   const row=detailState.overview||getSelectedDashboardRow()
   const analysis=latestAnalysisResult()
   const recommendations=analysisListItems(analysis?.recommendations)
-  const versions=currentVersions()
-  const deployments=detailState.deployments||[]
   const jobs=detailState.jobs||[]
-  const draftArtifact=latestDraftArtifact()
-  const latestApply=jobs.find(job=>job.job_type==='apply_to_draft')
+  const latestApply=latestApplyJob()
+  const draftArtifact=artifactForJob(latestApply)||latestDraftArtifact()
+  const usage=usageForJob(latestApply)
+  const draftVersion=versionForJob(latestApply,draftArtifact)
+  const status=draftStatusSummary(latestApply)
   const draftUrl=draftArtifact?.preview_url||latestApply?.preview_url||''
   const githubUrl=draftArtifact?.metadata?.github_branch_url||latestApply?.payload?.github_branch_url||''
-  return enhancedDetailContext('execution')+`${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="heading-row"><div><div class="eyebrow">IMPLEMENTATION</div><h1>修正実行</h1><p class="page-sub">AI提案をdraft側へ反映します。現在の運用では本番フォルダとmainは変更しません。</p></div><button class="secondary" onclick="go('proposals')">改善点を確認する</button></div><div class="dashboard-grid"><section class="panel section-card"><h2>今回の修正対象</h2>${recommendations.length?`<ul class="mini-list">${recommendations.map(item=>`<li><span>${escapeHtml(item.title)}</span><b>${escapeHtml(item.body||'')}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">先に「AI提案を作成」を実行してください。</div>`}</section><section class="panel section-card"><h2>draft更新ステータス</h2><ul class="mini-list"><li><span>公開状態</span><b>${escapeHtml(publishState(row).label)}</b></li><li><span>本番反映</span><b>停止中 / draftのみ更新</b></li><li><span>最新draftジョブ</span><b>${latestApply?jobStatusLabel(latestApply.status):'未実行'}</b></li><li><span>修正バージョン</span><b>${versions.some(item=>!item.is_production)?'確認待ちあり':'未作成'}</b></li></ul></section><section class="panel section-card"><h2>操作</h2><p class="page-sub">ジョブ投入後、VPS workerが処理します。数十秒後に更新してください。</p><div class="ga4-actions stack"><button class="secondary" data-action="vps-propose">AI提案を作成</button><button class="primary" data-action="vps-apply-draft" ${analysis?'':'disabled'}>AI提案をdraftへ反映</button><button class="secondary" data-action="detail-refresh">状態を更新</button></div><div class="ga4-field-list compact"><span>draft URL <b>${draftUrl?`<a href="${escapeHtml(draftUrl)}" target="_blank" rel="noopener">開く</a>`:'Netlify URL未確定'}</b></span><span>GitHub branch <b>${githubUrl?`<a href="${escapeHtml(githubUrl)}" target="_blank" rel="noopener">開く</a>`:'未作成'}</b></span></div></section></div><section class="panel table-panel"><div class="heading-row"><div><h2>VPSジョブ</h2><p class="page-sub">提案作成、draft反映、preview作成の実行ログです。</p></div></div>${jobs.length?`<table><thead><tr><th>種別</th><th>状態</th><th>結果</th><th>Branch / Commit</th><th>作成</th></tr></thead><tbody>${jobs.slice(0,10).map(job=>`<tr><td><div class="lp-name">${escapeHtml(job.job_type)}</div></td><td>${statusBadge(jobStatusLabel(job.status),jobStatusTone(job.status))}</td><td>${escapeHtml(job.result_summary||job.error_message||'処理待ち')}</td><td><div class="ga4-field-list compact"><span>${escapeHtml(job.git_branch||'--')}</span><span>${escapeHtml(job.commit_sha||'--')}</span></div></td><td>${escapeHtml(formatDisplayDate(job.created_at))}</td></tr>`).join('')}</tbody></table>`:`<div class="ga4-empty">VPSジョブはまだありません。</div>`}</section><section class="panel table-panel"><div class="heading-row"><div><h2>修正バージョン</h2><p class="page-sub">作成されたdraft版を確認します。本番公開は別フローです。</p></div></div>${versions.length?`<table><thead><tr><th>バージョン</th><th>ステータス</th><th>変更内容</th><th>作成 / 公開</th></tr></thead><tbody>${versions.map(version=>{const status=versionStatus(version);return `<tr><td><div class="lp-name">${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'未設定')}</div></td><td>${statusBadge(status.label,status.tone)}</td><td>${escapeHtml(version.change_summary||'変更概要未設定')}</td><td><div class="ga4-field-list compact"><span>作成 ${escapeHtml(formatDisplayDate(version.created_at))}</span><span>公開 ${escapeHtml(formatDisplayDate(version.published_at))}</span></div></td></tr>`}).join('')}</tbody></table>`:`<div class="ga4-empty">修正バージョンはまだありません。</div>`}</section>`
+  const edits=appliedEditsList(draftArtifact)
+  const approved=Boolean(draftVersion?.change_summary&&String(draftVersion.change_summary).startsWith('[承認済みdraft]'))
+  return enhancedDetailContext('execution')+`${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="heading-row"><div><div class="eyebrow">IMPLEMENTATION</div><h1>修正実行</h1><p class="page-sub">保存済み改善案をdraft側へ反映し、preview URLで確認します。本番フォルダと本番URLは変更しません。</p></div><div class="ga4-actions"><button class="secondary" onclick="go('proposals')">改善点を確認する</button><button class="secondary" data-action="detail-refresh">状態を更新</button></div></div><div class="dashboard-grid"><section class="panel section-card"><h2>draft生成ステータス</h2><div class="ga4-field-list"><span>状態 <b>${statusBadge(status.label,status.tone)}</b></span><span>詳細 <b>${escapeHtml(status.detail)}</b></span><span>最新job <b>${latestApply?escapeHtml(latestApply.id.slice(0,8)):'--'}</b></span><span>作成 <b>${escapeHtml(formatDisplayDate(latestApply?.created_at))}</b></span><span>AIコスト <b>${escapeHtml(costLabel(usage))}</b></span></div>${latestApply?.status==='failed'?`<div class="ga4-empty">失敗理由：${escapeHtml(latestApply.error_message||'不明')}</div>`:''}</section><section class="panel section-card"><h2>preview確認</h2><div class="ga4-field-list compact"><span>preview URL <b>${draftUrl?`<a href="${escapeHtml(draftUrl)}" target="_blank" rel="noopener">開く</a>`:'未発行'}</b></span><span>GitHub branch <b>${githubUrl?`<a href="${escapeHtml(githubUrl)}" target="_blank" rel="noopener">開く</a>`:'未作成'}</b></span><span>commit <b>${escapeHtml(draftArtifact?.commit_sha||latestApply?.commit_sha||'--')}</b></span><span>本番反映 <b>停止中 / draftのみ</b></span></div><div class="ga4-actions stack"><button class="secondary" data-action="vps-propose">AI提案を作成</button><button class="primary" data-action="vps-apply-draft" ${analysis?'':'disabled'}>AI提案をdraftへ反映</button><button class="primary" data-action="approve-draft" ${latestApply?.status==='succeeded'&&!approved?'':'disabled'}>${approved?'承認済み':'このdraftでOK'}</button></div></section><section class="panel section-card"><h2>反映された改善内容</h2>${edits.length?`<ul class="mini-list">${edits.map(item=>`<li><span>${escapeHtml(item.target_area||item.type||'edit')}<br><small>${escapeHtml(item.type||'')}</small></span><b>${escapeHtml(item.title||item.label||item.after||'変更内容未記録')}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">まだ反映ログがありません。</div>`}</section><section class="panel section-card"><h2>今回の修正対象</h2>${recommendations.length?`<ul class="mini-list">${recommendations.map(item=>`<li><span>${escapeHtml(item.title)}</span><b>${escapeHtml(item.body||'')}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">先に「AI提案を作成」を実行してください。</div>`}</section></div><section class="panel table-panel"><div class="heading-row"><div><h2>VPSジョブ</h2><p class="page-sub">処理中、成功、失敗理由、commitを確認できます。</p></div></div>${jobs.length?`<table><thead><tr><th>種別</th><th>状態</th><th>結果 / 失敗理由</th><th>Preview</th><th>作成</th></tr></thead><tbody>${jobs.slice(0,10).map(job=>`<tr><td><div class="lp-name">${escapeHtml(job.job_type)}</div></td><td>${statusBadge(jobStatusLabel(job.status),jobStatusTone(job.status))}</td><td>${escapeHtml(job.result_summary||job.error_message||'処理待ち')}</td><td>${job.preview_url?`<a href="${escapeHtml(job.preview_url)}" target="_blank" rel="noopener">開く</a>`:'--'}<div class="ga4-field-list compact"><span>${escapeHtml(job.git_branch||'--')}</span><span>${escapeHtml(job.commit_sha||'--')}</span></div></td><td>${escapeHtml(formatDisplayDate(job.created_at))}</td></tr>`).join('')}</tbody></table>`:`<div class="ga4-empty">VPSジョブはまだありません。</div>`}</section>`
 }
 function enhancedButtons(){
   document.querySelectorAll('[data-action]').forEach(button=>{
@@ -1309,6 +1386,7 @@ function enhancedButtons(){
       else if(action==='user-delete'){ deleteManagedUser(button) }
       else if(action==='save-proposal'){ saveProposalDraft(button.dataset.proposalId) }
       else if(action==='draft-from-proposal'){ startDraftFromSavedProposals(button.dataset.route||'macro') }
+      else if(action==='approve-draft'){ approveLatestDraft() }
       else if(action==='preview-version'){
         selectedVersionPreview={
           url:button.dataset.previewUrl,
