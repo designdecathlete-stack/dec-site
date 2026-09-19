@@ -14,3 +14,6 @@ AILP/supabase/.temp/
 .env
 .env.*
 !.env.example
+
+# Local production backups
+backups/

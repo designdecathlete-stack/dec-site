@@ -67,3 +67,27 @@ folder: ailp-previews/marr/draft-d23613be/
 ```
 
 The saved `preview_url` still uses the production Netlify domain as a placeholder until Netlify Deploy Preview or Branch Deploy is configured. The job metadata stores `netlify_preview_status=pending_netlify_deploy_preview` and the GitHub branch URL for review.
+
+## Production backup and restore policy
+
+Before replacing a production LP folder, keep a local backup outside Git. For marr, the current backup is stored locally at:
+
+```text
+D:\Users\natur\Desktop\Python\06_AILP\app\backups\marr\marr-production-20260919-133402\
+D:\Users\natur\Desktop\Python\06_AILP\app\backups\marr\marr-production-20260919-133402.zip
+```
+
+The `backups/` directory is ignored by Git. To restore manually, copy the backed-up `marr/` contents back into the repository `marr/` folder, commit the restore, and push `main`.
+
+## Production publish flow
+
+`publish_version` is the production step after draft approval. It uses the selected draft artifact as the source of truth, fetches the draft branch, copies `ailp-previews/{lp-folder}/{version_slug}/` into `{lp-folder}/`, removes the draft-only diagnostic section from `index.html`, commits on `main`, pushes to GitHub, and lets Netlify publish the existing production URL.
+
+The production job writes:
+
+- `lp_jobs`: final status, commit, public URL, and source draft metadata.
+- `lp_job_artifacts`: `production_publish` artifact with the source preview path and production commit.
+- `git_versions`: a new `is_production=true` live version, while older live rows are set to false.
+- `production_deployments`: Netlify deployment record for the public URL.
+
+This keeps draft history and production history separate while making rollback possible from either Git commits or the local backup.

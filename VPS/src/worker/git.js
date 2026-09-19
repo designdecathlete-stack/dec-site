@@ -409,6 +409,72 @@ export async function publishPreviewFolderToMain({ config, branchName, previewPa
   }
 }
 
+function removeDraftOnlyMarkers(html) {
+  return String(html || '')
+    .replace(/<section id="ailp-draft-improvement"[\s\S]*?<\/section>\s*/g, '')
+}
+
+export async function publishVersionToProduction({ config, branchName, previewPath, productionFolder }) {
+  const normalizedPreviewPath = String(previewPath || '').replace(/^\/+|\/+$/g, '')
+  const normalizedProductionFolder = String(productionFolder || '').replace(/^\/+|\/+$/g, '')
+  if (!normalizedPreviewPath.startsWith('ailp-previews/') || normalizedPreviewPath.includes('..')) {
+    throw new Error(`Invalid previewPath for production publish: ${previewPath}`)
+  }
+  if (!normalizedProductionFolder || normalizedProductionFolder.includes('..') || normalizedProductionFolder.startsWith('ailp-previews/')) {
+    throw new Error(`Invalid productionFolder: ${productionFolder}`)
+  }
+
+  const tempRoot = await mkdtemp(join(tmpdir(), 'ailp-production-main-'))
+  try {
+    await git(['clone', repoUrl(config), tempRoot], { config })
+    await git(['config', 'user.name', config.gitAuthorName], { cwd: tempRoot, config })
+    await git(['config', 'user.email', config.gitAuthorEmail], { cwd: tempRoot, config })
+    await git(['fetch', 'origin', branchName], { cwd: tempRoot, config })
+    await git(['checkout', 'origin/main', '--', '.'], { cwd: tempRoot, config })
+    await git(['checkout', 'FETCH_HEAD', '--', normalizedPreviewPath], { cwd: tempRoot, config })
+
+    const sourceDir = assertInside(tempRoot, join(tempRoot, normalizedPreviewPath))
+    const targetDir = assertInside(tempRoot, join(tempRoot, normalizedProductionFolder))
+    await rm(targetDir, { recursive: true, force: true })
+    await mkdir(targetDir, { recursive: true })
+    await cp(sourceDir, targetDir, {
+      recursive: true,
+      force: true,
+      filter: (source) => !source.includes('.git') && !source.endsWith('ailp-draft-proposal.md'),
+    })
+
+    const htmlPath = assertInside(tempRoot, join(targetDir, 'index.html'))
+    try {
+      const html = await readFile(htmlPath, 'utf8')
+      await writeFile(htmlPath, removeDraftOnlyMarkers(html), 'utf8')
+    } catch {}
+
+    await git(['add', normalizedProductionFolder], { cwd: tempRoot, config })
+    const diffSummary = await git(['diff', '--cached', '--stat'], { cwd: tempRoot, config })
+    if (!diffSummary) {
+      const commitSha = await git(['rev-parse', 'HEAD'], { cwd: tempRoot, config })
+      return {
+        published: false,
+        commitSha,
+        publicPath: normalizedProductionFolder,
+        publicUrl: `https://dec-site.netlify.app/${normalizedProductionFolder}/`,
+        diffSummary: '',
+      }
+    }
+    await git(['commit', '-m', `Publish AILP production ${normalizedProductionFolder} from ${normalizedPreviewPath}`], { cwd: tempRoot, config })
+    const commitSha = await git(['rev-parse', 'HEAD'], { cwd: tempRoot, config })
+    await git(['push', repoUrl(config), 'HEAD:main'], { cwd: tempRoot, config })
+    return {
+      published: true,
+      commitSha,
+      publicPath: normalizedProductionFolder,
+      publicUrl: `https://dec-site.netlify.app/${normalizedProductionFolder}/`,
+      diffSummary,
+    }
+  } finally {
+    await rm(tempRoot, { recursive: true, force: true })
+  }
+}
 
 
 

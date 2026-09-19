@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { ensureLpWorkspace } from '../guards/path-guard.js'
 import { writeJobStep } from '../logging/job-log.js'
-import { applyDraftChanges, createPreviewFolder, prepareRepo, publishPreviewFolderToMain, pushBranch, writeDraftProposal } from './git.js'
+import { applyDraftChanges, createPreviewFolder, prepareRepo, publishPreviewFolderToMain, publishVersionToProduction, pushBranch, writeDraftProposal } from './git.js'
 import { createDraftChangePlan, createImprovementProposal, estimateCost } from './openai.js'
 
 
@@ -786,6 +786,167 @@ export async function runJob({ config, supabase, job }) {
       pushed,
       diff_summary: draft.diffSummary,
       applied_edits: draft.appliedEdits,
+    })
+    return
+  }
+
+  if (job.job_type === 'publish_version') {
+    const context = await loadLpContext(supabase, job.lp_project_id)
+    const artifactQuery = supabase
+      .from('lp_job_artifacts')
+      .select('*')
+      .eq('lp_project_id', job.lp_project_id)
+      .eq('artifact_type', 'draft_lp_update')
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (job.payload?.draft_job_id) artifactQuery.eq('job_id', job.payload.draft_job_id)
+    if (job.payload?.commit_sha) artifactQuery.eq('commit_sha', job.payload.commit_sha)
+
+    const { data: artifacts, error: artifactLookupError } = await artifactQuery
+    if (artifactLookupError) throw new Error(artifactLookupError.message)
+    const artifact = artifacts?.[0]
+    if (!artifact) throw new Error('No draft artifact found to publish.')
+
+    const { data: draftVersion, error: versionLookupError } = await supabase
+      .from('git_versions')
+      .select('*')
+      .eq('lp_project_id', job.lp_project_id)
+      .eq('commit_sha', artifact.commit_sha)
+      .maybeSingle()
+    if (versionLookupError) throw new Error(versionLookupError.message)
+    const isApprovedDraft = String(draftVersion?.change_summary || '').startsWith('[承認済みdraft]')
+    if (!isApprovedDraft && job.payload?.allow_unapproved !== true) {
+      throw new Error('Draft is not approved. Click "このdraftでOK" before publishing to production.')
+    }
+
+    const sourceBranch = artifact.git_branch || job.payload?.git_branch
+    const previewPath = artifact.file_path
+    if (!sourceBranch || !previewPath) throw new Error('Draft artifact is missing git_branch or file_path.')
+
+    await writeJobStep(supabase, job.id, 'production_publish_prepare', {
+      status: 'running',
+      summary: 'Preparing production publish from approved draft',
+      lp_project_id: job.lp_project_id,
+      source_branch: sourceBranch,
+      preview_path: previewPath,
+      production_folder: context.overview.folder_path,
+      source_commit_sha: artifact.commit_sha,
+    })
+
+    if (config.dryRun) {
+      await writeJobStep(supabase, job.id, 'dry_run_complete', {
+        summary: 'Dry run skipped production publish',
+        lp_project_id: job.lp_project_id,
+        preview_path: previewPath,
+      })
+      return
+    }
+
+    const previousLive = await (async () => {
+      const { data, error } = await supabase
+        .from('git_versions')
+        .select('*')
+        .eq('lp_project_id', job.lp_project_id)
+        .eq('is_production', true)
+        .maybeSingle()
+      if (error) throw new Error(error.message)
+      return data
+    })()
+
+    const published = await publishVersionToProduction({
+      config,
+      branchName: sourceBranch,
+      previewPath,
+      productionFolder: context.overview.folder_path,
+    })
+
+    const productionLabel = `live-${new Date().toISOString().slice(0, 10)}-${published.commitSha.slice(0, 7)}`
+    const changeSummary = String(draftVersion?.change_summary || artifact.metadata?.draft_source || 'Published approved draft to production')
+
+    const { error: clearLiveError } = await supabase
+      .from('git_versions')
+      .update({ is_production: false })
+      .eq('lp_project_id', job.lp_project_id)
+      .eq('is_production', true)
+    if (clearLiveError) throw new Error(clearLiveError.message)
+
+    const { data: productionVersion, error: productionVersionError } = await supabase
+      .from('git_versions')
+      .insert({
+        lp_project_id: job.lp_project_id,
+        version_label: productionLabel,
+        branch: 'main',
+        commit_sha: published.commitSha,
+        parent_commit_sha: previousLive?.commit_sha || artifact.commit_sha,
+        folder_path: context.overview.folder_path,
+        change_summary: `[本番反映] ${changeSummary.replace(/^\[承認済みdraft\]\s*/, '')}`,
+        is_production: true,
+      })
+      .select('id')
+      .single()
+    if (productionVersionError) throw new Error(productionVersionError.message)
+
+    const publicUrl = context.overview.public_url || published.publicUrl
+    const { error: deploymentError } = await supabase.from('production_deployments').insert({
+      lp_project_id: job.lp_project_id,
+      provider: 'netlify',
+      deploy_url: published.publicUrl,
+      public_url: publicUrl,
+      commit_sha: published.commitSha,
+      status: 'succeeded',
+      deployed_at: new Date().toISOString(),
+    })
+    if (deploymentError) throw new Error(deploymentError.message)
+
+    const { error: artifactError } = await supabase.from('lp_job_artifacts').insert({
+      job_id: job.id,
+      lp_project_id: job.lp_project_id,
+      artifact_type: 'production_publish',
+      file_path: context.overview.folder_path,
+      git_branch: 'main',
+      commit_sha: published.commitSha,
+      preview_url: publicUrl,
+      diff_summary: published.diffSummary,
+      metadata: {
+        source_artifact_id: artifact.id,
+        source_draft_job_id: artifact.job_id,
+        source_preview_path: previewPath,
+        source_commit_sha: artifact.commit_sha,
+        production_version_id: productionVersion.id,
+        previous_live_commit_sha: previousLive?.commit_sha || null,
+        public_path: published.publicPath,
+        published_to_main: true,
+      },
+    })
+    if (artifactError) throw new Error(artifactError.message)
+
+    const { error: jobUpdateError } = await supabase.from('lp_jobs').update({
+      result_summary: `Published approved draft ${previewPath} to production folder ${context.overview.folder_path}.`,
+      git_branch: 'main',
+      commit_sha: published.commitSha,
+      preview_url: publicUrl,
+      payload: {
+        ...(job.payload ?? {}),
+        source_artifact_id: artifact.id,
+        source_draft_job_id: artifact.job_id,
+        source_preview_path: previewPath,
+        source_commit_sha: artifact.commit_sha,
+        production_version_id: productionVersion.id,
+        previous_live_commit_sha: previousLive?.commit_sha || null,
+      },
+    }).eq('id', job.id)
+    if (jobUpdateError) throw new Error(jobUpdateError.message)
+
+    await writeJobStep(supabase, job.id, 'production_published', {
+      summary: 'Approved draft was published to the production LP folder',
+      lp_project_id: job.lp_project_id,
+      source_preview_path: previewPath,
+      production_folder: context.overview.folder_path,
+      commit_sha: published.commitSha,
+      public_url: publicUrl,
+      diff_summary: published.diffSummary,
+      previous_live_commit_sha: previousLive?.commit_sha || null,
     })
     return
   }
