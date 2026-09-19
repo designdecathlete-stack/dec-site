@@ -2579,6 +2579,36 @@ body.page-id-12 .woo-lp-sticky-header__text {
     }
     @media (min-width:601px) and (max-width:767px) { body { padding-bottom:82px; } }
     @media (min-width:768px) { body { padding-bottom:0; } .woo-lp__wrap { padding-right:28px; padding-left:28px; } }
+    /* Refined LINE CTA: readable live text, restrained depth and motion. */
+    .woo-lp-fv__cta, .woo-lp-cta-line, .woo-lp-fv__mobile-link {
+      background:linear-gradient(180deg,#278b69 0%,#197455 52%,#146347 100%); color:#fff; border:1px solid #1b7053;
+      border-radius:14px; box-shadow:inset 0 2px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(0,0,0,.12),0 5px 0 #0c4934,0 9px 16px rgba(28,70,52,.24);
+      text-shadow:0 1px 1px rgba(0,0,0,.16);
+      text-decoration:none; animation:none; letter-spacing:.025em;
+      transition:background-color .2s ease,transform .2s ease,box-shadow .2s ease;
+    }
+    .woo-lp-fv__cta:hover, .woo-lp-cta-line:hover, .woo-lp-fv__mobile-link:hover {
+      background:linear-gradient(180deg,#2d9874 0%,#1c7e5d 52%,#176b4e 100%); color:#fff; transform:translateY(-1px); box-shadow:inset 0 2px 0 rgba(255,255,255,.34),0 6px 0 #0c4934,0 11px 19px rgba(28,70,52,.26);
+    }
+    .woo-lp-fv__cta:active, .woo-lp-cta-line:active, .woo-lp-fv__mobile-link:active {
+      transform:translateY(4px); box-shadow:inset 0 1px 3px rgba(0,0,0,.12),0 1px 0 #0c4934,0 3px 7px rgba(28,70,52,.18);
+    }
+    .woo-lp-fv__cta:focus-visible, .woo-lp-cta-line:focus-visible, .woo-lp-fv__mobile-link:focus-visible {
+      outline:3px solid #a66e51; outline-offset:4px;
+    }
+    .woo-lp-cta-line .woo-lp-cta-line__icon { width:32px; height:32px; }
+    .woo-lp-cta-line__sub { font-size:.72rem; font-weight:400; }
+    .woo-lp-fv__mobile-link { display:flex; align-items:center; justify-content:center; gap:12px; min-height:72px; padding:12px 14px; text-align:left; }
+    .woo-lp-fv__mobile-link .woo-lp-fv__line-icon { width:32px; height:32px; flex-shrink:0; clip-path:none; }
+    .woo-lp-fv__entry-copy { display:flex; flex-direction:column; gap:3px; }
+    .woo-lp-fv__entry-copy small { font-size:10px; letter-spacing:.08em; font-weight:400; }
+    .woo-lp-fv__entry-copy strong { font-size:15px; line-height:1.5; font-weight:700; }
+    .woo-lp-fv__entry-arrow { font-size:20px; margin-left:auto; }
+    @media (max-width:600px) { .woo-lp-fv__mobile-link { bottom:5%; } }
+    @media (prefers-reduced-motion:reduce) {
+      .woo-lp-fv__cta, .woo-lp-cta-line, .woo-lp-fv__mobile-link { transition:none; }
+      .woo-lp-fv__cta:hover, .woo-lp-cta-line:hover, .woo-lp-fv__mobile-link:hover { transform:none; }
+    }
   </style>
 </head>
 <body>
@@ -2610,7 +2640,9 @@ body.page-id-12 .woo-lp-sticky-header__text {
     <div class="woo-lp-fv__mobile-visual">
       <img class="woo-lp-fv__mobile-art" src="assets/images/fv-mobile-recruit.webp" width="941" height="1672" fetchpriority="high" alt="防府市のアイサロン新店舗 オープニングスタッフ募集。美容師免許を活かして、未経験からアイリストへ。動画マニュアルと勤務中研修で、一歩ずつデビューを目指せます。全員未経験から入社。">
       <a class="woo-lp-fv__mobile-link" href="https://lin.ee/ZVD436S" aria-label="LINEで見学会・採用エントリーへ">
-        <img src="assets/images/fv-line-entry-cta.webp" width="2160" height="728" alt="見学会・採用エントリーへ">
+        <img class="woo-lp-fv__line-icon" src="assets/images/line-me.webp" width="32" height="32" alt="LINE">
+        <span class="woo-lp-fv__entry-copy"><small>LINEで受付中</small><strong>見学会・採用エントリーへ</strong></span>
+        <span class="woo-lp-fv__entry-arrow" aria-hidden="true">→</span>
       </a>
     </div>
     <img decoding="async" class="woo-lp-fv__image woo-lp-fv__image--team" src="assets/images/fv-staff-team.webp" alt="くつろぎサロン wooのスタッフ集合写真">
