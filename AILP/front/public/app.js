@@ -1417,10 +1417,27 @@ function usageForVersion(version){
 }
 function sourceLabelForArtifact(artifact){
   const source=artifact?.metadata?.draft_source||''
-  if(source.includes('ui_saved_proposals')) return '保存済み改善案'
-  if(source.includes('replacement_rule')) return '置換ルールテスト'
+  if(source.includes('ai_analysis_recommendations')) return 'AI分析の改善案'
+  if(source.includes('ui_saved_proposals')) return '編集済み改善案'
+  if(source.includes('replacement_rule')) return 'AI HTML編集'
   if(source) return source
-  return 'AI分析結果'
+  return artifact?'AI分析結果':'初期登録 / 手動登録'
+}
+function analysisSourceLabelForArtifact(artifact){
+  const analysisId=artifact?.metadata?.ai_analysis_result_id||artifact?.metadata?.source_analysis_id||''
+  const jobId=artifact?.job_id||''
+  if(analysisId) return `AI分析 ${String(analysisId).slice(0,8)}`
+  if(jobId) return `job ${String(jobId).slice(0,8)}`
+  return 'AI未紐づけ'
+}
+function artifactEditCount(artifact){
+  const edits=artifact?.metadata?.applied_edits
+  return Array.isArray(edits)?edits.length:0
+}
+function versionPreviewLabel(version,previewUrl,row){
+  if(version?.is_production) return '現行URLを開く'
+  if(previewUrl&&row&&previewUrl===lpPreviewUrl(row)) return '現行URLを開く'
+  return 'previewを開く'
 }
 function enhancedPreviewableVersionHistory(){
   const row=detailState.overview||getSelectedDashboardRow()
@@ -1443,7 +1460,7 @@ function enhancedPreviewableVersionHistory(){
       }
     })
   ].sort((a,b)=>String(b.date).localeCompare(String(a.date)))
-  return enhancedDetailContext('versions')+`<div class="version-history-page"><div class="heading-row"><div><div class="eyebrow">IMPROVEMENT HISTORY</div><h1>改善履歴・バージョン</h1><p class="page-sub">${escapeHtml(row?.lp_name||selected.name)} の全バージョン、改善内容、公開履歴を確認します。</p></div><span class="version-history-count">${versions.length} versions</span></div><section class="panel table-panel"><div class="version-history-heading"><div><span>ALL VERSIONS</span><h2>LPの全バージョン</h2></div><small>URLをクリックすると、詳細のサマリーでその版をプレビューできます</small></div>${versions.length?`<table class="version-history-table"><thead><tr><th>バージョン</th><th>状態</th><th>何を改善したか</th><th>プレビューURL</th><th>作成 / 公開</th></tr></thead><tbody>${versions.map(version=>{const status=versionStatus(version);const artifact=artifactForVersion(version);const usage=usageForVersion(version);const previewUrl=versionPreviewUrl(version,deployments,row,detailState.artifacts);return `<tr><td><b>${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'未設定')}</b>${version.is_production?'<small class="version-current">現行LP</small>':''}<div class="version-commit"><small>${escapeHtml(version.branch||'--')} / ${escapeHtml(version.commit_sha||'--')}</small></div></td><td>${statusBadge(status.label,status.tone)}</td><td>${escapeHtml(versionImprovementSummary(version))}<div class="version-commit"><small>元: ${escapeHtml(sourceLabelForArtifact(artifact))} / AI ${escapeHtml(costLabel(usage))}</small></div></td><td>${previewUrl?`<button class="secondary version-preview-button" data-action="preview-version" data-preview-url="${escapeHtml(previewUrl)}" data-preview-version-label="${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'過去バージョン')}" data-preview-lp-project-id="${escapeHtml(row?.lp_project_id||selectedLpProjectId||'')}">URLを詳細でプレビュー</button>`:'<span class="version-no-preview">プレビューURL未発行</span>'}</td><td><div class="version-dates"><span>作成 ${escapeHtml(formatDisplayDate(version.created_at))}</span><span>公開 ${escapeHtml(formatDisplayDate(version.published_at))}</span></div></td></tr>`}).join('')}</tbody></table>`:`<div class="ga4-empty">バージョン情報がまだありません。</div>`}</section><section class="panel version-timeline"><div class="version-history-heading"><div><span>CHANGELOG</span><h2>改善・公開履歴</h2></div><small>${timeline.length} 件</small></div>${timeline.length?`<ol>${timeline.map(item=>`<li><span class="timeline-dot ${item.kind}"></span><div><b>${escapeHtml(item.title)}</b><p><span class="timeline-improvement-label">改善内容</span>${escapeHtml(item.improvement)}</p></div><time>${escapeHtml(formatDisplayDate(item.date))}</time></li>`).join('')}</ol>`:`<div class="ga4-empty">履歴がまだありません。</div>`}</section></div>`
+  return enhancedDetailContext('versions')+`<div class="version-history-page"><div class="heading-row"><div><div class="eyebrow">IMPROVEMENT HISTORY</div><h1>改善履歴・バージョン</h1><p class="page-sub">${escapeHtml(row?.lp_name||selected.name)} の全バージョン、改善内容、公開履歴を確認します。</p></div><span class="version-history-count">${versions.length} versions</span></div><section class="panel table-panel"><div class="version-history-heading"><div><span>ALL VERSIONS</span><h2>LPの全バージョン</h2></div><small>URLをクリックすると、詳細のサマリーでその版をプレビューできます</small></div>${versions.length?`<table class="version-history-table"><thead><tr><th>バージョン</th><th>状態</th><th>何を改善したか</th><th>プレビューURL</th><th>作成 / 公開</th></tr></thead><tbody>${versions.map(version=>{const status=versionStatus(version);const artifact=artifactForVersion(version);const usage=usageForVersion(version);const previewUrl=versionPreviewUrl(version,deployments,row,detailState.artifacts);return `<tr><td><b>${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'未設定')}</b>${version.is_production?'<small class="version-current">現行LP</small>':''}<div class="version-commit"><small>${escapeHtml(version.branch||'--')} / ${escapeHtml(version.commit_sha||'--')}</small></div></td><td>${statusBadge(status.label,status.tone)}</td><td>${escapeHtml(versionImprovementSummary(version))}<div class="version-commit"><small>元: ${escapeHtml(sourceLabelForArtifact(artifact))} / ${escapeHtml(analysisSourceLabelForArtifact(artifact))}</small><small>反映 ${formatCount(artifactEditCount(artifact))}件 / AI ${escapeHtml(costLabel(usage))}</small></div></td><td>${previewUrl?`<button class="secondary version-preview-button" data-action="preview-version" data-preview-url="${escapeHtml(previewUrl)}" data-preview-version-label="${escapeHtml(version.version_label||version.commit_sha?.slice(0,7)||'過去バージョン')}" data-preview-lp-project-id="${escapeHtml(row?.lp_project_id||selectedLpProjectId||'')}">${escapeHtml(versionPreviewLabel(version,previewUrl,row))}</button>`:'<span class="version-no-preview">プレビューURL未発行</span>'}</td><td><div class="version-dates"><span>作成 ${escapeHtml(formatDisplayDate(version.created_at))}</span><span>公開 ${escapeHtml(formatDisplayDate(version.published_at))}</span></div></td></tr>`}).join('')}</tbody></table>`:`<div class="ga4-empty">バージョン情報がまだありません。</div>`}</section><section class="panel version-timeline"><div class="version-history-heading"><div><span>CHANGELOG</span><h2>改善・公開履歴</h2></div><small>${timeline.length} 件</small></div>${timeline.length?`<ol>${timeline.map(item=>`<li><span class="timeline-dot ${item.kind}"></span><div><b>${escapeHtml(item.title)}</b><p><span class="timeline-improvement-label">改善内容</span>${escapeHtml(item.improvement)}</p></div><time>${escapeHtml(formatDisplayDate(item.date))}</time></li>`).join('')}</ol>`:`<div class="ga4-empty">履歴がまだありません。</div>`}</section></div>`
 }
 function enhancedRoutedExecution(){
   const steps=[
