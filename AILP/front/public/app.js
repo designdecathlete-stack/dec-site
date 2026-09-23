@@ -37,6 +37,7 @@ const uiState={apiLogLevel:'all',apiLogQuery:'',userSearchQuery:'',selectedAcces
 let selectedLpProjectId=null
 let selectedClientId=null
 let selectedVersionPreview=null
+const proposalDraftEdits={}
 function formatIsoDate(date){return date.toISOString().slice(0,10)}
 function formatDisplayDate(value){if(!value)return '未取得';const date=new Date(value);return Number.isNaN(date.getTime())?String(value):date.toLocaleString('ja-JP')}
 function statusBadge(label,tone){return `<span class="ga4-status-badge ${tone}">${label}</span>`}
@@ -965,7 +966,15 @@ function renderWithDetailMenu(){
 }
 function analysisListItems(items){
   if(!Array.isArray(items)) return []
-  return items.map(item=>typeof item==='string'?{title:item,body:''}:{title:item.title||item.label||item.heading||'項目',body:item.body||item.detail||item.description||''})
+  return items.map((item,index)=>{
+    if(typeof item==='string') return {id:`rec-${index}`,title:item,body:''}
+    return {
+      ...item,
+      id:item.id||`rec-${index}`,
+      title:item.title||item.label||item.heading||'項目',
+      body:item.body||item.detail||item.description||'',
+    }
+  })
 }
 function channelBreakdown(metrics){
   const grouped=new Map()
@@ -1235,43 +1244,95 @@ function lpPreviewUrl(row){
   if(url.includes('dec-site.site')) return `https://dec-site.netlify.app/${String(row?.folder_path||'').replace(/^\/+|\/+$/g,'')}/`
   return url||'about:blank'
 }
-const editableProposals=[
-  {id:'value',priority:'最優先',title:'「誰に、どんな変化を約束するか」をファーストビューで明確化',evidence:'90%到達 26.7%に対して、CTA率は 8.2%。内容は読まれているが、選ぶ理由が弱い状態です。',hypothesis:'施術メニューの説明より先に、ターゲットが得られる具体的な変化と、選ばれる理由を提示します。',impact:'訴求・ベネフィット',tone:'high'},
-  {id:'difference',priority:'優先',title:'他店との違いと価格価値を、比較前に伝える',evidence:'50→75%の継続率が 65.8% と最も低く、比較・納得パートで読了が落ちています。',hypothesis:'実績・独自性・価格に含まれる価値を一つの判断材料として整理し、検討理由を作ります。',impact:'差別化・オファー',tone:'medium'},
-  {id:'cta',priority:'次点',title:'下部CTAの直前に、予約前の不安解消を追加',evidence:'下部CTAクリックは 19件。最後まで読んだユーザーの行動転換を補強する余地があります。',hypothesis:'所要時間・来店後の流れ・相談可否をCTA直前に集約し、迷いを減らします。',impact:'クロージング・CTA',tone:'low'},
-]
+function proposalPriorityLabel(item,index){
+  if(item.priority==='high'||item.priority===1||index===0) return '最優先'
+  if(item.priority==='medium'||item.priority===2) return '優先'
+  if(item.priority==='low'||item.priority===3) return '次点'
+  return item.priority||`改善 ${String(index+1).padStart(2,'0')}`
+}
+function proposalTone(item,index){
+  if(item.priority==='high'||item.priority===1||index===0) return 'high'
+  if(item.priority==='medium'||item.priority===2) return 'medium'
+  return 'low'
+}
+function proposalRoute(item){
+  const route=String(item.route||'').toLowerCase()
+  const area=String(item.target_area||'').toLowerCase()
+  if(route==='micro'||['cta','faq','measurement'].includes(area)) return 'micro'
+  if(route==='measurement') return 'micro'
+  return 'macro'
+}
+function proposalImpact(item){
+  return item.expected_effect||item.impact||item.target_area||'改善仮説'
+}
+function proposalEvidenceText(item){
+  const parts=[]
+  if(Array.isArray(item.ga4_evidence)) parts.push(...item.ga4_evidence)
+  if(Array.isArray(item.evidence)) parts.push(...item.evidence)
+  if(item.reason_chain) parts.push(item.reason_chain)
+  return parts.filter(Boolean).join('\n')||item.body||''
+}
+function proposalHypothesisText(item){
+  return item.hypothesis||item.expected_effect||item.body||item.review_note||''
+}
+function currentAiProposalItems(){
+  const analysis=latestAnalysisResult()
+  return analysisListItems(analysis?.recommendations).map((item,index)=>{
+    const id=String(item.id||`rec-${index}`)
+    const saved=proposalDraftEdits[id]||{}
+    return {
+      ...item,
+      id,
+      title:saved.title??item.title,
+      evidence:saved.evidence??proposalEvidenceText(item),
+      hypothesis:saved.hypothesis??proposalHypothesisText(item),
+      priorityLabel:proposalPriorityLabel(item,index),
+      route:proposalRoute(item),
+      tone:proposalTone(item,index),
+      impact:saved.impact??proposalImpact(item),
+    }
+  })
+}
 function saveProposalDraft(id){
-  const proposal=editableProposals.find(item=>item.id===id)
   const card=document.querySelector(`[data-proposal-id="${id}"]`)
-  if(!proposal||!card) return
-  proposal.title=card.querySelector('[data-proposal-field="title"]')?.value.trim()||proposal.title
-  proposal.evidence=card.querySelector('[data-proposal-field="evidence"]')?.value.trim()||proposal.evidence
-  proposal.hypothesis=card.querySelector('[data-proposal-field="hypothesis"]')?.value.trim()||proposal.hypothesis
-  notice('改善案を保存しました。修正実行タブで内容を確認できます。')
+  if(!card) return
+  proposalDraftEdits[id]={
+    title:card.querySelector('[data-proposal-field="title"]')?.value.trim()||'',
+    evidence:card.querySelector('[data-proposal-field="evidence"]')?.value.trim()||'',
+    hypothesis:card.querySelector('[data-proposal-field="hypothesis"]')?.value.trim()||'',
+  }
+  notice('改善案を保存しました。draft生成時にこの内容を使います。')
 }
 function saveAllProposalDrafts(){
-  editableProposals.forEach(item=>{
+  currentAiProposalItems().forEach(item=>{
     const card=document.querySelector(`[data-proposal-id="${item.id}"]`)
     if(!card) return
-    item.title=card.querySelector('[data-proposal-field="title"]')?.value.trim()||item.title
-    item.evidence=card.querySelector('[data-proposal-field="evidence"]')?.value.trim()||item.evidence
-    item.hypothesis=card.querySelector('[data-proposal-field="hypothesis"]')?.value.trim()||item.hypothesis
+    proposalDraftEdits[item.id]={
+      title:card.querySelector('[data-proposal-field="title"]')?.value.trim()||item.title,
+      evidence:card.querySelector('[data-proposal-field="evidence"]')?.value.trim()||item.evidence,
+      hypothesis:card.querySelector('[data-proposal-field="hypothesis"]')?.value.trim()||item.hypothesis,
+    }
   })
 }
 function proposalDraftRecommendations(route='all'){
-  return editableProposals
-    .filter(item=>route==='all'||(route==='micro'?item.id==='cta':item.id!=='cta'))
+  return currentAiProposalItems()
+    .filter(item=>route==='all'||item.route===route)
     .map(item=>({
       title:item.title,
-      body:item.hypothesis,
-      evidence:[item.evidence],
-      priority:item.priority==='最優先'?'high':item.priority==='優先'?'medium':'low',
-      target_area:item.id==='cta'?'cta':item.id==='difference'?'proof':'hero',
-      target_selector_or_text:item.id==='cta'?'closing CTA':item.id==='difference'?'reason/compare section':'hero section',
-      expected_effect:item.impact,
-      implementation_scope:'medium',
+      body:item.hypothesis||item.body,
+      evidence:item.evidence?[item.evidence]:item.evidence,
+      priority:item.priority==='high'||item.priorityLabel==='最優先'?'high':item.priority==='medium'||item.priorityLabel==='優先'?'medium':'low',
+      route:item.route,
+      target_area:item.target_area||item.area||(item.route==='micro'?'cta':'hero'),
+      target_selector_or_text:item.target_selector_or_text||item.selector||'',
+      expected_effect:item.expected_effect||item.impact||item.hypothesis,
+      ga4_evidence:item.ga4_evidence||[],
+      html_evidence:item.html_evidence||[],
+      reason_chain:item.reason_chain||item.evidence||'',
+      validation_metric:item.validation_metric||'',
+      implementation_scope:item.implementation_scope||'medium',
       approved_for_draft:true,
-      review_note:'管理画面で保存された改善案をdraft生成に使用',
+      review_note:item.review_note||'管理画面で確認・編集したAI提案をdraft生成に使用',
     }))
 }
 async function startDraftFromSavedProposals(route='macro'){
@@ -1281,6 +1342,11 @@ async function startDraftFromSavedProposals(route='macro'){
     notice('先にAI提案を作成してください。')
     return
   }
+  const recommendations=proposalDraftRecommendations(route)
+  if(!recommendations.length){
+    notice('この分類でdraft生成できるAI提案がありません。')
+    return
+  }
   const now=new Date()
   const stamp=`ui-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`
   const job=await enqueueLpJob('apply_to_draft',{
@@ -1288,12 +1354,12 @@ async function startDraftFromSavedProposals(route='macro'){
     publish_preview_folder:true,
     version_slug:stamp,
     ai_analysis_result_id:analysis.id,
-    draft_source:'ui_saved_proposals',
+    draft_source:'ai_analysis_recommendations',
     route,
-    override_recommendations:proposalDraftRecommendations(route),
+    override_recommendations:recommendations,
   })
   if(job){
-    notice('保存済み改善案からdraft生成ジョブを投入しました。')
+    notice('AI提案からdraft生成ジョブを投入しました。')
     go('execution')
   }
 }
@@ -1311,8 +1377,15 @@ function enhancedEditableProposals(){
 }
 function enhancedRoutedProposals(){
   const analysis=latestAnalysisResult()
-  return enhancedDetailContext('proposals')+`<div class="improvement-page">${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="heading-row"><div><div class="eyebrow">IMPROVEMENT DISCOVERY</div><h1>改善点の洗い出し</h1><p class="page-sub">GA,分析の診断をもとに、改善すべき順番と仮説を整理・編集します。</p></div><button class="secondary" onclick="go('analysis')">GA,分析を確認</button></div>${!analysis?`<div class="panel ga4-empty">まだAI提案がありません。先に「GA,分析」または「修正実行」でAI提案を作成してください。</div>`:''}<section class="improvement-summary"><div><span>今回の診断</span><h2>マクロ課題：別LPを新規制作</h2><p>現LPは維持したまま、訴求・差別化・オファーを変えたdraftを作成して検証します。ミクロ課題の場合だけ、現LPの構成やCTAを細かく改善します。</p></div><div><span>今回の目的</span><b>別LPで<br>選ばれる理由を再設計</b></div></section><div class="route-guide"><div class="route-guide-card active"><b>マクロ課題</b><span>別LPを新規制作</span><small>訴求・コンセプト・差別化・オファー</small></div><i>→</i><div class="route-guide-card"><b>ミクロ課題</b><span>現LPを細かく改善</span><small>構成・情報順・CTA・読みやすさ</small></div></div><div class="improvement-proposals">${editableProposals.map((item,index)=>{const route=item.id==='cta'?'micro':'macro';return `<section class="improvement-proposal ${item.tone}" data-proposal-id="${item.id}"><div class="improvement-proposal-top"><span class="improvement-priority">${item.priority}</span><span>改善 ${String(index+1).padStart(2,'0')} / 編集可</span></div><span class="proposal-route ${route}">${route==='macro'?'マクロ：別LPを制作':'ミクロ：現LPを改善'}</span><label class="proposal-editor"><span>改善内容</span><textarea data-proposal-field="title">${escapeHtml(item.title)}</textarea></label><label class="proposal-editor"><span>数値から見える事実</span><textarea data-proposal-field="evidence">${escapeHtml(item.evidence)}</textarea></label><label class="proposal-editor"><span>改善仮説</span><textarea data-proposal-field="hypothesis">${escapeHtml(item.hypothesis)}</textarea></label><div class="improvement-footer"><span>${item.impact}</span><div class="proposal-actions"><button class="secondary" data-action="save-proposal" data-proposal-id="${item.id}">保存</button>${route==='macro'?`<button class="primary" data-action="draft-from-proposal" data-route="macro" ${analysis?'':'disabled'}>別LP制作へ進める</button>`:`<button class="primary" data-action="draft-from-proposal" data-route="micro" ${analysis?'':'disabled'}>現LP改善へ進める</button>`}</div></div></section>`}).join('')}</div></div>`
+  const proposals=currentAiProposalItems()
+  const macroCount=proposals.filter(item=>item.route==='macro').length
+  const microCount=proposals.filter(item=>item.route==='micro').length
+  const created=analysis?.created_at?formatDisplayDate(analysis.created_at):'未作成'
+  const metricRange=analysis?.ga4_metric_date_from||analysis?.ga4_metric_date_to?`${analysis.ga4_metric_date_from||'--'} 〜 ${analysis.ga4_metric_date_to||'--'}`:'未記録'
+  const summaryTitle=analysis?.diagnosis?.route==='micro'?'ミクロ課題：現LPを細かく改善':analysis?.diagnosis?.route==='measurement'?'計測確認を優先':'AI提案から改善案を選択'
+  return enhancedDetailContext('proposals')+`<div class="improvement-page">${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="heading-row"><div><div class="eyebrow">IMPROVEMENT DISCOVERY</div><h1>改善点の洗い出し</h1><p class="page-sub">最新AI分析の提案を表示し、必要な文言だけ編集してdraft生成へ渡します。</p></div><button class="secondary" data-action="analyze-run">AI提案を再生成</button></div>${!analysis?`<div class="panel ga4-empty">まだAI提案がありません。先に「AI提案を再生成」を押してください。</div>`:''}${analysis?`<section class="improvement-summary"><div><span>今回の診断</span><h2>${escapeHtml(summaryTitle)}</h2><p>${escapeHtml(analysis.summary||'AI分析結果から改善案を作成しました。')}</p><small>提案作成: ${escapeHtml(created)} / GA4期間: ${escapeHtml(metricRange)} / model: ${escapeHtml(analysis.model||'heuristic')}</small></div><div><span>今回の目的</span><b>AI提案を<br>draftへ反映</b></div></section>`:''}<div class="route-guide"><div class="route-guide-card ${macroCount?'active':''}"><b>マクロ課題</b><span>別LPを新規制作</span><small>${macroCount}件 / 訴求・コンセプト・差別化・オファー</small></div><i>→</i><div class="route-guide-card ${microCount?'active':''}"><b>ミクロ課題</b><span>現LPを細かく改善</span><small>${microCount}件 / 構成・情報順・CTA・読みやすさ</small></div></div>${proposals.length?`<div class="improvement-proposals">${proposals.map((item,index)=>`<section class="improvement-proposal ${item.tone}" data-proposal-id="${escapeHtml(item.id)}"><div class="improvement-proposal-top"><span class="improvement-priority">${escapeHtml(item.priorityLabel)}</span><span>改善 ${String(index+1).padStart(2,'0')} / 編集可</span></div><span class="proposal-route ${item.route}">${item.route==='macro'?'マクロ：別LPを制作':'ミクロ：現LPを改善'}</span><label class="proposal-editor"><span>改善内容</span><textarea data-proposal-field="title">${escapeHtml(item.title)}</textarea></label><label class="proposal-editor"><span>数値・HTMLから見える事実</span><textarea data-proposal-field="evidence">${escapeHtml(item.evidence)}</textarea></label><label class="proposal-editor"><span>改善仮説</span><textarea data-proposal-field="hypothesis">${escapeHtml(item.hypothesis)}</textarea></label><div class="improvement-footer"><span>${escapeHtml(item.impact)}</span><div class="proposal-actions"><button class="secondary" data-action="save-proposal" data-proposal-id="${escapeHtml(item.id)}">保存</button>${item.route==='macro'?`<button class="primary" data-action="draft-from-proposal" data-route="macro">別LP制作へ進める</button>`:`<button class="primary" data-action="draft-from-proposal" data-route="micro">現LP改善へ進める</button>`}</div></div></section>`).join('')}</div>`:`<div class="panel ga4-empty">AI提案の recommendations がありません。AI提案を再生成してください。</div>`}</div>`
 }
+
 function enhancedVersionHistory(){
   const row=detailState.overview||getSelectedDashboardRow()
   const versions=currentVersions()
