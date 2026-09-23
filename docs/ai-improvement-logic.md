@@ -23,3 +23,5 @@ AILPの改善案ロジックとHTML反映ノウハウは、クライアントと
   - `applyTargetedHtmlEdits()`
 
 mdを更新しただけでは実プロンプトやHTML編集処理は変わらない。運用ノウハウを実装へ反映する場合は、上記のworker側コードも更新する。
+
+- [GA4 scoring logic](ga4-scoring-logic.md) - GTM前後のGA4スコア算出ルール。

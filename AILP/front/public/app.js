@@ -196,6 +196,56 @@ function analysisTotals(){
     return sum
   },{sessions:0,total_users:0,screen_page_views:0,conversions:0,event_count:0})
 }
+function averageEngagementRate(metrics){
+  let weighted=0
+  let sessions=0
+  let fallbackSum=0
+  let fallbackCount=0
+  metrics.forEach(metric=>{
+    if(metric.engagement_rate===null||metric.engagement_rate===undefined) return
+    const rate=Number(metric.engagement_rate||0)
+    const weight=Number(metric.sessions||0)
+    if(weight>0){ weighted+=rate*weight; sessions+=weight }
+    fallbackSum+=rate
+    fallbackCount+=1
+  })
+  if(sessions>0) return weighted/sessions
+  return fallbackCount?fallbackSum/fallbackCount:null
+}
+function scoreFromThresholds(value,thresholds){
+  for(const item of thresholds){ if(value>=item.min) return item.score }
+  return 0
+}
+function standardGa4Scores(metrics=metricsForActivePeriod()){
+  const daily=aggregateMetrics(metrics)
+  const totals=daily.reduce((sum,row)=>{
+    sum.sessions+=row.sessions
+    sum.total_users+=row.total_users
+    sum.screen_page_views+=row.screen_page_views
+    sum.conversions+=row.conversions
+    sum.event_count+=row.event_count
+    return sum
+  },{sessions:0,total_users:0,screen_page_views:0,conversions:0,event_count:0})
+  const hasData=totals.sessions>0||totals.total_users>0||totals.screen_page_views>0
+  const engagement=averageEngagementRate(metrics)
+  const pageDepth=totals.total_users>0?totals.screen_page_views/totals.total_users:(totals.sessions>0?totals.screen_page_views/totals.sessions:0)
+  const cvr=totals.sessions>0?totals.conversions/totals.sessions:0
+  const interest=hasData?Math.round((scoreFromThresholds(engagement??0,[{min:.6,score:90},{min:.45,score:75},{min:.25,score:55},{min:.1,score:35},{min:.01,score:20}])*0.7)+(scoreFromThresholds(pageDepth,[{min:2,score:90},{min:1.5,score:75},{min:1.2,score:55},{min:1,score:35},{min:.5,score:20}])*0.3)):0
+  const read=hasData?scoreFromThresholds(pageDepth,[{min:2.5,score:90},{min:1.8,score:75},{min:1.3,score:60},{min:1,score:40},{min:.5,score:20}]):0
+  const action=hasData?scoreFromThresholds(cvr,[{min:.05,score:90},{min:.03,score:75},{min:.01,score:55},{min:.001,score:35},{min:0,score:10}]):0
+  const overall=hasData?Math.round(interest*.35+read*.25+action*.4):0
+  return {hasData,totals,daily,engagement,pageDepth,cvr,interest,read,action,overall}
+}
+function scoreLabel(score){
+  if(score>=75) return '高い'
+  if(score>=50) return '注意'
+  if(score>=25) return '低い'
+  return '要確認'
+}
+function percentLabel(value,digits=1){
+  if(value===null||value===undefined||Number.isNaN(Number(value))) return '--'
+  return `${(Number(value)*100).toFixed(digits)}%`
+}
 function latestAnalysisResult(){return (detailState.analysisResults||[])[0]||null}
 function currentVersions(){return detailState.versions||[]}
 function versionStatus(version){
@@ -1249,10 +1299,12 @@ async function startDraftFromSavedProposals(route='macro'){
 }
 function enhancedSummary(){
   const row=detailState.overview||getSelectedDashboardRow()
-  const score=computeHealthScore(row)
+  const gaScore=standardGa4Scores()
+  const score=gaScore.hasData?gaScore.overall:computeHealthScore(row)
   const publish=publishState(row)
   const previewUrl=lpPreviewUrl(row)
-  return enhancedDetailContext('detail')+`<div class="summary-page"><div class="summary-preview panel"><div class="summary-preview-head"><div><span>LIVE LP PREVIEW</span><h2>実際のLPプレビュー</h2></div><a href="${escapeHtml(previewUrl)}" target="_blank" rel="noopener">別タブで開く ↗</a></div><iframe class="summary-preview-frame" src="${escapeHtml(previewUrl)}" title="${escapeHtml(row?.lp_name||'LP')} のプレビュー" loading="lazy"></iframe></div><div class="summary-side"><section class="summary-score-card"><div><span>現状スコア</span><h2>LPヘルススコア</h2></div><div class="summary-score-gauge" style="--score:${score}"><b>${score}</b><small>/ 100</small></div><div class="summary-score-meta"><span>${publish.label}</span><span>直近30日データ</span></div></section><section class="panel summary-metrics"><div class="summary-section-heading"><div><span>GA4</span><h2>主要数値</h2></div><small>ダミーデータ</small></div><div class="summary-metric-grid"><div><span>Sessions</span><b>1,240</b></div><div><span>Users</span><b>1,096</b></div><div><span>Engagement</span><b>68.2%</b></div><div><span>平均滞在</span><b>47秒</b></div></div></section><section class="panel summary-conversions"><div class="summary-section-heading"><div><span>CONVERSION</span><h2>コンバージョン</h2></div><b>7.3%</b></div><div class="summary-conversion-row"><span>CTAクリック</span><b>102</b><small>8.2%</small></div><div class="summary-conversion-row"><span>Hot Pepper</span><b>70</b><small>5.6%</small></div><div class="summary-conversion-row"><span>LINE</span><b>16</b><small>1.3%</small></div><div class="summary-conversion-row"><span>電話</span><b>4</b><small>0.3%</small></div></section></div></div>`
+  const cvr=gaScore.totals.sessions>0?gaScore.totals.conversions/gaScore.totals.sessions:0
+  return enhancedDetailContext('detail')+`<div class="summary-page"><div class="summary-preview panel"><div class="summary-preview-head"><div><span>LIVE LP PREVIEW</span><h2>実際のLPプレビュー</h2></div><a href="${escapeHtml(previewUrl)}" target="_blank" rel="noopener">別タブで開く ↗</a></div><iframe class="summary-preview-frame" src="${escapeHtml(previewUrl)}" title="${escapeHtml(row?.lp_name||'LP')} のプレビュー" loading="lazy"></iframe></div><div class="summary-side"><section class="summary-score-card"><div><span>現状スコア</span><h2>LPヘルススコア</h2></div><div class="summary-score-gauge" style="--score:${score}"><b>${score}</b><small>/ 100</small></div><div class="summary-score-meta"><span>${publish.label}</span><span>${gaScore.hasData?'GA4標準指標':'GA4未取得'}</span></div></section><section class="panel summary-metrics"><div class="summary-section-heading"><div><span>GA4</span><h2>主要数値</h2></div><small>${gaScore.hasData?'実データ':'未取得'}</small></div><div class="summary-metric-grid"><div><span>Sessions</span><b>${formatCount(gaScore.totals.sessions)}</b></div><div><span>Users</span><b>${formatCount(gaScore.totals.total_users)}</b></div><div><span>Engagement</span><b>${percentLabel(gaScore.engagement)}</b></div><div><span>PV/User</span><b>${gaScore.pageDepth.toFixed(2)}</b></div></div></section><section class="panel summary-conversions"><div class="summary-section-heading"><div><span>CONVERSION</span><h2>標準CV</h2></div><b>${percentLabel(cvr,2)}</b></div><div class="summary-conversion-row"><span>Conversions</span><b>${formatCount(gaScore.totals.conversions)}</b><small>GA4標準指標</small></div><div class="summary-conversion-row"><span>Events</span><b>${formatCount(gaScore.totals.event_count)}</b><small>eventCount</small></div><div class="summary-conversion-row"><span>CTAクリック</span><b>GTM後</b><small>イベント設計待ち</small></div></section></div></div>`
 }
 function enhancedEditableProposals(){
   return enhancedDetailContext('proposals')+`<div class="improvement-page"><div class="heading-row"><div><div class="eyebrow">IMPROVEMENT DISCOVERY</div><h1>改善点の洗い出し</h1><p class="page-sub">GA,分析のダミー診断をもとに、改善すべき順番と仮説を整理・編集します。</p></div><button class="secondary" onclick="go('analysis')">GA,分析を確認</button></div><section class="improvement-summary"><div><span>診断結果</span><h2>マクロ課題を先に改善</h2><p>読了は一定水準にあるため、構成を大きく変える前に「何を選ぶ理由にするか」を再設計します。</p></div><div><span>今回の目的</span><b>読んだあとに<br>予約したくなる理由をつくる</b></div></section><div class="improvement-proposals">${editableProposals.map((item,index)=>`<section class="improvement-proposal ${item.tone}" data-proposal-id="${item.id}"><div class="improvement-proposal-top"><span class="improvement-priority">${item.priority}</span><span>改善 ${String(index+1).padStart(2,'0')} / 編集可</span></div><label class="proposal-editor"><span>改善内容</span><textarea data-proposal-field="title">${escapeHtml(item.title)}</textarea></label><label class="proposal-editor"><span>数値から見える事実</span><textarea data-proposal-field="evidence">${escapeHtml(item.evidence)}</textarea></label><label class="proposal-editor"><span>改善仮説</span><textarea data-proposal-field="hypothesis">${escapeHtml(item.hypothesis)}</textarea></label><div class="improvement-footer"><span>${item.impact}</span><div class="proposal-actions"><button class="secondary" data-action="save-proposal" data-proposal-id="${item.id}">保存</button><button class="primary" onclick="go('execution')">修正実行へ進める</button></div></div></section>`).join('')}</div></div>`
@@ -1345,14 +1397,25 @@ function enhancedDemoExecution(){
   return enhancedDetailContext('execution')+`<div class="execution-page"><div class="heading-row"><div><div class="eyebrow">IMPLEMENTATION PLAN</div><h1>修正実行</h1><p class="page-sub">選択した改善点を、修正バージョン作成から公開確認まで進めます。</p></div><button class="secondary" onclick="go('proposals')">改善点を見直す</button></div><section class="execution-overview"><div><span>実行対象</span><b>マクロ課題の改善</b><small>訴求・差別化・オファーを優先</small></div><div><span>修正バージョン</span><b>v2.0 draft</b><small>公開前のダミー表示</small></div><div><span>公開判定</span><b>確認待ち</b><small>プレビュー確認後に公開</small></div></section><section class="execution-flow"><div class="execution-flow-heading"><div><span>修正プラン</span><h2>今回の変更内容</h2></div><b>3件</b></div>${steps.map(item=>`<div class="execution-step"><span class="execution-number">${item.step}</span><div><h3>${item.title}</h3><p>${item.detail}</p></div><span class="execution-status">${item.status}</span></div>`).join('')}</section><div class="execution-grid"><section class="panel execution-card"><span>PREVIEW</span><h2>確認用バージョン</h2><div class="execution-preview"><b>v2.0 draft</b><p>訴求コピー・比較パート・CTA前の不安解消を反映したプレビューを作成します。</p><code>preview / biyoshitsu-owner-hokago / v2</code></div><button class="primary">プレビューを作成</button></section><section class="panel execution-card"><span>PUBLISH CHECK</span><h2>公開前チェック</h2><ul><li>FVの訴求が対象者に明確か</li><li>差別化と価格価値が伝わるか</li><li>CTA前の不安解消があるか</li><li>モバイルで予約導線が見えるか</li></ul><button class="secondary">確認を依頼する</button></section></div></div>`
 }
 function enhancedGaAnalysis(){
-  const scrollRows=[
-    {label:'25% 到達',count:920,rate:74.2,retention:'FVを超えて本文を読み始めた'},
-    {label:'50% 到達',count:681,rate:54.9,retention:'25→50% 継続率 74.0%'},
-    {label:'75% 到達',count:448,rate:36.1,retention:'50→75% 継続率 65.8%'},
-    {label:'90% 到達',count:331,rate:26.7,retention:'75→90% 継続率 73.9%'},
+  const row=detailState.overview||getSelectedDashboardRow()
+  const metrics=metricsForActivePeriod()
+  const gaScore=standardGa4Scores(metrics)
+  const daily=gaScore.daily
+  const latestMetric=daily[daily.length-1]
+  const channels=channelBreakdown(metrics).slice(0,5)
+  const hasData=gaScore.hasData
+  const diagnosis=hasData
+    ? (gaScore.action<35?'行動改善と計測確認を優先':gaScore.interest<50?'ファーストビュー改善を優先':gaScore.read<50?'読み進めやすさを改善':'小さく検証しながら改善')
+    : 'GA4データ取得を先に確認'
+  const insight=hasData
+    ? `直近のGA4標準指標では、セッション ${formatCount(gaScore.totals.sessions)}、CV ${formatCount(gaScore.totals.conversions)}、CVR ${percentLabel(gaScore.cvr,2)} です。GTMイベント未整備のため、CTAクリックや予約意向クリックはまだ評価対象外です。`
+    : 'この期間のGA4標準指標がまだありません。GA4接続確認画面で接続テスト・取得を実行してください。'
+  const gtmRows=[
+    {label:'CTAクリック',status:'GTM設定後',detail:'LINE / Hot Pepper / 電話などのクリックイベント'},
+    {label:'予約意向クリック',status:'GTM設定後',detail:'外部予約・問い合わせ遷移イベント'},
+    {label:'スクロール到達',status:'GTM設定後',detail:'25% / 50% / 75% / 90% 到達イベント'},
   ]
-  const ctaRows=[{label:'FV CTA',count:52,rate:4.2},{label:'中盤 CTA',count:31,rate:2.5},{label:'下部 CTA',count:19,rate:1.5}]
-  return enhancedDetailContext('analysis')+`<div class="ga-analysis-page"><div class="heading-row"><div><div class="eyebrow">GA4 / LP DIAGNOSIS</div><h1>GA,分析</h1><p class="page-sub">直近30日・ダミーデータ。興味 → 読了 → 行動の順で、改善仮説を確認します。</p></div><button class="secondary" data-action="analyze-run">GA4データを更新</button></div><div class="ga-demo-note">DEMO DATA　実データ連携前の表示イメージです</div><div class="ga-kpi-grid"><section class="ga-kpi"><span>セッション</span><strong>1,240</strong><small>ユーザー 1,096</small></section><section class="ga-kpi"><span>エンゲージメント率</span><strong>68.2%</strong><small>平均エンゲージメント 47秒</small></section><section class="ga-kpi"><span>CTAクリック</span><strong>102</strong><small>CTA率 8.2%</small></section><section class="ga-kpi"><span>予約意向クリック</span><strong>90</strong><small>総成果率 7.3%</small></section></div><div class="ga-score-grid"><section class="ga-score-card"><span>INTEREST SCORE</span><strong>82</strong><b>興味：高い</b><small>エンゲージメント率・25%到達率</small></section><section class="ga-score-card"><span>READ SCORE</span><strong>76</strong><b>読了：高い</b><small>50% / 75% / 90% 到達率</small></section><section class="ga-score-card action"><span>ACTION SCORE</span><strong>41</strong><b>行動：低い</b><small>CTA率・予約意向クリック率</small></section></div><section class="ga-diagnosis"><div><span>診断</span><h2>マクロ課題の可能性が高い</h2><p>LPは最後まで読まれている一方、CTA・予約意向クリック率が相対的に低い状態です。構成より先に、訴求・差別化・オファー・価格価値を見直す仮説が有力です。</p></div><div class="ga-diagnosis-priority"><span>優先順位</span><ol><li>コンセプト / ベネフィット</li><li>他店との差別化</li><li>オファー・価格価値</li></ol></div></section><div class="ga-analysis-grid"><section class="panel ga-analysis-card"><div class="ga-card-heading"><div><span>SCROLL DEPTH</span><h2>どこまで読まれたか</h2></div><b>1,240 sessions</b></div><div class="ga-scroll-list">${scrollRows.map(item=>`<div class="ga-scroll-row"><div><b>${item.label}</b><small>${item.retention}</small></div><div class="ga-progress" role="progressbar" aria-label="${item.label}" aria-valuenow="${item.rate}" aria-valuemin="0" aria-valuemax="100"><i style="width:${item.rate}%"></i></div><strong>${item.rate}%<small>${item.count}人</small></strong></div>`).join('')}</div><p class="ga-insight">最大の減衰は 50→75% 区間です。比較・納得パートの証拠や価格価値を優先的に確認します。</p></section><section class="panel ga-analysis-card"><div class="ga-card-heading"><div><span>CTA POSITION</span><h2>どこで行動したか</h2></div><b>102 clicks</b></div><div class="ga-cta-list">${ctaRows.map(item=>`<div class="ga-cta-row"><span>${item.label}</span><div class="ga-progress"><i style="width:${item.rate*10}%"></i></div><b>${item.count}<small>${item.rate}%</small></b></div>`).join('')}</div><div class="ga-booking-grid"><div><span>Hot Pepper</span><b>70</b></div><div><span>LINE</span><b>16</b></div><div><span>電話</span><b>4</b></div><div><span>Google MAP</span><b>22</b></div></div><p class="ga-insight">FV CTAは機能していますが、読了後のCTA転換が弱く、最終的な選ばれる理由の補強が必要です。</p></section></div></div>`
+  return enhancedDetailContext('analysis')+`${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="ga-analysis-page"><div class="heading-row"><div><div class="eyebrow">GA4 / LP DIAGNOSIS</div><h1>GA,分析</h1><p class="page-sub">GA4標準指標から、GTM前に見られるスコアを表示します。CTA別・予約意向・スクロール深度はGTM設定後に拡張します。</p></div><button class="secondary" data-action="analyze-run">AI分析を更新</button></div>${hasData?'':`<div class="ga-demo-note">GA4 DATA 未取得　接続確認画面でデータ取得を実行してください</div>`}<div class="ga-kpi-grid"><section class="ga-kpi"><span>セッション</span><strong>${formatCount(gaScore.totals.sessions)}</strong><small>ユーザー ${formatCount(gaScore.totals.total_users)}</small></section><section class="ga-kpi"><span>エンゲージメント率</span><strong>${percentLabel(gaScore.engagement)}</strong><small>GA4標準 engagementRate</small></section><section class="ga-kpi"><span>PV / User</span><strong>${gaScore.pageDepth.toFixed(2)}</strong><small>読み進みの代替指標</small></section><section class="ga-kpi"><span>CV / CVR</span><strong>${formatCount(gaScore.totals.conversions)}</strong><small>${percentLabel(gaScore.cvr,2)}</small></section></div><div class="ga-score-grid"><section class="ga-score-card"><span>INTEREST SCORE</span><strong>${gaScore.interest}</strong><b>興味：${scoreLabel(gaScore.interest)}</b><small>エンゲージメント率 + PV/User</small></section><section class="ga-score-card"><span>READ PROXY SCORE</span><strong>${gaScore.read}</strong><b>読了代替：${scoreLabel(gaScore.read)}</b><small>GTM前はPV/Userで代替</small></section><section class="ga-score-card action"><span>ACTION SCORE</span><strong>${gaScore.action}</strong><b>行動：${scoreLabel(gaScore.action)}</b><small>標準 conversions / sessions</small></section></div><section class="ga-diagnosis"><div><span>診断</span><h2>${escapeHtml(diagnosis)}</h2><p>${escapeHtml(insight)}</p></div><div class="ga-diagnosis-priority"><span>優先順位</span><ol><li>GA4標準CVとCVR</li><li>エンゲージメント率</li><li>PV/User</li></ol></div></section><div class="ga-analysis-grid"><section class="panel ga-analysis-card"><div class="ga-card-heading"><div><span>STANDARD GA4 TREND</span><h2>日別CV推移</h2></div><b>${latestMetric?.metric_date||row?.last_metric_date||'未取得'}</b></div><div class="chart">${renderMiniTrendSvg(daily.map(item=>item.conversions))}</div><p class="ga-insight">GTM前は標準の conversions を行動指標にします。CVが0の場合は、LP改善と同時にコンバージョン設定の確認が必要です。</p></section><section class="panel ga-analysis-card"><div class="ga-card-heading"><div><span>SOURCE / MEDIUM</span><h2>流入別の実績</h2></div><b>${formatCount(gaScore.totals.sessions)} sessions</b></div>${channels.length?`<div class="ga-cta-list">${channels.map(item=>`<div class="ga-cta-row"><span>${escapeHtml(item.source_medium)}</span><div class="ga-progress"><i style="width:${Math.min(100,gaScore.totals.sessions?item.sessions/gaScore.totals.sessions*100:0)}%"></i></div><b>${formatCount(item.sessions)}<small>CV ${formatCount(item.conversions)}</small></b></div>`).join('')}</div>`:`<div class="ga4-empty">流入データがありません。</div>`}<p class="ga-insight">流入元ごとの温度感とLP冒頭の訴求が合っているかを確認します。</p></section></div><section class="panel ga-analysis-card"><div class="ga-card-heading"><div><span>GTM EXTENSION</span><h2>GTM後に追加する指標</h2></div><b>未設定</b></div><div class="ga-cta-list">${gtmRows.map(item=>`<div class="ga-cta-row"><span>${escapeHtml(item.label)}</span><div class="ga-progress"><i style="width:0%"></i></div><b>${escapeHtml(item.status)}<small>${escapeHtml(item.detail)}</small></b></div>`).join('')}</div><p class="ga-insight">GTM導入後は、この画面のAction ScoreをCTAクリック率・予約意向クリック率・スクロール到達率で置き換えます。</p></section></div>`
 }
 function enhancedExecution(){
   const row=detailState.overview||getSelectedDashboardRow()
