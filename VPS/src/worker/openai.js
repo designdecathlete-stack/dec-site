@@ -1,4 +1,6 @@
-import { spawn } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import OpenAI from 'openai'
@@ -83,25 +85,29 @@ async function createProposalInProcess({ config, context }) {
 
 function runOpenAiChild({ config, kind, payload }) {
   const childPath = join(dirname(fileURLToPath(import.meta.url)), 'openai-child.js')
-  const input = JSON.stringify({ kind, config: { openAiApiKey: config.openAiApiKey, openAiModel: config.openAiModel, openAiRequestTimeoutMs: config.openAiRequestTimeoutMs }, payload })
-  return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [childPath], { stdio: ['pipe', 'pipe', 'pipe'], env: process.env })
-    let stdout = ''
-    let stderr = ''
-    const timer = setTimeout(() => {
-      child.kill('SIGKILL')
-      reject(new Error(`OpenAI child ${kind} timed out after ${config.openAiRequestTimeoutMs}ms`))
-    }, Number(config.openAiRequestTimeoutMs || 45000))
-    child.stdout.on('data', chunk => { stdout += chunk })
-    child.stderr.on('data', chunk => { stderr += chunk })
-    child.on('error', error => { clearTimeout(timer); reject(error) })
-    child.on('close', code => {
-      clearTimeout(timer)
-      if (code !== 0) return reject(new Error(stderr || `OpenAI child exited with code ${code}`))
-      try { resolve(JSON.parse(stdout)) } catch (error) { reject(new Error(`OpenAI child returned invalid JSON: ${error.message}`)) }
+  const dir = mkdtempSync(join(tmpdir(), 'ailp-openai-'))
+  const inputPath = join(dir, 'input.json')
+  try {
+    writeFileSync(inputPath, JSON.stringify({
+      kind,
+      config: {
+        openAiApiKey: config.openAiApiKey,
+        openAiModel: config.openAiModel,
+        openAiRequestTimeoutMs: config.openAiRequestTimeoutMs,
+      },
+      payload,
+    }), 'utf8')
+    const stdout = execFileSync(process.execPath, [childPath, inputPath], {
+      timeout: Number(config.openAiRequestTimeoutMs || 45000),
+      maxBuffer: 1024 * 1024 * 4,
+      encoding: 'utf8',
+      killSignal: 'SIGKILL',
+      env: process.env,
     })
-    child.stdin.end(input)
-  })
+    return JSON.parse(stdout)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
 }
 
 export async function createImprovementProposal({ config, context }) {

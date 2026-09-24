@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import OpenAI from 'openai'
 
 function jsonFromText(text) {
@@ -18,11 +19,18 @@ function proposalMessages(context) {
   ]
 }
 
-let input = ''
-process.stdin.setEncoding('utf8')
-process.stdin.on('data', chunk => { input += chunk })
-process.stdin.on('end', async () => {
+async function readStdin() {
+  return await new Promise((resolve) => {
+    let input = ''
+    process.stdin.setEncoding('utf8')
+    process.stdin.on('data', chunk => { input += chunk })
+    process.stdin.on('end', () => resolve(input))
+  })
+}
+
+async function main() {
   try {
+    const input = process.argv[2] ? readFileSync(process.argv[2], 'utf8') : await readStdin()
     const request = JSON.parse(input)
     const openai = new OpenAI({ apiKey: request.config.openAiApiKey, timeout: request.config.openAiRequestTimeoutMs })
     if (request.kind !== 'proposal') throw new Error(`Unsupported child kind: ${request.kind}`)
@@ -33,4 +41,6 @@ process.stdin.on('end', async () => {
     process.stderr.write(error instanceof Error ? error.stack || error.message : String(error))
     process.exitCode = 1
   }
-})
+}
+
+main()
