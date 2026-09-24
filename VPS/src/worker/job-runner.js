@@ -173,6 +173,47 @@ function normalizeProposalResult(result) {
   }
 }
 
+function fallbackMeasurementProposal(context) {
+  const connectionStatus = context.overview.ga4_connection_status || 'missing'
+  const summary = 'GA4計測データが不足しているため、まず計測設定とCVイベントの検証を優先してください。'
+  return {
+    parsed: {
+      score: 30,
+      summary,
+      diagnosis: {
+        primary_issue: 'measurement',
+        reason: `GA4 connection status is ${connectionStatus}, metric rows are ${context.metrics.length}.`,
+      },
+      findings: [{
+        title: 'GA4計測データ不足',
+        body: 'LP単位のGA4指標が不足しており、CVRや行動改善の判断に必要な実測値が揃っていません。',
+        evidence: [
+          `GA4接続状態: ${connectionStatus}`,
+          `取得済みmetric rows: ${context.metrics.length}`,
+        ],
+      }],
+      recommendations: [{
+        title: 'GA4・CV計測設定の検証',
+        body: 'GA4 Property / Page Path / CVイベントが対象LPに正しく紐づいているか確認し、ホットペッパー・LINEなど主要CTAクリックをCVまたは重要イベントとして計測できる状態にしてください。',
+        priority: 'high',
+        target_area: 'measurement',
+        target_selector_or_text: 'GA4設定、GTMイベント、主要CTAリンク',
+        expected_effect: '改善提案とdraft反映の根拠になるCV・クリック・流入データを取得できる',
+        implementation_scope: 'small',
+        approved_for_draft: true,
+        review_note: '実測データが不足しているため、LP文言変更より先に計測正常化を優先するのが現実的です。',
+      }],
+      rejected_ideas: [{
+        title: '大幅なLP改修',
+        reason: 'GA4計測が不足しており、改修効果を検証できないため先送りします。',
+      }],
+    },
+    rawText: JSON.stringify({ summary }),
+    usage: {},
+    model: 'measurement-fallback',
+  }
+}
+
 async function saveAiResults({ config, supabase, job, context, proposal }) {
   const normalized = normalizeProposalResult(proposal.parsed)
   const cost = estimateCost(config, proposal.usage)
@@ -359,6 +400,25 @@ export async function runJob({ config, supabase, job }) {
         summary: 'Dry run loaded GA4 context without calling AI',
         lp_project_id: job.lp_project_id,
         metric_rows: context.metrics.length,
+      })
+      return
+    }
+
+    if (!context.metrics.length || context.overview.ga4_connection_status !== 'configured') {
+      await writeJobStep(supabase, job.id, 'measurement_fallback', {
+        summary: 'GA4 metrics are missing or incomplete. Saved measurement-first proposal without calling OpenAI.',
+        lp_project_id: job.lp_project_id,
+        metric_rows: context.metrics.length,
+        ga4_connection_status: context.overview.ga4_connection_status,
+      })
+      const saved = await saveAiResults({ config, supabase, job, context, proposal: fallbackMeasurementProposal(context) })
+      await writeJobStep(supabase, job.id, 'ai_proposal_saved', {
+        summary: 'Measurement fallback proposal was saved to ai_analysis_results',
+        lp_project_id: job.lp_project_id,
+        ai_analysis_result_id: saved.analysisId,
+        recommendation_count: saved.normalized.recommendations.length,
+        total_tokens: saved.cost.totalTokens,
+        estimated_cost_jpy: saved.cost.estimatedCostJpy,
       })
       return
     }
