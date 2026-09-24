@@ -32,6 +32,8 @@ const dashboardState={loading:false,loaded:false,error:'',rows:[]}
 const ga4AdminState={loading:false,loaded:false,error:'',rows:[],busy:{},configs:{}}
 const apiLogState={loading:false,loaded:false,error:'',rows:[]}
 const detailState={loading:false,loadedFor:null,error:'',overview:null,metrics:[],analysisResults:[],versions:[],deployments:[],jobs:[],artifacts:[],usageLogs:[]}
+let detailAutoRefreshTimer=null
+let detailAutoRefreshLastAt=0
 const userSettingsState={loading:false,loaded:false,error:'',users:[],projects:[],memberships:[]}
 const uiState={apiLogLevel:'all',apiLogQuery:'',userSearchQuery:'',selectedAccessUserId:'',newUserRole:'lp_dashboard'}
 let selectedLpProjectId=null
@@ -640,6 +642,29 @@ function proposeStatusSummary(job){
 }
 function isActiveJob(job){
   return job&&['queued','running'].includes(job.status)
+}
+function hasActiveDetailJob(){
+  return (detailState.jobs||[]).some(job=>isActiveJob(job))
+}
+function stopDetailAutoRefresh(){
+  if(detailAutoRefreshTimer){
+    clearInterval(detailAutoRefreshTimer)
+    detailAutoRefreshTimer=null
+  }
+}
+function syncDetailAutoRefresh(){
+  const detailPages=['detail','analysis','proposals','execution','versions','history']
+  if(!detailPages.includes(page)||!hasActiveDetailJob()){
+    stopDetailAutoRefresh()
+    return
+  }
+  if(detailAutoRefreshTimer) return
+  detailAutoRefreshTimer=setInterval(()=>{
+    const now=Date.now()
+    if(detailState.loading||now-detailAutoRefreshLastAt<4500) return
+    detailAutoRefreshLastAt=now
+    loadDetailData(true)
+  },5000)
 }
 function appliedEditsList(artifact){
   const edits=artifact?.metadata?.applied_edits
@@ -1647,6 +1672,7 @@ function enhancedRenderWithDetailMenu(){
   enhancedSyncLpPicker()
   enhancedButtons()
   bindProductionActions()
+  syncDetailAutoRefresh()
 }
 syncLpPicker = enhancedSyncLpPicker
 dashboard = enhancedDashboard
@@ -1684,6 +1710,6 @@ buttons = enhancedButtons
 renderWithDetailMenu = enhancedRenderWithDetailMenu
 viewerMode.addEventListener('change',event=>{viewerRole=event.target.value; renderWithDetailMenu(); if(viewerRole==='client') go('detail');});
 lpPicker.addEventListener('change',event=>{if(currentDashboardRows().length){setSelectedLpFromId(event.target.value)}else{selected=lps[Number(event.target.value)]} if(page==='detail') renderWithDetailMenu(); else go('detail');});
-window.addEventListener('hashchange',renderWithDetailMenu);
+window.addEventListener('hashchange',()=>{stopDetailAutoRefresh();renderWithDetailMenu()});
 renderWithDetailMenu();
 
