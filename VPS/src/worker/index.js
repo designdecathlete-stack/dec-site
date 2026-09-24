@@ -5,6 +5,22 @@ import { runJob } from './job-runner.js'
 
 const once = process.argv.includes('--once')
 
+async function recoverStaleRunningJobs(supabase, staleMinutes) {
+  const cutoff = new Date(Date.now() - staleMinutes * 60 * 1000).toISOString()
+  const { error } = await supabase
+    .from('lp_jobs')
+    .update({
+      status: 'queued',
+      error_message: `Recovered stale running job after ${staleMinutes} minutes`,
+      started_at: null,
+      finished_at: null,
+    })
+    .eq('status', 'running')
+    .lt('updated_at', cutoff)
+
+  if (error) throw new Error(error.message)
+}
+
 async function claimJobs(supabase, limit) {
   const { data, error } = await supabase
     .from('lp_jobs')
@@ -33,6 +49,7 @@ async function setJobStatus(supabase, jobId, status, errorMessage = null) {
 }
 
 async function tick(config, supabase) {
+  await recoverStaleRunningJobs(supabase, config.staleRunningJobMinutes)
   const jobs = await claimJobs(supabase, config.maxJobsPerTick)
   for (const job of jobs) {
     try {

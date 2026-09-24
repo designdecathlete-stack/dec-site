@@ -3,6 +3,7 @@ import OpenAI from 'openai'
 export function createOpenAi(config) {
   return new OpenAI({
     apiKey: config.openAiApiKey,
+    timeout: config.openAiRequestTimeoutMs,
   })
 }
 
@@ -76,7 +77,7 @@ export async function createImprovementProposal({ config, context }) {
     messages,
     temperature: 0.2,
     response_format: { type: 'json_object' },
-  })
+  }, { timeout: config.openAiRequestTimeoutMs })
 
   const content = response.choices[0]?.message?.content ?? '{}'
   const parsed = jsonFromText(content)
@@ -160,7 +161,7 @@ export async function createDraftChangePlan({ config, context, analysis }) {
     messages,
     temperature: 0.2,
     response_format: { type: 'json_object' },
-  })
+  }, { timeout: config.openAiRequestTimeoutMs })
 
   const content = response.choices[0]?.message?.content ?? '{}'
   const parsed = jsonFromText(content)
