@@ -1,3 +1,6 @@
+import { spawn } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
 import OpenAI from 'openai'
 
 export function createOpenAi(config) {
@@ -13,19 +16,12 @@ function jsonFromText(text) {
   return JSON.parse(fenced ? fenced[1] : trimmed)
 }
 
-async function createChatCompletionWithAbort(openai, params, timeoutMs) {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), timeoutMs)
-  try {
-    return await openai.chat.completions.create(params, { timeout: timeoutMs, signal: controller.signal })
-  } finally {
-    clearTimeout(timeout)
-  }
+async function createChatCompletion(openai, params, timeoutMs) {
+  return await openai.chat.completions.create(params, { timeout: timeoutMs })
 }
 
-export async function createImprovementProposal({ config, context }) {
-  const openai = createOpenAi(config)
-  const messages = [
+function proposalMessages(context) {
+  return [
     {
       role: 'system',
       content: [
@@ -48,26 +44,9 @@ export async function createImprovementProposal({ config, context }) {
         required_json_shape: {
           score: 'integer 0-100',
           summary: 'short Japanese summary',
-          diagnosis: {
-            primary_issue: 'traffic|interest|read|action|measurement',
-            reason: 'Japanese reason based on GA4 and HTML/CSS',
-          },
-          findings: [{
-            title: 'Japanese title',
-            body: 'evidence from metrics and current LP source',
-            evidence: ['GA4 evidence', 'HTML/CSS evidence'],
-          }],
-          recommendations: [{
-            title: 'Japanese action',
-            body: 'specific change proposal',
-            priority: 'high|medium|low',
-            target_area: 'hero|cta|offer|proof|faq|measurement|other',
-            target_selector_or_text: 'section/class/text to change if known',
-            expected_effect: 'what should improve',
-            implementation_scope: 'small|medium|large',
-            approved_for_draft: true,
-            review_note: 'self-review result: not too narrow, realistic, testable',
-          }],
+          diagnosis: { primary_issue: 'traffic|interest|read|action|measurement', reason: 'Japanese reason based on GA4 and HTML/CSS' },
+          findings: [{ title: 'Japanese title', body: 'evidence from metrics and current LP source', evidence: ['GA4 evidence', 'HTML/CSS evidence'] }],
+          recommendations: [{ title: 'Japanese action', body: 'specific change proposal', priority: 'high|medium|low', target_area: 'hero|cta|offer|proof|faq|measurement|other', target_selector_or_text: 'section/class/text to change if known', expected_effect: 'what should improve', implementation_scope: 'small|medium|large', approved_for_draft: true, review_note: 'self-review result: not too narrow, realistic, testable' }],
           rejected_ideas: [{ title: 'Japanese rejected idea', reason: 'why it was rejected' }],
         },
         review_rules: [
@@ -81,22 +60,53 @@ export async function createImprovementProposal({ config, context }) {
       }),
     },
   ]
+}
 
-  const response = await createChatCompletionWithAbort(openai, {
-    model: config.openAiModel,
-    messages,
-    temperature: 0.2,
-    response_format: { type: 'json_object' },
-  }, config.openAiRequestTimeoutMs)
+function draftMessages(context, analysis) {
+  return [
+    { role: 'system', content: ['You are an LP editor for AILP.', 'Use only the provided LP-scoped context and analysis.', 'Do not mention or infer other LPs, clients, secrets, tokens, or unrelated projects.', 'Return strict JSON only.'].join(' ') },
+    { role: 'user', content: JSON.stringify({
+      task: ['Create a concise draft update plan for a landing page preview.', 'Use only recommendations that passed self-review.', 'Prefer natural LP edits to hero, CTA, offer, proof, FAQ, or measurement notes.', 'For now the worker may render this as a draft-only improvement section, but the plan must specify real target areas for future direct HTML edits.'].join(' '),
+      required_json_shape: { headline: 'Japanese headline for the draft improvement section', lead: 'short Japanese lead copy', changes: [{ title: 'Japanese change title', body: 'specific LP copy or section direction', target_area: 'hero|cta|offer|proof|faq|measurement|other', target_selector_or_text: 'section/class/text to change if known', edit_intent: 'replace_copy|add_cta|add_section|reorder|measurement_check|other' }], cta_label: 'Japanese CTA label', self_review_summary: 'why these changes are realistic and not too narrow' },
+      context,
+      analysis: { summary: analysis?.summary, findings: analysis?.findings, recommendations: analysis?.recommendations, score: analysis?.score },
+    }) },
+  ]
+}
 
+async function createProposalInProcess({ config, context }) {
+  const openai = createOpenAi(config)
+  const response = await createChatCompletion(openai, { model: config.openAiModel, messages: proposalMessages(context), temperature: 0.2, response_format: { type: 'json_object' } }, config.openAiRequestTimeoutMs)
   const content = response.choices[0]?.message?.content ?? '{}'
-  const parsed = jsonFromText(content)
-  return {
-    parsed,
-    rawText: content,
-    usage: response.usage ?? {},
-    model: response.model ?? config.openAiModel,
-  }
+  return { parsed: jsonFromText(content), rawText: content, usage: response.usage ?? {}, model: response.model ?? config.openAiModel }
+}
+
+function runOpenAiChild({ config, kind, payload }) {
+  const childPath = join(dirname(fileURLToPath(import.meta.url)), 'openai-child.js')
+  const input = JSON.stringify({ kind, config: { openAiApiKey: config.openAiApiKey, openAiModel: config.openAiModel, openAiRequestTimeoutMs: config.openAiRequestTimeoutMs }, payload })
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [childPath], { stdio: ['pipe', 'pipe', 'pipe'], env: process.env })
+    let stdout = ''
+    let stderr = ''
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL')
+      reject(new Error(`OpenAI child ${kind} timed out after ${config.openAiRequestTimeoutMs}ms`))
+    }, Number(config.openAiRequestTimeoutMs || 45000))
+    child.stdout.on('data', chunk => { stdout += chunk })
+    child.stderr.on('data', chunk => { stderr += chunk })
+    child.on('error', error => { clearTimeout(timer); reject(error) })
+    child.on('close', code => {
+      clearTimeout(timer)
+      if (code !== 0) return reject(new Error(stderr || `OpenAI child exited with code ${code}`))
+      try { resolve(JSON.parse(stdout)) } catch (error) { reject(new Error(`OpenAI child returned invalid JSON: ${error.message}`)) }
+    })
+    child.stdin.end(input)
+  })
+}
+
+export async function createImprovementProposal({ config, context }) {
+  if (config.openAiUseChildProcess !== false) return runOpenAiChild({ config, kind: 'proposal', payload: { context } })
+  return createProposalInProcess({ config, context })
 }
 
 export function estimateCost(config, usage) {
@@ -104,81 +114,15 @@ export function estimateCost(config, usage) {
   const outputTokens = Number(usage.completion_tokens ?? usage.output_tokens ?? 0)
   const cachedInputTokens = Number(usage.prompt_tokens_details?.cached_tokens ?? usage.cached_input_tokens ?? 0)
   const billableInputTokens = Math.max(inputTokens - cachedInputTokens, 0)
-
-  const usd =
-    (billableInputTokens / 1_000_000) * config.openAiInputUsdPerMillion +
-    (cachedInputTokens / 1_000_000) * config.openAiCachedInputUsdPerMillion +
-    (outputTokens / 1_000_000) * config.openAiOutputUsdPerMillion
-
-  return {
-    inputTokens,
-    outputTokens,
-    cachedInputTokens,
-    reasoningTokens: Number(usage.completion_tokens_details?.reasoning_tokens ?? usage.reasoning_tokens ?? 0),
-    totalTokens: Number(usage.total_tokens ?? inputTokens + outputTokens),
-    estimatedCostUsd: Number.isFinite(usd) ? usd : null,
-    estimatedCostJpy: Number.isFinite(usd) ? usd * config.usdJpyRate : null,
-  }
+  const usd = (billableInputTokens / 1_000_000) * config.openAiInputUsdPerMillion + (cachedInputTokens / 1_000_000) * config.openAiCachedInputUsdPerMillion + (outputTokens / 1_000_000) * config.openAiOutputUsdPerMillion
+  return { inputTokens, outputTokens, cachedInputTokens, reasoningTokens: Number(usage.completion_tokens_details?.reasoning_tokens ?? usage.reasoning_tokens ?? 0), totalTokens: Number(usage.total_tokens ?? inputTokens + outputTokens), estimatedCostUsd: Number.isFinite(usd) ? usd : null, estimatedCostJpy: Number.isFinite(usd) ? usd * config.usdJpyRate : null }
 }
 
 export async function createDraftChangePlan({ config, context, analysis }) {
   const openai = createOpenAi(config)
-  const messages = [
-    {
-      role: 'system',
-      content: [
-        'You are an LP editor for AILP.',
-        'Use only the provided LP-scoped context and analysis.',
-        'Do not mention or infer other LPs, clients, secrets, tokens, or unrelated projects.',
-        'Return strict JSON only.',
-      ].join(' '),
-    },
-    {
-      role: 'user',
-      content: JSON.stringify({
-        task: [
-          'Create a concise draft update plan for a landing page preview.',
-          'Use only recommendations that passed self-review.',
-          'Prefer natural LP edits to hero, CTA, offer, proof, FAQ, or measurement notes.',
-          'For now the worker may render this as a draft-only improvement section, but the plan must specify real target areas for future direct HTML edits.',
-        ].join(' '),
-        required_json_shape: {
-          headline: 'Japanese headline for the draft improvement section',
-          lead: 'short Japanese lead copy',
-          changes: [{
-            title: 'Japanese change title',
-            body: 'specific LP copy or section direction',
-            target_area: 'hero|cta|offer|proof|faq|measurement|other',
-            target_selector_or_text: 'section/class/text to change if known',
-            edit_intent: 'replace_copy|add_cta|add_section|reorder|measurement_check|other',
-          }],
-          cta_label: 'Japanese CTA label',
-          self_review_summary: 'why these changes are realistic and not too narrow',
-        },
-        context,
-        analysis: {
-          summary: analysis?.summary,
-          findings: analysis?.findings,
-          recommendations: analysis?.recommendations,
-          score: analysis?.score,
-        },
-      }),
-    },
-  ]
-
-  const response = await createChatCompletionWithAbort(openai, {
-    model: config.openAiModel,
-    messages,
-    temperature: 0.2,
-    response_format: { type: 'json_object' },
-  }, config.openAiRequestTimeoutMs)
-
+  const response = await createChatCompletion(openai, { model: config.openAiModel, messages: draftMessages(context, analysis), temperature: 0.2, response_format: { type: 'json_object' } }, config.openAiRequestTimeoutMs)
   const content = response.choices[0]?.message?.content ?? '{}'
-  const parsed = jsonFromText(content)
-  return {
-    parsed,
-    rawText: content,
-    usage: response.usage ?? {},
-    model: response.model ?? config.openAiModel,
-  }
+  return { parsed: jsonFromText(content), rawText: content, usage: response.usage ?? {}, model: response.model ?? config.openAiModel }
 }
+
+export const __openAiChildInternals = { jsonFromText, proposalMessages }

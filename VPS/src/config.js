@@ -17,6 +17,7 @@ export function loadConfig() {
     openAiProposalMaxAttempts: Number(env('OPENAI_PROPOSAL_MAX_ATTEMPTS', '3')),
     openAiProposalRetryDelayMs: Number(env('OPENAI_PROPOSAL_RETRY_DELAY_MS', '3000')),
     openAiProposalUseOpenAi: env('OPENAI_PROPOSAL_USE_OPENAI', 'true') === 'true',
+    openAiUseChildProcess: env('OPENAI_USE_CHILD_PROCESS', 'true') === 'true',
     jobTimeoutMs: Number(env('JOB_TIMEOUT_MS', '180000')),
     staleRunningJobMinutes: Number(env('STALE_RUNNING_JOB_MINUTES', '10')),
     githubToken: env('GITHUB_TOKEN', ''),
