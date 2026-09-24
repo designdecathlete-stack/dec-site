@@ -33,6 +33,14 @@ async function claimJobs(supabase, limit) {
   return data ?? []
 }
 
+function withTimeout(promise, timeoutMs, label) {
+  let timeout
+  const timeoutPromise = new Promise((_, reject) => {
+    timeout = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs)
+  })
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeout))
+}
+
 async function setJobStatus(supabase, jobId, status, errorMessage = null) {
   const patch = {
     status,
@@ -54,7 +62,7 @@ async function tick(config, supabase) {
   for (const job of jobs) {
     try {
       await setJobStatus(supabase, job.id, 'running')
-      await runJob({ config, supabase, job })
+      await withTimeout(runJob({ config, supabase, job }), config.jobTimeoutMs, `Job ${job.id}`)
       await setJobStatus(supabase, job.id, 'succeeded')
     } catch (error) {
       await setJobStatus(

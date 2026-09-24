@@ -14,6 +14,7 @@ export function loadConfig() {
     openAiApiKey: env('OPENAI_API_KEY'),
     openAiModel: env('OPENAI_MODEL', 'gpt-5.1'),
     openAiRequestTimeoutMs: Number(env('OPENAI_REQUEST_TIMEOUT_MS', '120000')),
+    jobTimeoutMs: Number(env('JOB_TIMEOUT_MS', '180000')),
     staleRunningJobMinutes: Number(env('STALE_RUNNING_JOB_MINUTES', '10')),
     githubToken: env('GITHUB_TOKEN', ''),
     githubRepository: env('GITHUB_REPOSITORY', 'designdecathlete-stack/dec-site'),
