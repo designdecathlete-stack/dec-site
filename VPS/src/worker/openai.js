@@ -13,6 +13,16 @@ function jsonFromText(text) {
   return JSON.parse(fenced ? fenced[1] : trimmed)
 }
 
+async function createChatCompletionWithAbort(openai, params, timeoutMs) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await openai.chat.completions.create(params, { timeout: timeoutMs, signal: controller.signal })
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
 export async function createImprovementProposal({ config, context }) {
   const openai = createOpenAi(config)
   const messages = [
@@ -72,12 +82,12 @@ export async function createImprovementProposal({ config, context }) {
     },
   ]
 
-  const response = await openai.chat.completions.create({
+  const response = await createChatCompletionWithAbort(openai, {
     model: config.openAiModel,
     messages,
     temperature: 0.2,
     response_format: { type: 'json_object' },
-  }, { timeout: config.openAiRequestTimeoutMs })
+  }, config.openAiRequestTimeoutMs)
 
   const content = response.choices[0]?.message?.content ?? '{}'
   const parsed = jsonFromText(content)
@@ -156,12 +166,12 @@ export async function createDraftChangePlan({ config, context, analysis }) {
     },
   ]
 
-  const response = await openai.chat.completions.create({
+  const response = await createChatCompletionWithAbort(openai, {
     model: config.openAiModel,
     messages,
     temperature: 0.2,
     response_format: { type: 'json_object' },
-  }, { timeout: config.openAiRequestTimeoutMs })
+  }, config.openAiRequestTimeoutMs)
 
   const content = response.choices[0]?.message?.content ?? '{}'
   const parsed = jsonFromText(content)
