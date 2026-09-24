@@ -611,7 +611,8 @@ function latestApplyJob(){
   return (detailState.jobs||[]).find(job=>job.job_type==='apply_to_draft')||null
 }
 function latestProposeJob(){
-  return (detailState.jobs||[]).find(job=>job.job_type==='propose_improvements')||null
+  const jobs=(detailState.jobs||[]).filter(job=>job.job_type==='propose_improvements')
+  return jobs.find(job=>isActiveJob(job))||jobs.find(job=>job.status==='succeeded')||jobs[0]||null
 }
 function artifactForJob(job){
   if(!job) return null
@@ -1712,4 +1713,5 @@ viewerMode.addEventListener('change',event=>{viewerRole=event.target.value; rend
 lpPicker.addEventListener('change',event=>{if(currentDashboardRows().length){setSelectedLpFromId(event.target.value)}else{selected=lps[Number(event.target.value)]} if(page==='detail') renderWithDetailMenu(); else go('detail');});
 window.addEventListener('hashchange',()=>{stopDetailAutoRefresh();renderWithDetailMenu()});
 renderWithDetailMenu();
+
 
