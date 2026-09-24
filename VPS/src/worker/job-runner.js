@@ -320,6 +320,15 @@ function fallbackHeuristicProposal(context, sourceContext, cause) {
   }
 }
 
+function withProposalTimeout(promise, timeoutMs, label) {
+  let timeout
+  promise.catch(() => {})
+  const timeoutPromise = new Promise((_, reject) => {
+    timeout = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs)
+  })
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeout))
+}
+
 async function createImprovementProposalWithRecovery({ config, supabase, job, context, sourceContext }) {
   const maxAttempts = Math.max(1, Number(config.openAiProposalMaxAttempts || 1))
   let lastError = null
@@ -333,7 +342,7 @@ async function createImprovementProposalWithRecovery({ config, supabase, job, co
         max_attempts: maxAttempts,
         timeout_ms: config.openAiRequestTimeoutMs,
       })
-      return await createImprovementProposal({
+      const proposalPromise = createImprovementProposal({
         config,
         context: {
           ...context.aiContext,
@@ -341,6 +350,7 @@ async function createImprovementProposalWithRecovery({ config, supabase, job, co
           improvement_logic_version: 'docs/ai-improvement-logic.md',
         },
       })
+      return await withProposalTimeout(proposalPromise, Number(config.openAiRequestTimeoutMs || 45000), `OpenAI proposal attempt ${attempt}`)
     } catch (error) {
       lastError = error
       await writeJobStep(supabase, job.id, 'ai_proposal_attempt_failed', {
