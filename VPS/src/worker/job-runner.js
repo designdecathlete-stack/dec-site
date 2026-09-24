@@ -1,3 +1,4 @@
+import { setTimeout as wait } from 'node:timers/promises'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { ensureLpWorkspace } from '../guards/path-guard.js'
@@ -212,6 +213,155 @@ function fallbackMeasurementProposal(context) {
     usage: {},
     model: 'measurement-fallback',
   }
+}
+
+
+function primaryHtmlEvidence(sourceContext) {
+  const headings = sourceContext?.html_signals?.headings || []
+  const links = sourceContext?.html_signals?.links || []
+  const firstHeading = headings.find(item => item.level === 1)?.text || headings[0]?.text || 'ファーストビュー見出し'
+  const cta = links.find(item => /line|予約|相談|申込|tel|電話|hotpepper|beauty/i.test(`${item.text} ${item.href}`))
+  return {
+    firstHeading,
+    ctaText: cta?.text || '主要CTA',
+    headingCount: headings.length,
+    linkCount: links.length,
+  }
+}
+
+function fallbackHeuristicProposal(context, sourceContext, cause) {
+  const totals = context.aiContext?.latest_30d_from_dashboard || {}
+  const totals90 = context.aiContext?.totals_90d || {}
+  const sessions = Number(totals.sessions ?? totals90.sessions ?? 0)
+  const conversions = Number(totals.conversions ?? totals90.conversions ?? 0)
+  const conversionRate = Number(totals.conversion_rate ?? totals90.conversion_rate ?? 0)
+  const engagementRate = Number(totals90.average_engagement_rate ?? 0)
+  const html = primaryHtmlEvidence(sourceContext)
+  const summary = conversions <= 0
+    ? 'AI生成が一時的に利用できなかったため、GA4とHTMLから保守的な改善案を作成しました。まずCV計測とCTA導線を確認してください。'
+    : 'AI生成が一時的に利用できなかったため、GA4とHTMLから保守的な改善案を作成しました。CTAとファーストビューの訴求を優先して改善してください。'
+  const cvrText = sessions > 0 ? `${(conversionRate * 100).toFixed(2)}%` : '未算出'
+  return {
+    parsed: {
+      score: sessions > 0 && conversions > 0 ? 62 : 42,
+      summary,
+      diagnosis: {
+        primary_issue: conversions <= 0 ? 'measurement' : 'action',
+        reason: `OpenAI proposal fallback. sessions=${sessions}, conversions=${conversions}, cvr=${cvrText}, engagement=${engagementRate ? `${(engagementRate * 100).toFixed(1)}%` : 'unknown'}.`,
+      },
+      findings: [
+        {
+          title: conversions <= 0 ? 'CV計測またはCTA到達に課題' : 'CTA行動率の改善余地',
+          body: `直近データではsessions=${sessions}、conversions=${conversions}、CVR=${cvrText}です。数値上、CTAクリック・予約意向イベントの計測確認と導線強化を優先します。`,
+          evidence: [`sessions: ${sessions}`, `conversions: ${conversions}`, `CVR: ${cvrText}`],
+        },
+        {
+          title: 'ファーストビューの約束を明確にする余地',
+          body: `現在の主要見出し候補は「${html.firstHeading}」です。誰に、どんな変化を約束するLPかを冒頭で明確にするとCTA前の納得感を高められます。`,
+          evidence: [`H1/見出し候補: ${html.firstHeading}`, `検出CTA候補: ${html.ctaText}`],
+        },
+      ],
+      recommendations: [
+        {
+          title: 'CV・CTAイベントの計測確認',
+          body: 'LINE、予約、電話、外部予約リンクなど主要CTAがGA4/GTMで重要イベントとして取れているか確認し、未計測なら最優先で補正します。',
+          priority: 'high',
+          target_area: 'measurement',
+          target_selector_or_text: html.ctaText,
+          expected_effect: '改善前後のCVRとCTAクリック率を比較できる状態にする',
+          implementation_scope: 'small',
+          approved_for_draft: true,
+          review_note: 'CVが少ない、または計測不備が疑われる場合に現実的で検証可能な改善です。',
+          ga4_evidence: [`sessions=${sessions}`, `conversions=${conversions}`, `cvr=${cvrText}`],
+          html_evidence: [`cta=${html.ctaText}`],
+          reason_chain: 'CVが低い/不明 → まず計測とCTA到達を確認 → 改善効果を評価可能にする',
+        },
+        {
+          title: 'ファーストビューで対象者と得られる変化を明確化',
+          body: '現在の見出しの近くに、対象者・悩み・施術後の変化が一文で伝わる補足コピーを追加します。',
+          priority: 'high',
+          target_area: 'hero',
+          target_selector_or_text: html.firstHeading,
+          expected_effect: 'LP冒頭の理解を早め、CTAまで読む理由を強くする',
+          implementation_scope: 'small',
+          approved_for_draft: true,
+          review_note: '既存デザインを崩さず、文章追加または置換で検証できます。',
+          ga4_evidence: [`engagement_rate=${engagementRate ? `${(engagementRate * 100).toFixed(1)}%` : 'unknown'}`],
+          html_evidence: [`heading=${html.firstHeading}`],
+          reason_chain: '冒頭の約束が弱い可能性 → 対象者と変化を明示 → 読了/CTAクリック改善を狙う',
+        },
+        {
+          title: 'CTA直前の不安解消コピーを追加',
+          body: 'CTAの近くに、相談前の不安を下げる短い説明を加えます。例: 初回相談の流れ、所要時間、無理な勧誘がないこと。',
+          priority: 'medium',
+          target_area: 'cta',
+          target_selector_or_text: html.ctaText,
+          expected_effect: 'CTAクリック前の心理的抵抗を下げる',
+          implementation_scope: 'small',
+          approved_for_draft: true,
+          review_note: 'CTA周辺のコピー改善なので既存構成を壊さず実装できます。',
+          ga4_evidence: [`conversions=${conversions}`, `cvr=${cvrText}`],
+          html_evidence: [`cta=${html.ctaText}`],
+          reason_chain: 'CTA手前で迷う可能性 → 不安解消を追加 → クリック率改善を狙う',
+        },
+      ],
+      rejected_ideas: [{
+        title: '全面リデザイン',
+        reason: 'OpenAI生成が利用できない状況では根拠が粗くなるため、まず小さく検証できる改善に限定します。',
+      }],
+      fallback: {
+        type: 'heuristic_no_openai',
+        cause: String(cause?.message || cause || 'OpenAI request failed'),
+      },
+    },
+    rawText: JSON.stringify({ summary, fallback: true }),
+    usage: {},
+    model: 'heuristic-fallback',
+  }
+}
+
+async function createImprovementProposalWithRecovery({ config, supabase, job, context, sourceContext }) {
+  const maxAttempts = Math.max(1, Number(config.openAiProposalMaxAttempts || 1))
+  let lastError = null
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      await writeJobStep(supabase, job.id, 'ai_proposal_attempt', {
+        status: 'running',
+        summary: `OpenAI proposal attempt ${attempt}/${maxAttempts}`,
+        lp_project_id: job.lp_project_id,
+        attempt,
+        max_attempts: maxAttempts,
+        timeout_ms: config.openAiRequestTimeoutMs,
+      })
+      return await createImprovementProposal({
+        config,
+        context: {
+          ...context.aiContext,
+          current_lp_source: sourceContext,
+          improvement_logic_version: 'docs/ai-improvement-logic.md',
+        },
+      })
+    } catch (error) {
+      lastError = error
+      await writeJobStep(supabase, job.id, 'ai_proposal_attempt_failed', {
+        status: attempt < maxAttempts ? 'running' : 'failed',
+        summary: `OpenAI proposal attempt ${attempt}/${maxAttempts} failed`,
+        lp_project_id: job.lp_project_id,
+        attempt,
+        max_attempts: maxAttempts,
+        error_message: error instanceof Error ? error.message : String(error),
+      })
+      if (attempt < maxAttempts) {
+        await wait(Number(config.openAiProposalRetryDelayMs || 0))
+      }
+    }
+  }
+  await writeJobStep(supabase, job.id, 'ai_proposal_heuristic_fallback', {
+    summary: 'OpenAI did not return a usable proposal. Saved a GA4/HTML heuristic proposal instead of failing the job.',
+    lp_project_id: job.lp_project_id,
+    error_message: lastError instanceof Error ? lastError.message : String(lastError || 'Unknown OpenAI error'),
+  })
+  return fallbackHeuristicProposal(context, sourceContext, lastError)
 }
 
 async function saveAiResults({ config, supabase, job, context, proposal }) {
@@ -440,18 +590,17 @@ export async function runJob({ config, supabase, job }) {
       model: config.openAiModel,
     })
 
-    const proposal = await createImprovementProposal({
+    const proposal = await createImprovementProposalWithRecovery({
       config,
-      context: {
-        ...context.aiContext,
-        current_lp_source: sourceContext,
-        improvement_logic_version: 'docs/ai-improvement-logic.md',
-      },
+      supabase,
+      job,
+      context,
+      sourceContext,
     })
     const saved = await saveAiResults({ config, supabase, job, context, proposal })
 
     await writeJobStep(supabase, job.id, 'ai_proposal_saved', {
-      summary: 'AI proposal was saved to ai_analysis_results',
+      summary: proposal.model === 'heuristic-fallback' ? 'Heuristic fallback proposal was saved to ai_analysis_results' : 'AI proposal was saved to ai_analysis_results',
       lp_project_id: job.lp_project_id,
       ai_analysis_result_id: saved.analysisId,
       recommendation_count: saved.normalized.recommendations.length,
