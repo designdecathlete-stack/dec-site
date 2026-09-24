@@ -330,6 +330,14 @@ function withProposalTimeout(promise, timeoutMs, label) {
 }
 
 async function createImprovementProposalWithRecovery({ config, supabase, job, context, sourceContext }) {
+  if (!config.openAiProposalUseOpenAi) {
+    await writeJobStep(supabase, job.id, 'ai_proposal_safe_fallback', {
+      summary: 'OpenAI proposal generation is disabled for safety. Saved a GA4/HTML heuristic proposal instead.',
+      lp_project_id: job.lp_project_id,
+    })
+    return fallbackHeuristicProposal(context, sourceContext, 'OPENAI_PROPOSAL_USE_OPENAI=false')
+  }
+
   const maxAttempts = Math.max(1, Number(config.openAiProposalMaxAttempts || 1))
   let lastError = null
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
