@@ -65,6 +65,119 @@ async function loadLpSourceContext(workspace, folderPath) {
   }
 }
 
+
+async function loadCodexKnowledgeFiles(config) {
+  const docs = [
+    'docs/ai-proposal-prompt.md',
+    'docs/ai-html-edit-prompt.md',
+    'docs/ai-improvement-logic.md',
+    'docs/ga4-scoring-logic.md',
+  ]
+  const loaded = []
+  for (const file of docs) {
+    try {
+      const content = await readFile(join(config.decSiteRepoPath, file), 'utf8')
+      loaded.push({ file, content: content.slice(0, 20000) })
+    } catch (error) {
+      loaded.push({ file, missing: true, error: error instanceof Error ? error.message : String(error) })
+    }
+  }
+  return loaded
+}
+
+function codexProposalPrompt({ context, sourceContext, knowledgeFiles }) {
+  return [
+    '# AILP Codex Proposal Task',
+    '',
+    'あなたはプロのLPマーケター兼フロントエンド編集者です。',
+    'GA4実データ、現在のHTML/CSS、ノウハウmdを根拠に、LP改善提案を作成してください。',
+    '',
+    '## 必須方針',
+    '',
+    '- LP単位の機密情報だけを使い、他LPの情報を混ぜない。',
+    '- マクロ改善（別LP制作）とミクロ改善（現LPの細部改善）を分ける。',
+    '- GA4指標とHTML/CSS上の根拠を必ず紐づける。',
+    '- draft反映で使えるように target_area / target_selector_or_text を具体化する。',
+    '- 現実的に反映できる改善を優先し、デザインを大きく壊す指示は避ける。',
+    '',
+    '## 保存先',
+    '',
+    '結果は Supabase public.ai_analysis_results に保存する想定です。',
+    'recommendations はJSON配列で、少なくとも title, body, evidence, hypothesis, priority, route, target_area, target_selector_or_text, expected_effect, implementation_scope, approved_for_draft, review_note を含めてください。',
+    '',
+    '## LP context',
+    '',
+    '```json',
+    JSON.stringify(context.aiContext, null, 2),
+    '```',
+    '',
+    '## Current HTML/CSS signals',
+    '',
+    '```json',
+    JSON.stringify(sourceContext, null, 2),
+    '```',
+    '',
+    '## Knowledge files',
+    '',
+    ...knowledgeFiles.map(item => item.missing
+      ? `### ${item.file}\n\n読み込み失敗: ${item.error || 'missing'}\n`
+      : `### ${item.file}\n\n${item.content}\n`),
+  ].join('\n')
+}
+
+async function createCodexProposalTask({ config, supabase, job, context, sourceContext }) {
+  const knowledgeFiles = await loadCodexKnowledgeFiles(config)
+  const prompt = codexProposalPrompt({ context, sourceContext, knowledgeFiles })
+  const metadata = {
+    executor: 'codex',
+    status: 'ready_for_codex',
+    prompt_files: knowledgeFiles.map(item => ({ file: item.file, missing: Boolean(item.missing) })),
+    prompt_text: prompt.slice(0, 120000),
+    lp_context: context.aiContext,
+    source_context: sourceContext,
+    expected_output_table: 'ai_analysis_results',
+    expected_output_shape: {
+      score: 'integer 0-100',
+      summary: 'text',
+      findings: 'jsonb[]',
+      recommendations: 'jsonb[] with macro/micro route and target selectors',
+      model: 'codex',
+    },
+  }
+
+  const { error: artifactError } = await supabase
+    .from('lp_job_artifacts')
+    .insert({
+      job_id: job.id,
+      lp_project_id: job.lp_project_id,
+      artifact_type: 'codex_proposal_task',
+      file_path: null,
+      diff_summary: 'Codex proposal task prepared from GA4, current HTML/CSS, and knowledge md files.',
+      metadata,
+    })
+  if (artifactError) throw new Error(artifactError.message)
+
+  const { error: jobUpdateError } = await supabase
+    .from('lp_jobs')
+    .update({
+      result_summary: 'Codex用タスクを作成しました。CodexがGA4・HTML/CSS・ノウハウmdを読んで提案を保存する状態です。',
+      payload: {
+        ...(job.payload ?? {}),
+        executor: 'codex',
+        codex_task_status: 'ready_for_codex',
+        codex_prompt_files: metadata.prompt_files,
+      },
+    })
+    .eq('id', job.id)
+  if (jobUpdateError) throw new Error(jobUpdateError.message)
+
+  await writeJobStep(supabase, job.id, 'codex_task_ready', {
+    summary: 'Codex proposal task was prepared without calling OpenAI from the VPS worker.',
+    lp_project_id: job.lp_project_id,
+    prompt_files: metadata.prompt_files,
+  })
+}
+
 function dateDaysAgo(days) {
   const date = new Date()
   date.setUTCDate(date.getUTCDate() - days)
@@ -569,6 +682,19 @@ export async function runJob({ config, supabase, job }) {
         lp_project_id: job.lp_project_id,
         metric_rows: context.metrics.length,
       })
+      return
+    }
+
+    if (job.payload?.executor === 'codex') {
+      await writeJobStep(supabase, job.id, 'source_context_load', {
+        status: 'running',
+        summary: 'Loading current LP HTML/CSS signals for Codex task',
+        lp_project_id: job.lp_project_id,
+        folder_path: context.overview.folder_path,
+      })
+      await prepareRepo({ config, workspace, branchName: `ailp/${context.overview.folder_path}/codex-proposal-context`.replace(/[^A-Za-z0-9/_-]/g, '-') })
+      const sourceContext = await loadLpSourceContext(workspace, context.overview.folder_path)
+      await createCodexProposalTask({ config, supabase, job, context, sourceContext })
       return
     }
 

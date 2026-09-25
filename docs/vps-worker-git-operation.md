@@ -91,3 +91,20 @@ The production job writes:
 - `production_deployments`: Netlify deployment record for the public URL.
 
 This keeps draft history and production history separate while making rollback possible from either Git commits or the local backup.
+
+## Codex提案タスクの流れ
+
+`AI提案を作成` ボタンは、VPS worker内でOpenAI APIを長時間呼び続けるのではなく、`lp_jobs.job_type = propose_improvements` と `payload.executor = codex` のジョブを作る。
+
+workerは対象LP単位で以下を集め、`lp_job_artifacts.artifact_type = codex_proposal_task` に保存する。
+
+- `lp_dashboard_overview` と `ga4_daily_metrics` のLP単位GA4コンテキスト
+- 現在のLP HTML/CSSから抽出した見出し、CTAリンク、section、CSSサンプル
+- `docs/ai-proposal-prompt.md`
+- `docs/ai-html-edit-prompt.md`
+- `docs/ai-improvement-logic.md`
+- `docs/ga4-scoring-logic.md`
+
+このジョブは、AI判断そのものをVPS workerで実行しない。VPS workerはCodex用タスク材料を作るだけにして、ハングしてジョブが詰まる原因を切り離す。Codexまたは将来のCodex/Agents実行基盤がこのタスクを読み、`ai_analysis_results` に `summary` / `findings` / `recommendations` を保存する。
+
+recommendationsは、draft反映で使えるように `route`、`target_area`、`target_selector_or_text`、`ga4_evidence`、`html_evidence`、`reason_chain` を含める。マクロ改善とミクロ改善を分け、他LPの情報を混ぜない。
