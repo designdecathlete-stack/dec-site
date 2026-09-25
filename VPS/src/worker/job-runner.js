@@ -178,6 +178,118 @@ async function createCodexProposalTask({ supabase, job, context, sourceContext, 
   })
 }
 
+
+function fallbackDraftPlanFromAnalysis(analysis) {
+  const recommendations = Array.isArray(analysis?.recommendations) ? analysis.recommendations : []
+  const approved = recommendations
+    .filter(item => item?.approved_for_draft !== false)
+    .slice(0, 5)
+  const changes = (approved.length ? approved : recommendations.slice(0, 5)).map((item, index) => ({
+    title: String(item?.title || `改善 ${index + 1}`).slice(0, 120),
+    body: String(item?.body || item?.hypothesis || item?.expected_effect || '').slice(0, 700),
+    target_area: item?.target_area || item?.area || 'other',
+    target_selector_or_text: item?.target_selector_or_text || item?.selector || '',
+    edit_intent: item?.edit_intent || 'replace_copy',
+  }))
+  return {
+    headline: changes[0]?.title || 'AI改善提案をdraftに反映',
+    lead: analysis?.summary || 'GA4と現在のLP内容から、確認用draftに改善案を反映しました。',
+    changes,
+    cta_label: 'LINEで相談する',
+    self_review_summary: 'Codex HTML編集タスクを保存し、保存済み改善案をもとに既存デザインを崩さない範囲でdraftを作成しました。',
+  }
+}
+
+function codexHtmlEditPrompt({ context, sourceContext, analysis, plan, knowledgeFiles }) {
+  return [
+    '# AILP Codex HTML Edit Task',
+    '',
+    'あなたはLPのHTML/CSSを壊さずに改善できるフロントエンド編集者です。',
+    'GA4根拠つき改善案、現在のHTML/CSS、ノウハウmdを読み、draft用のHTML/CSS編集を作ってください。',
+    '',
+    '## 編集方針',
+    '',
+    '- 本番フォルダは直接変更しない。draft / preview 用だけを編集する。',
+    '- 既存デザイン、画像、公開URL、LPフォルダ構成を壊さない。',
+    '- target_area / target_selector_or_text を優先して、hero、CTA、trust、FAQなど該当箇所を自然に置換または補足する。',
+    '- 変更前後をログ化できるように before / after / target_area / target_selector_or_text を残す。',
+    '- マクロ改善は新規LP案、ミクロ改善は現LPの部分編集として扱う。',
+    '',
+    '## LP context',
+    '',
+    '```json',
+    JSON.stringify(context.aiContext, null, 2),
+    '```',
+    '',
+    '## Current HTML/CSS signals',
+    '',
+    '```json',
+    JSON.stringify(sourceContext, null, 2),
+    '```',
+    '',
+    '## Improvement analysis',
+    '',
+    '```json',
+    JSON.stringify({
+      id: analysis?.id,
+      summary: analysis?.summary,
+      findings: analysis?.findings || [],
+      recommendations: analysis?.recommendations || [],
+    }, null, 2),
+    '```',
+    '',
+    '## Draft plan currently used by worker',
+    '',
+    '```json',
+    JSON.stringify(plan, null, 2),
+    '```',
+    '',
+    '## Knowledge files',
+    '',
+    ...knowledgeFiles.map(item => item.missing
+      ? `### ${item.file}\n\n読み込み失敗: ${item.error || 'missing'}\n`
+      : `### ${item.file}\n\n${item.content}\n`),
+  ].join('\n')
+}
+
+async function createCodexHtmlEditTask({ supabase, job, context, sourceContext, analysis, plan, repoPath, versionSlug }) {
+  const knowledgeFiles = await loadCodexKnowledgeFiles(repoPath)
+  const prompt = codexHtmlEditPrompt({ context, sourceContext, analysis, plan, knowledgeFiles })
+  const metadata = {
+    executor: 'codex_html',
+    status: 'ready_for_codex',
+    version_slug: versionSlug,
+    prompt_files: knowledgeFiles.map(item => ({ file: item.file, missing: Boolean(item.missing) })),
+    prompt_text: prompt.slice(0, 140000),
+    lp_context: context.aiContext,
+    source_context: sourceContext,
+    ai_analysis_result_id: analysis?.id || null,
+    draft_plan: plan,
+    expected_output: {
+      preview_folder: `ailp-previews/${context.overview.folder_path}/${versionSlug}`,
+      output_files: ['index.html', 'related css if needed'],
+      log_fields: ['target_area', 'target_selector_or_text', 'before', 'after'],
+    },
+  }
+  const { error: artifactError } = await supabase
+    .from('lp_job_artifacts')
+    .insert({
+      job_id: job.id,
+      lp_project_id: job.lp_project_id,
+      artifact_type: 'codex_html_edit_task',
+      file_path: null,
+      diff_summary: 'Codex HTML edit task prepared from saved recommendations, current HTML/CSS, and knowledge md files.',
+      metadata,
+    })
+  if (artifactError) throw new Error(artifactError.message)
+  await writeJobStep(supabase, job.id, 'codex_html_task_ready', {
+    summary: 'Codex HTML edit task was prepared. Worker will create a draft preview from the same saved recommendations without calling OpenAI.',
+    lp_project_id: job.lp_project_id,
+    version_slug: versionSlug,
+    prompt_files: metadata.prompt_files,
+  })
+}
+
 function dateDaysAgo(days) {
   const date = new Date()
   date.setUTCDate(date.getUTCDate() - days)
@@ -974,18 +1086,34 @@ export async function runJob({ config, supabase, job }) {
 
     await prepareRepo({ config, workspace, branchName })
     const sourceContext = await loadLpSourceContext(workspace, context.overview.folder_path)
-    const planResponse = await createDraftChangePlan({
-      config,
-      context: {
-        ...context.aiContext,
-        current_lp_source: sourceContext,
-        improvement_logic_version: 'docs/ai-improvement-logic.md',
-        operator_saved_proposals: overrideRecommendations,
-        draft_source: job.payload?.draft_source || 'latest_ai_analysis',
-        route: job.payload?.route || null,
-      },
-      analysis: draftAnalysis,
-    })
+    let planResponse
+    if (job.payload?.html_executor === 'codex' || job.payload?.executor === 'codex_html') {
+      const parsed = fallbackDraftPlanFromAnalysis(draftAnalysis)
+      planResponse = { parsed, rawText: JSON.stringify(parsed), usage: {}, model: 'codex-html-handoff' }
+      await createCodexHtmlEditTask({
+        supabase,
+        job,
+        context,
+        sourceContext,
+        analysis: draftAnalysis,
+        plan: parsed,
+        repoPath: workspace.repo,
+        versionSlug,
+      })
+    } else {
+      planResponse = await createDraftChangePlan({
+        config,
+        context: {
+          ...context.aiContext,
+          current_lp_source: sourceContext,
+          improvement_logic_version: 'docs/ai-improvement-logic.md',
+          operator_saved_proposals: overrideRecommendations,
+          draft_source: job.payload?.draft_source || 'latest_ai_analysis',
+          route: job.payload?.route || null,
+        },
+        analysis: draftAnalysis,
+      })
+    }
     const cost = estimateCost(config, planResponse.usage)
 
     const draft = await applyDraftChanges({

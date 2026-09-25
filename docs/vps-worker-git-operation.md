@@ -108,3 +108,11 @@ workerは対象LP単位で以下を集め、`lp_job_artifacts.artifact_type = co
 このジョブは、AI判断そのものをVPS workerで実行しない。VPS workerはCodex用タスク材料を作るだけにして、ハングしてジョブが詰まる原因を切り離す。Codexまたは将来のCodex/Agents実行基盤がこのタスクを読み、`ai_analysis_results` に `summary` / `findings` / `recommendations` を保存する。
 
 recommendationsは、draft反映で使えるように `route`、`target_area`、`target_selector_or_text`、`ga4_evidence`、`html_evidence`、`reason_chain` を含める。マクロ改善とミクロ改善を分け、他LPの情報を混ぜない。
+
+## Codex HTML編集タスクの流れ
+
+`apply_to_draft` に `payload.html_executor = codex` が付いた場合、workerはOpenAI APIを呼ばず、保存済みの `ai_analysis_results.recommendations` または管理画面で編集済みの `override_recommendations` からdraft planを作る。
+
+同時に `lp_job_artifacts.artifact_type = codex_html_edit_task` を保存する。このartifactには、LP単位GA4、現在HTML/CSSシグナル、改善案、draft plan、ノウハウmdを含める。Codexはこのartifactを読み、より自然なHTML/CSS置換ルールを育てられる。
+
+workerは従来通り `ailp-previews/{lp-folder}/{version_slug}` にdraft HTMLを作り、preview URL、branch、commit、applied editsを保存する。これにより、HTML作成は止まりにくいルールベースdraftを先に出しつつ、Codex HTML編集のノウハウを別途蓄積できる。

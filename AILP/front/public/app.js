@@ -1392,6 +1392,7 @@ async function startDraftFromSavedProposals(route='macro'){
   const job=await enqueueLpJob('apply_to_draft',{
     push:true,
     publish_preview_folder:true,
+    html_executor:'codex',
     version_slug:stamp,
     ai_analysis_result_id:analysis.id,
     draft_source:'ai_analysis_recommendations',
@@ -1586,7 +1587,7 @@ function enhancedButtons(){
       }
       else if(action==='analyze-run'){ runLpAnalysis() }
       else if(action==='vps-propose'){ enqueueLpJob('propose_improvements',{executor:'codex',knowledge_files:['docs/ai-proposal-prompt.md','docs/ai-html-edit-prompt.md','docs/ai-improvement-logic.md','docs/ga4-scoring-logic.md']}) }
-      else if(action==='vps-apply-draft'){ enqueueLpJob('apply_to_draft',{push:true}) }
+      else if(action==='vps-apply-draft'){ enqueueLpJob('apply_to_draft',{push:true,html_executor:'codex'}) }
       else if(action==='detail-refresh'){ loadDetailData(true) }
       else if(action==='dashboard-refresh'){ loadDashboardData(true) }
       else if(action==='api-log-refresh'){ loadApiLogData(true) }
