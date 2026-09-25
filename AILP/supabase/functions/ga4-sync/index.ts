@@ -1,6 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 
-import { runGa4Report } from '../_shared/ga4.ts'
+import { runGa4EventReport, runGa4Report } from '../_shared/ga4.ts'
 import { resolveAnalyticsSettings } from '../_shared/analytics-settings.ts'
 import { getCronToken } from '../_shared/env.ts'
 import { badRequest, forbidden, json, methodNotAllowed, optionsResponse, serverError, unauthorized } from '../_shared/http.ts'
@@ -222,6 +222,33 @@ Deno.serve(async (req) => {
           }
         }
 
+        const eventRows = await runGa4EventReport({
+          propertyId,
+          pagePath: settings.ga4_page_path,
+          dateFrom: body.date_from,
+          dateTo: body.date_to,
+        })
+
+        if (eventRows.length > 0) {
+          const { error: eventUpsertError } = await service.from('ga4_daily_events').upsert(
+            eventRows.map((row) => ({
+              lp_project_id: target.id,
+              metric_date: row.date,
+              event_name: row.eventName,
+              event_count: row.eventCount,
+              raw: row,
+              synced_at: new Date().toISOString(),
+            })),
+            {
+              onConflict: 'lp_project_id,metric_date,event_name',
+            }
+          )
+
+          if (eventUpsertError) {
+            throw new Error(eventUpsertError.message)
+          }
+        }
+
         const { error: finishError } = await service
           .from('ga4_sync_jobs')
           .update({
@@ -246,6 +273,7 @@ Deno.serve(async (req) => {
           metadata: {
             ga4_sync_job_id: job.id,
             row_count: rows.length,
+            event_row_count: eventRows.length,
           },
         })
       } catch (targetError) {

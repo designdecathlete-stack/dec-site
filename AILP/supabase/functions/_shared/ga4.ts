@@ -13,6 +13,12 @@ type RunReportRow = {
   engagementRate: number | null
 }
 
+type RunEventReportRow = {
+  date: string
+  eventName: string
+  eventCount: number
+}
+
 type Ga4PropertyCandidate = {
   accountName: string
   accountDisplayName: string
@@ -203,6 +209,91 @@ export async function runGa4Report(args: {
     conversions: metricNumber(row.metricValues?.[3]?.value),
     eventCount: metricNumber(row.metricValues?.[4]?.value),
     engagementRate: row.metricValues?.[5]?.value ? Number(row.metricValues[5].value) : null,
+  }))
+}
+
+
+export async function runGa4EventReport(args: {
+  propertyId: string
+  pagePath: string
+  dateFrom: string
+  dateTo: string
+}): Promise<RunEventReportRow[]> {
+  const accessToken = await getAccessToken()
+  const response = await fetch(
+    `https://analyticsdata.googleapis.com/v1beta/properties/${args.propertyId}:runReport`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        dimensions: [
+          { name: 'date' },
+          { name: 'eventName' },
+        ],
+        metrics: [
+          { name: 'eventCount' },
+        ],
+        dateRanges: [
+          {
+            startDate: args.dateFrom,
+            endDate: args.dateTo,
+          },
+        ],
+        dimensionFilter: {
+          andGroup: {
+            expressions: [
+              {
+                filter: {
+                  fieldName: 'pagePath',
+                  stringFilter: {
+                    matchType: 'BEGINS_WITH',
+                    value: args.pagePath,
+                  },
+                },
+              },
+              {
+                filter: {
+                  fieldName: 'eventName',
+                  inListFilter: {
+                    values: [
+                      'cta_click',
+                      'lp_cta_click',
+                      'line_click',
+                      'line_tap',
+                      'click_line',
+                      'reservation_click',
+                      'booking_click',
+                      'reserve_click',
+                      'hotpepper_click',
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        },
+      }),
+    }
+  )
+
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`GA4 event runReport failed: ${body}`)
+  }
+
+  const json = await response.json()
+  const rows = (json.rows ?? []) as Array<{
+    dimensionValues?: Array<{ value?: string }>
+    metricValues?: Array<{ value?: string }>
+  }>
+
+  return rows.map((row) => ({
+    date: googleDateToIso(row.dimensionValues?.[0]?.value ?? ''),
+    eventName: row.dimensionValues?.[1]?.value ?? '(not set)',
+    eventCount: metricNumber(row.metricValues?.[0]?.value),
   }))
 }
 

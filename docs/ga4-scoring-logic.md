@@ -139,3 +139,19 @@ GTM導入後は、`Read Proxy Score` という名前を `Read Score` に変え�
 - `source_medium` が `(not set)` や `(data not available)` に偏る場合、UTMや広告連携も確認する。
 - PV/Userは読了の代替であり、スクロール深度そのものではない。
 - スコアだけで修正を決めず、必ずLPのHTML/CSSと照合する。
+
+## GTMイベントを使うダッシュボード指標
+
+ダッシュボードのCTA系指標は、GA4の標準指標に加えて `ga4_daily_events` に保存したイベント別件数を使う。
+
+GTM側の推奨イベント名は以下。
+
+| 指標 | 推奨イベント名 | 互換イベント名 |
+| --- | --- | --- |
+| CTAクリック | `cta_click` | `lp_cta_click` |
+| LINEクリック | `line_click` | `line_tap`, `click_line` |
+| 予約意向クリック | `reservation_click` | `booking_click`, `reserve_click`, `hotpepper_click` |
+
+GA4同期では、LPごとの `ga4_page_path` でページを絞り込み、上記イベント名の `eventCount` を日別に保存する。`lp_dashboard_overview` は直近30日の `cta_clicks_30d`、`line_clicks_30d`、`reservation_clicks_30d` と、セッション比率を返す。
+
+GTM設定直後はGA4の反映に時間差があるため、管理画面では「GA4データを更新」を押して再同期する。イベントが0件の場合は、GTM Previewでタグ発火、GA4 DebugViewでイベント受信、イベント名の一致を順に確認する。
