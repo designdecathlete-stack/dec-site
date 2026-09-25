@@ -388,6 +388,71 @@ async function loadLpContext(supabase, lpProjectId) {
   }
 }
 
+
+async function loadDraftLpContext(supabase, lpProjectId) {
+  const overviewResult = await supabase
+    .from('lp_dashboard_overview')
+    .select('*')
+    .eq('lp_project_id', lpProjectId)
+    .single()
+  if (overviewResult.error) throw new Error(overviewResult.error.message)
+  const overview = overviewResult.data
+
+  const metricsResult = await supabase
+    .from('ga4_daily_metrics')
+    .select('metric_date,source_medium,sessions,total_users,screen_page_views,conversions,event_count,engagement_rate')
+    .eq('lp_project_id', lpProjectId)
+    .gte('metric_date', dateDaysAgo(30))
+    .order('metric_date', { ascending: true })
+    .limit(200)
+  if (metricsResult.error) throw new Error(metricsResult.error.message)
+
+  const metrics = metricsResult.data ?? []
+  const totals = metricTotals(metrics)
+  return {
+    overview,
+    metrics,
+    aiContext: {
+      lp_project_id: overview.lp_project_id,
+      client_name: overview.client_name,
+      lp_name: overview.lp_name,
+      folder_path: overview.folder_path,
+      public_url: overview.public_url,
+      publish_status: overview.publish_status,
+      ga4_connection_status: overview.ga4_connection_status,
+      ga4_property_id: overview.ga4_property_id,
+      ga4_page_path: overview.ga4_page_path,
+      date_range: {
+        from: metrics[0]?.metric_date ?? null,
+        to: metrics[metrics.length - 1]?.metric_date ?? null,
+      },
+      totals_90d: {
+        sessions: totals.sessions,
+        total_users: totals.total_users,
+        screen_page_views: totals.screen_page_views,
+        conversions: totals.conversions,
+        event_count: totals.event_count,
+        conversion_rate: totals.sessions > 0 ? totals.conversions / totals.sessions : null,
+        average_engagement_rate: totals.engagement_rate_count > 0 ? totals.engagement_rate_sum / totals.engagement_rate_count : null,
+      },
+      latest_30d_from_dashboard: {
+        sessions: overview.sessions_30d,
+        total_users: overview.total_users_30d,
+        page_views: overview.page_views_30d,
+        conversions: overview.conversions_30d,
+        conversion_rate: overview.conversion_rate_30d,
+      },
+      top_source_mediums_90d: Object.values(metrics.reduce((grouped, row) => {
+        const key = row.source_medium || '(unknown)'
+        grouped[key] ??= { source_medium: key, sessions: 0, conversions: 0 }
+        grouped[key].sessions += Number(row.sessions || 0)
+        grouped[key].conversions += Number(row.conversions || 0)
+        return grouped
+      }, {})).sort((left, right) => right.sessions - left.sessions).slice(0, 8),
+    },
+  }
+}
+
 function normalizeProposalResult(result) {
   const findings = Array.isArray(result.findings) ? result.findings : []
   const recommendations = Array.isArray(result.recommendations) ? result.recommendations : []
@@ -1041,7 +1106,7 @@ export async function runJob({ config, supabase, job }) {
       summary: 'Loading LP dashboard and GA4 context for draft generation',
       lp_project_id: job.lp_project_id,
     })
-    const context = await loadLpContext(supabase, job.lp_project_id)
+    const context = await loadDraftLpContext(supabase, job.lp_project_id)
     await writeJobStep(supabase, job.id, 'draft_context_ready', {
       summary: 'Draft context is ready',
       lp_project_id: job.lp_project_id,
