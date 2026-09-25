@@ -644,6 +644,19 @@ export async function runJob({ config, supabase, job }) {
     throw new Error(`Job ${job.id} is missing lp_project_id`)
   }
 
+  if (job.job_type === 'propose_improvements' && job.payload?.executor === 'codex') {
+    await writeJobStep(supabase, job.id, 'codex_context_load', {
+      status: 'running',
+      summary: 'Loading LP-scoped GA4 data and existing workspace files for Codex task',
+      lp_project_id: job.lp_project_id,
+    })
+    const context = await loadLpContext(supabase, job.lp_project_id)
+    const workspace = await ensureLpWorkspace(config.workspaceRoot, job.lp_project_id)
+    const sourceContext = await loadLpSourceContext(workspace, context.overview.folder_path)
+    await createCodexProposalTask({ supabase, job, context, sourceContext, repoPath: workspace.repo })
+    return
+  }
+
   await writeJobStep(supabase, job.id, 'workspace_prepare', {
     status: 'running',
     summary: 'Preparing LP-scoped workspace',
@@ -682,19 +695,6 @@ export async function runJob({ config, supabase, job }) {
         lp_project_id: job.lp_project_id,
         metric_rows: context.metrics.length,
       })
-      return
-    }
-
-    if (job.payload?.executor === 'codex') {
-      await writeJobStep(supabase, job.id, 'source_context_load', {
-        status: 'running',
-        summary: 'Loading current LP HTML/CSS signals for Codex task',
-        lp_project_id: job.lp_project_id,
-        folder_path: context.overview.folder_path,
-      })
-      await prepareRepo({ config, workspace, branchName: `ailp/${context.overview.folder_path}/codex-proposal-context`.replace(/[^A-Za-z0-9/_-]/g, '-') })
-      const sourceContext = await loadLpSourceContext(workspace, context.overview.folder_path)
-      await createCodexProposalTask({ supabase, job, context, sourceContext, repoPath: workspace.repo })
       return
     }
 
