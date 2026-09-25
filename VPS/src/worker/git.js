@@ -373,6 +373,54 @@ export async function createPreviewFolder({ config, workspace, folderPath, branc
   }
 }
 
+
+export async function createLpVariantFolder({ config, workspace, sourceFolderPath, targetFolderPath, branchName, lpName }) {
+  const repoRoot = workspace.repo
+  const normalizedSource = String(sourceFolderPath || '').replace(/^\/+|\/+$/g, '')
+  const normalizedTarget = String(targetFolderPath || '').replace(/^\/+|\/+$/g, '')
+  if (!normalizedSource || normalizedSource.includes('..')) throw new Error(`Invalid source folder_path: ${sourceFolderPath}`)
+  if (!normalizedTarget || normalizedTarget.includes('..') || normalizedTarget.startsWith('ailp-previews/')) throw new Error(`Invalid target folder_path: ${targetFolderPath}`)
+  if (normalizedSource === normalizedTarget) throw new Error('Source and target LP folders must be different')
+
+  const sourceDir = assertInside(repoRoot, join(repoRoot, normalizedSource))
+  const targetDir = assertInside(repoRoot, join(repoRoot, normalizedTarget))
+  await rm(targetDir, { recursive: true, force: true })
+  await mkdir(targetDir, { recursive: true })
+  await cp(sourceDir, targetDir, {
+    recursive: true,
+    force: true,
+    filter: (source) => !source.includes('.git') && !source.endsWith('ailp-draft-proposal.md'),
+  })
+
+  const htmlPath = assertInside(repoRoot, join(targetDir, 'index.html'))
+  try {
+    let html = await readFile(htmlPath, 'utf8')
+    html = removeDraftOnlyMarkers(html)
+    const label = escapeHtmlFragment(lpName || normalizedTarget.split('/').pop() || 'LP')
+    if (html.includes('</body>')) {
+      html = html.replace('</body>', `
+<!-- AILP LP variant: ${label} / source: ${escapeHtmlFragment(normalizedSource)} / created: ${new Date().toISOString()} -->
+</body>`)
+    }
+    await writeFile(htmlPath, html, 'utf8')
+  } catch {}
+
+  await git(['add', normalizedTarget], { cwd: repoRoot, config })
+  const diffSummary = await git(['diff', '--cached', '--stat'], { cwd: repoRoot, config })
+  if (!diffSummary) throw new Error(`No changes created for ${normalizedTarget}`)
+  await git(['commit', '-m', `Create AILP LP variant ${normalizedTarget}`], { cwd: repoRoot, config })
+  const commitSha = await git(['rev-parse', 'HEAD'], { cwd: repoRoot, config })
+  await git(['push', repoUrl(config), `HEAD:${branchName}`], { cwd: repoRoot, config })
+  await git(['push', repoUrl(config), 'HEAD:main'], { cwd: repoRoot, config })
+  return {
+    branchName,
+    commitSha,
+    folderPath: normalizedTarget,
+    publicUrl: `https://dec-site.netlify.app/${normalizedTarget}/`,
+    diffSummary,
+  }
+}
+
 export async function pushBranch({ config, workspace, branchName }) {
   await git(['push', repoUrl(config), `HEAD:${branchName}`], {
     cwd: workspace.repo,

@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { ensureLpWorkspace } from '../guards/path-guard.js'
 import { writeJobStep } from '../logging/job-log.js'
-import { applyDraftChanges, createPreviewFolder, prepareRepo, publishPreviewFolderToMain, publishVersionToProduction, pushBranch, writeDraftProposal } from './git.js'
+import { applyDraftChanges, createLpVariantFolder, createPreviewFolder, prepareRepo, publishPreviewFolderToMain, publishVersionToProduction, pushBranch, writeDraftProposal } from './git.js'
 import { createDraftChangePlan, createImprovementProposal, estimateCost } from './openai.js'
 
 
@@ -783,6 +783,55 @@ async function latestAnalysis(supabase, lpProjectId) {
   return data
 }
 
+
+function rootClientFolder(folderPath) {
+  return String(folderPath || '').replace(/^\/+|\/+$/g, '').split('/').filter(Boolean)[0] || ''
+}
+
+async function nextLpVariantInfo(supabase, clientId, sourceFolderPath) {
+  const root = rootClientFolder(sourceFolderPath)
+  if (!root) throw new Error(`Invalid source folder_path: ${sourceFolderPath}`)
+  const { data, error } = await supabase
+    .from('lp_projects')
+    .select('name,slug,folder_path')
+    .eq('client_id', clientId)
+  if (error) throw new Error(error.message)
+  const rows = data || []
+  const used = new Set(rows.map(row => String(row.folder_path || '').replace(/^\/+|\/+$/g, '')))
+  let number = 2
+  while (used.has(`${root}/lp${number}`)) number += 1
+  return {
+    lpNumber: number,
+    slug: `lp${number}`,
+    nameSuffix: `LP${number}`,
+    folderPath: `${root}/lp${number}`,
+    publicUrl: `https://dec-site.netlify.app/${root}/lp${number}/`,
+    ga4PagePath: `/${root}/lp${number}/`,
+  }
+}
+
+async function cloneLpAccess(supabase, sourceLpProjectId, newLpProjectId) {
+  const access = await supabase
+    .from('access_user_lp_projects')
+    .select('access_user_id')
+    .eq('lp_project_id', sourceLpProjectId)
+  if (!access.error && access.data?.length) {
+    await supabase.from('access_user_lp_projects').insert(
+      access.data.map(row => ({ access_user_id: row.access_user_id, lp_project_id: newLpProjectId }))
+    )
+  }
+
+  const memberships = await supabase
+    .from('lp_user_memberships')
+    .select('user_id')
+    .eq('lp_project_id', sourceLpProjectId)
+  if (!memberships.error && memberships.data?.length) {
+    await supabase.from('lp_user_memberships').insert(
+      memberships.data.map(row => ({ user_id: row.user_id, lp_project_id: newLpProjectId }))
+    )
+  }
+}
+
 function draftMarkdown({ job, context, analysis }) {
   const recommendations = Array.isArray(analysis?.recommendations) ? analysis.recommendations : []
   const findings = Array.isArray(analysis?.findings) ? analysis.findings : []
@@ -1010,6 +1059,116 @@ export async function runJob({ config, supabase, job }) {
 
   if (job.job_type === 'create_preview_folder') {
     const context = await loadLpContext(supabase, job.lp_project_id)
+
+    if (job.payload?.action === 'create_lp_variant') {
+      const variant = await nextLpVariantInfo(supabase, context.overview.client_id, context.overview.folder_path)
+      const lpName = String(job.payload?.lp_name || `${context.overview.client_name} ${variant.nameSuffix}`).trim()
+      const sourceMode = job.payload?.source || 'copy_current_lp'
+      const sourceFolderPath = sourceMode === 'template' && job.payload?.template_folder_path
+        ? String(job.payload.template_folder_path)
+        : context.overview.folder_path
+      const branchName = `ailp/${variant.folderPath}/create`.replace(/[^A-Za-z0-9/_-]/g, '-')
+
+      await writeJobStep(supabase, job.id, 'lp_variant_repo_prepare', {
+        status: 'running',
+        summary: 'Preparing repository to create a new LP under the same client',
+        lp_project_id: job.lp_project_id,
+        source_folder_path: sourceFolderPath,
+        target_folder_path: variant.folderPath,
+      })
+      await prepareRepo({ config, workspace, branchName })
+      const created = await createLpVariantFolder({
+        config,
+        workspace,
+        sourceFolderPath,
+        targetFolderPath: variant.folderPath,
+        branchName,
+        lpName,
+      })
+
+      const { data: newLp, error: lpError } = await supabase.from('lp_projects').insert({
+        client_id: context.overview.client_id,
+        name: lpName,
+        slug: variant.slug,
+        folder_path: variant.folderPath,
+        public_url: created.publicUrl,
+        ga4_page_path: variant.ga4PagePath,
+        status: 'active',
+      }).select('id').single()
+      if (lpError) throw new Error(lpError.message)
+
+      await supabase.from('lp_projects').update({
+        lp_number: variant.lpNumber,
+        is_primary: false,
+        parent_lp_project_id: job.lp_project_id,
+        creation_method: sourceMode === 'template' ? 'template' : 'copy_current_lp',
+        template_key: sourceMode === 'template' ? (job.payload?.template_key || null) : null,
+      }).eq('id', newLp.id)
+
+      await supabase.from('lp_analytics_settings').insert({
+        lp_project_id: newLp.id,
+        ga4_property_id: null,
+        ga4_page_path: variant.ga4PagePath,
+        ga4_measurement_id: null,
+        gtm_container_id: null,
+        is_active: true,
+      })
+      await cloneLpAccess(supabase, job.lp_project_id, newLp.id)
+
+      await supabase.from('git_versions').insert({
+        lp_project_id: newLp.id,
+        version_label: 'mainLP-initial',
+        branch: created.branchName,
+        commit_sha: created.commitSha,
+        folder_path: created.folderPath,
+        change_summary: `Created ${lpName} from ${sourceFolderPath}. GA4/GTM settings are required per LP.`,
+        is_production: true,
+        public_url: created.publicUrl,
+        published_at: new Date().toISOString(),
+      })
+
+      await supabase.from('lp_job_artifacts').insert({
+        job_id: job.id,
+        lp_project_id: newLp.id,
+        artifact_type: 'lp_variant_created',
+        file_path: created.folderPath,
+        git_branch: created.branchName,
+        commit_sha: created.commitSha,
+        preview_url: created.publicUrl,
+        diff_summary: created.diffSummary,
+        metadata: {
+          source_lp_project_id: job.lp_project_id,
+          source_folder_path: sourceFolderPath,
+          creation_method: sourceMode,
+          ga4_gtm_required: true,
+        },
+      })
+
+      await supabase.from('lp_jobs').update({
+        result_summary: `Created ${lpName} at ${created.publicUrl}. Configure GA4/GTM for this LP before analysis.`,
+        git_branch: created.branchName,
+        commit_sha: created.commitSha,
+        preview_url: created.publicUrl,
+        payload: {
+          ...(job.payload || {}),
+          created_lp_project_id: newLp.id,
+          created_folder_path: created.folderPath,
+          created_public_url: created.publicUrl,
+          ga4_gtm_required: true,
+        },
+      }).eq('id', job.id)
+
+      await writeJobStep(supabase, job.id, 'lp_variant_created', {
+        summary: 'New LP variant was created under the same client and published to main',
+        source_lp_project_id: job.lp_project_id,
+        new_lp_project_id: newLp.id,
+        folder_path: created.folderPath,
+        public_url: created.publicUrl,
+        commit_sha: created.commitSha,
+      })
+      return
+    }
+
     const versionSlug = job.payload?.version_slug || `draft-${job.id.slice(0, 8)}`
     const branchName = `ailp/${context.overview.folder_path}/${versionSlug}`.replace(/[^A-Za-z0-9/_-]/g, '-')
 
@@ -1530,3 +1689,4 @@ export async function runJob({ config, supabase, job }) {
 
   throw new Error('Non-dry-run execution is not implemented yet')
 }
+

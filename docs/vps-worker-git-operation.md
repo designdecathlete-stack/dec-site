@@ -116,3 +116,13 @@ recommendationsは、draft反映で使えるように `route`、`target_area`、
 同時に `lp_job_artifacts.artifact_type = codex_html_edit_task` を保存する。このartifactには、LP単位GA4、現在HTML/CSSシグナル、改善案、draft plan、ノウハウmdを含める。Codexはこのartifactを読み、より自然なHTML/CSS置換ルールを育てられる。
 
 workerは従来通り `ailp-previews/{lp-folder}/{version_slug}` にdraft HTMLを作り、preview URL、branch、commit、applied editsを保存する。これにより、HTML作成は止まりにくいルールベースdraftを先に出しつつ、Codex HTML編集のノウハウを別途蓄積できる。
+
+## Multiple LPs per client
+
+A client can now own more than one LP. The existing root LP folder, for example `marr/`, remains the primary LP and keeps the existing public URL `https://dec-site.netlify.app/marr/`. This row is treated as LP1.
+
+New LPs are created below the client folder, for example `marr/lp2/`, `marr/lp3/`, and so on. The worker creates the new folder from either the current LP copy or a template, commits the folder, pushes it to `main`, and registers a new `lp_projects` row with its own `folder_path`, `public_url`, and `ga4_page_path`.
+
+GA4 and GTM are configured per LP through `lp_analytics_settings`. A newly created LP starts with an empty `ga4_property_id`, `ga4_measurement_id`, and `gtm_container_id`, so the management screen must guide the operator to set those values before production analysis. The old `clients.ga4_property_id` remains only as fallback compatibility.
+
+The source LP access memberships are copied to the new LP so the same client/dashboard users can see it immediately. Because the URL is additive, creating LP2 does not change or remove the existing `/marr/` production LP.
