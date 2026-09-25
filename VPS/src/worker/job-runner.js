@@ -66,7 +66,7 @@ async function loadLpSourceContext(workspace, folderPath) {
 }
 
 
-async function loadCodexKnowledgeFiles(config) {
+async function loadCodexKnowledgeFiles(repoPath) {
   const docs = [
     'docs/ai-proposal-prompt.md',
     'docs/ai-html-edit-prompt.md',
@@ -76,7 +76,7 @@ async function loadCodexKnowledgeFiles(config) {
   const loaded = []
   for (const file of docs) {
     try {
-      const content = await readFile(join(config.decSiteRepoPath, file), 'utf8')
+      const content = await readFile(join(repoPath, file), 'utf8')
       loaded.push({ file, content: content.slice(0, 20000) })
     } catch (error) {
       loaded.push({ file, missing: true, error: error instanceof Error ? error.message : String(error) })
@@ -125,8 +125,8 @@ function codexProposalPrompt({ context, sourceContext, knowledgeFiles }) {
   ].join('\n')
 }
 
-async function createCodexProposalTask({ config, supabase, job, context, sourceContext }) {
-  const knowledgeFiles = await loadCodexKnowledgeFiles(config)
+async function createCodexProposalTask({ supabase, job, context, sourceContext, repoPath }) {
+  const knowledgeFiles = await loadCodexKnowledgeFiles(repoPath)
   const prompt = codexProposalPrompt({ context, sourceContext, knowledgeFiles })
   const metadata = {
     executor: 'codex',
@@ -694,7 +694,7 @@ export async function runJob({ config, supabase, job }) {
       })
       await prepareRepo({ config, workspace, branchName: `ailp/${context.overview.folder_path}/codex-proposal-context`.replace(/[^A-Za-z0-9/_-]/g, '-') })
       const sourceContext = await loadLpSourceContext(workspace, context.overview.folder_path)
-      await createCodexProposalTask({ config, supabase, job, context, sourceContext })
+      await createCodexProposalTask({ supabase, job, context, sourceContext, repoPath: workspace.repo })
       return
     }
 
