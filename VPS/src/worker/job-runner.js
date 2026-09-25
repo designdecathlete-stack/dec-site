@@ -1036,7 +1036,24 @@ export async function runJob({ config, supabase, job }) {
 
 
   if (job.job_type === 'apply_to_draft') {
+    await writeJobStep(supabase, job.id, 'draft_context_load', {
+      status: 'running',
+      summary: 'Loading LP dashboard and GA4 context for draft generation',
+      lp_project_id: job.lp_project_id,
+    })
     const context = await loadLpContext(supabase, job.lp_project_id)
+    await writeJobStep(supabase, job.id, 'draft_context_ready', {
+      summary: 'Draft context is ready',
+      lp_project_id: job.lp_project_id,
+      folder_path: context.overview.folder_path,
+      metric_rows: context.metrics.length,
+    })
+    await writeJobStep(supabase, job.id, 'draft_analysis_load', {
+      status: 'running',
+      summary: 'Loading AI analysis for draft generation',
+      lp_project_id: job.lp_project_id,
+      ai_analysis_result_id: job.payload?.ai_analysis_result_id || null,
+    })
     const analysis = job.payload?.ai_analysis_result_id
       ? await (async () => {
           const { data, error } = await supabase
@@ -1052,6 +1069,12 @@ export async function runJob({ config, supabase, job }) {
     if (!analysis) {
       throw new Error('No ai_analysis_results found. Run propose_improvements first.')
     }
+    await writeJobStep(supabase, job.id, 'draft_analysis_ready', {
+      summary: 'AI analysis is ready for draft generation',
+      lp_project_id: job.lp_project_id,
+      ai_analysis_result_id: analysis.id,
+      recommendation_count: Array.isArray(analysis.recommendations) ? analysis.recommendations.length : 0,
+    })
     const overrideRecommendations = Array.isArray(job.payload?.override_recommendations)
       ? job.payload.override_recommendations
       : null
