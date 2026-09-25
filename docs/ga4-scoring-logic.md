@@ -18,7 +18,7 @@ GTMが未設定でも、GA4の標準取得項目から最低限のLP診断を本
 - engagement_rate
 - source_medium
 
-GTM導入後に追加する指標:
+クライアント提供イベント名を登録すると取得できる指標:
 
 - CTAクリック
 - LINEクリック
@@ -140,18 +140,22 @@ GTM導入後は、`Read Proxy Score` という名前を `Read Score` に変え�
 - PV/Userは読了の代替であり、スクロール深度そのものではない。
 - スコアだけで修正を決めず、必ずLPのHTML/CSSと照合する。
 
-## GTMイベントを使うダッシュボード指標
+## クライアント提供イベントを使うダッシュボード指標
 
-ダッシュボードのCTA系指標は、GA4の標準指標に加えて `ga4_daily_events` に保存したイベント別件数を使う。
+ダッシュボードのCTA系・スクロール深度指標は、GA4の標準指標に加えて `ga4_daily_events` に保存したイベント別件数を使う。イベント名はLP単位の `lp_analytics_settings.event_mappings` で管理し、GA4確認画面から登録する。これにより、クライアントが既に用意しているGTM/GA4イベント名をこちらの固定名へ変更せずに取り込める。
 
-GTM側の推奨イベント名は以下。
+未設定時だけ、後方互換として以下の初期イベント名を使う。
 
-| 指標 | 推奨イベント名 | 互換イベント名 |
+| 指標 | 初期イベント名 | 互換イベント名 |
 | --- | --- | --- |
 | CTAクリック | `cta_click` | `lp_cta_click` |
 | LINEクリック | `line_click` | `line_tap`, `click_line` |
 | 予約意向クリック | `reservation_click` | `booking_click`, `reserve_click`, `hotpepper_click` |
+| 25%スクロール | `scroll_25` | なし |
+| 50%スクロール | `scroll_50` | なし |
+| 75%スクロール | `scroll_75` | なし |
+| 90%スクロール | `scroll_90` | `scroll` |
 
-GA4同期では、LPごとの `ga4_page_path` でページを絞り込み、上記イベント名の `eventCount` を日別に保存する。`lp_dashboard_overview` は直近30日の `cta_clicks_30d`、`line_clicks_30d`、`reservation_clicks_30d` と、セッション比率を返す。
+GA4同期では、LPごとの `ga4_page_path` でページを絞り込み、登録済みイベント名の `eventCount` を日別に保存する。`lp_dashboard_overview` は直近30日の `cta_clicks_30d`、`line_clicks_30d`、`reservation_clicks_30d`、`scroll_25_30d`、`scroll_50_30d`、`scroll_75_30d`、`scroll_90_30d` と、セッション比率を返す。
 
-GTM設定直後はGA4の反映に時間差があるため、管理画面では「GA4データを更新」を押して再同期する。イベントが0件の場合は、GTM Previewでタグ発火、GA4 DebugViewでイベント受信、イベント名の一致を順に確認する。
+GTM設定直後はGA4の反映に時間差があるため、管理画面では「GA4データを更新」を押して再同期する。イベントが0件の場合は、GTM Previewでタグ発火、GA4 DebugViewでイベント受信、GA4確認画面のイベント名登録、LPの `ga4_page_path` 一致を順に確認する。

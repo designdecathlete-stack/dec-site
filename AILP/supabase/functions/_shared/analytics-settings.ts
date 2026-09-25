@@ -3,6 +3,7 @@ type Settings = {
   ga4_page_path?: string | null
   ga4_measurement_id?: string | null
   gtm_container_id?: string | null
+  event_mappings?: Record<string, string[]> | null
   is_active?: boolean
 }
 
@@ -24,6 +25,7 @@ export function resolveAnalyticsSettings(target: {
     ga4_page_path: nonEmpty(settings?.ga4_page_path) ?? nonEmpty(target.ga4_page_path),
     ga4_measurement_id: nonEmpty(settings?.ga4_measurement_id),
     gtm_container_id: nonEmpty(settings?.gtm_container_id),
+    event_mappings: settings?.event_mappings ?? {},
     is_active: settings?.is_active !== false,
   }
 }

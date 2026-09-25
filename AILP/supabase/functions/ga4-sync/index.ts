@@ -24,7 +24,7 @@ async function resolveTargets(reader: {
 }, body: SyncBody) {
   let query = reader
     .from('lp_projects')
-    .select('id, client_id, ga4_page_path, clients(ga4_property_id), lp_analytics_settings(ga4_property_id,ga4_page_path,is_active)')
+    .select('id, client_id, ga4_page_path, clients(ga4_property_id), lp_analytics_settings(ga4_property_id,ga4_page_path,is_active,event_mappings)')
     .eq('status', 'active')
 
   if (body.lp_project_id) {
@@ -38,6 +38,21 @@ async function resolveTargets(reader: {
   }
 
   return data ?? []
+}
+
+
+function mappedEventNames(mappings: Record<string, string[]> | null | undefined): string[] {
+  const fallback = {
+    cta: ['cta_click', 'lp_cta_click'],
+    line: ['line_click', 'line_tap', 'click_line'],
+    reservation: ['reservation_click', 'booking_click', 'reserve_click', 'hotpepper_click'],
+    scroll_25: ['scroll_25'],
+    scroll_50: ['scroll_50'],
+    scroll_75: ['scroll_75'],
+    scroll_90: ['scroll', 'scroll_90'],
+  }
+  const source = mappings && Object.keys(mappings).length ? mappings : fallback
+  return Array.from(new Set(Object.values(source).flat().map((name) => String(name || '').trim()).filter(Boolean)))
 }
 
 async function createRunningJob(service: ReturnType<typeof createServiceClient>, target: {
@@ -227,6 +242,7 @@ Deno.serve(async (req) => {
           pagePath: settings.ga4_page_path,
           dateFrom: body.date_from,
           dateTo: body.date_to,
+          eventNames: mappedEventNames(settings.event_mappings),
         })
 
         if (eventRows.length > 0) {

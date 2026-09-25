@@ -218,6 +218,7 @@ export async function runGa4EventReport(args: {
   pagePath: string
   dateFrom: string
   dateTo: string
+  eventNames?: string[]
 }): Promise<RunEventReportRow[]> {
   const accessToken = await getAccessToken()
   const response = await fetch(
@@ -258,7 +259,7 @@ export async function runGa4EventReport(args: {
                 filter: {
                   fieldName: 'eventName',
                   inListFilter: {
-                    values: [
+                    values: Array.from(new Set((args.eventNames?.length ? args.eventNames : [
                       'cta_click',
                       'lp_cta_click',
                       'line_click',
@@ -268,7 +269,12 @@ export async function runGa4EventReport(args: {
                       'booking_click',
                       'reserve_click',
                       'hotpepper_click',
-                    ],
+                      'scroll',
+                      'scroll_25',
+                      'scroll_50',
+                      'scroll_75',
+                      'scroll_90',
+                    ]).map((name) => name.trim()).filter(Boolean))),
                   },
                 },
               },
