@@ -786,12 +786,24 @@ function versionForJob(job,artifact){
   if(!commit) return null
   return (detailState.versions||[]).find(item=>item.commit_sha===commit)||null
 }
+function queuedWaitSeconds(job){
+  if(!job?.created_at||job.status!=='queued') return 0
+  const started=new Date(job.created_at).getTime()
+  if(!Number.isFinite(started)) return 0
+  return Math.max(0,Math.round((Date.now()-started)/1000))
+}
+function queuedWaitDetail(job,normalDetail){
+  const seconds=queuedWaitSeconds(job)
+  if(seconds>=20) return `worker/APIの拾い上げ待ちが${seconds}秒続いています。通常は数秒で処理中に変わります。`
+  if(seconds>0) return `${normalDetail}（待機 ${seconds}秒）`
+  return normalDetail
+}
 function draftStatusSummary(job){
   if(!job) return {label:'未実行',tone:'warn',detail:'まだdraft生成ジョブはありません。'}
   if(job.status==='succeeded') return {label:'成功',tone:'ok',detail:'draft生成が完了しています。'}
   if(job.status==='failed') return {label:'失敗',tone:'error',detail:job.error_message||'draft生成に失敗しました。'}
   if(job.status==='running') return {label:'処理中',tone:'warn',detail:'VPS workerがdraftを生成中です。'}
-  return {label:'待機中',tone:'warn',detail:'VPS workerの実行待ちです。'}
+  return {label:'待機中',tone:'warn',detail:queuedWaitDetail(job,'VPS workerの実行待ちです。')}
 }
 function proposeStatusSummary(job){
   if(!job) return {label:'未作成',tone:'warn',detail:'まだAI提案作成ジョブはありません。'}
@@ -799,7 +811,7 @@ function proposeStatusSummary(job){
   if(job.status==='succeeded') return {label:'成功',tone:'ok',detail:job.result_summary||'AI提案が作成されました。'}
   if(job.status==='failed') return {label:'失敗',tone:'error',detail:job.error_message||'AI提案の作成に失敗しました。'}
   if(job.status==='running') return {label:'提案考え中',tone:'warn',detail:'VPS workerがGA4とLP内容をもとに改善案を作成中です。'}
-  return {label:'待機中',tone:'warn',detail:'AI提案作成ジョブの実行待ちです。'}
+  return {label:'待機中',tone:'warn',detail:queuedWaitDetail(job,'AI提案作成ジョブの実行待ちです。')}
 }
 
 function workflowJobMeta(job){
