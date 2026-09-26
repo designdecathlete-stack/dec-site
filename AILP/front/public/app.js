@@ -751,6 +751,23 @@ function latestPublishJob(){
 function latestSuccessfulPublishJob(){
   return (detailState.jobs||[]).find(job=>job.job_type==='publish_version'&&job.status==='succeeded')||null
 }
+function publishMatchesDraft(publishJob,draftJob,draftArtifact){
+  if(!publishJob||publishJob.job_type!=='publish_version') return false
+  const payload=publishJob.payload||{}
+  const draftJobId=draftJob?.id||draftArtifact?.job_id||''
+  const draftCommit=draftArtifact?.commit_sha||draftJob?.commit_sha||''
+  const sourceJobIds=[payload.draft_job_id,payload.source_draft_job_id].filter(Boolean).map(String)
+  const sourceCommits=[payload.commit_sha,payload.source_commit_sha].filter(Boolean).map(String)
+  return Boolean((draftJobId&&sourceJobIds.includes(String(draftJobId)))||(draftCommit&&sourceCommits.includes(String(draftCommit))))
+}
+function latestPublishJobForDraft(draftJob,draftArtifact){
+  if(!draftJob&&!draftArtifact) return latestPublishJob()
+  return (detailState.jobs||[]).find(job=>job.job_type==='publish_version'&&publishMatchesDraft(job,draftJob,draftArtifact))||null
+}
+function latestSuccessfulPublishJobForDraft(draftJob,draftArtifact){
+  if(!draftJob&&!draftArtifact) return latestSuccessfulPublishJob()
+  return (detailState.jobs||[]).find(job=>job.job_type==='publish_version'&&job.status==='succeeded'&&publishMatchesDraft(job,draftJob,draftArtifact))||null
+}
 function hasActiveJobType(type){
   return (detailState.jobs||[]).some(job=>job.job_type===type&&isActiveJob(job))
 }
@@ -874,8 +891,8 @@ function workflowStatusPanel(activeStage=''){
   const successfulApply=latestSuccessfulApplyJob()
   const displayDraftJob=applyJob?.status==='succeeded'?applyJob:successfulApply
   const draftArtifact=displayDraftJob?artifactForJob(displayDraftJob):null
-  const publishJob=latestPublishJob()
-  const successfulPublish=latestSuccessfulPublishJob()
+  const publishJob=latestPublishJobForDraft(displayDraftJob,draftArtifact)
+  const successfulPublish=latestSuccessfulPublishJobForDraft(displayDraftJob,draftArtifact)
   const proposeStatus=proposeStatusSummary(proposeJob)
   const draftStatus=draftStatusSummary(applyJob)
   const publishStatus=publishJob?.status==='succeeded'
@@ -970,10 +987,10 @@ async function approveLatestDraft(){
 async function publishApprovedDraft(){
   const auth=currentAuth()
   if(hasActiveJobType('publish_version')){ notice('本番反映ジョブが処理中です。完了まで再実行できません。'); return }
-  const alreadyPublished=latestSuccessfulPublishJob()
-  if(alreadyPublished){ notice('このdraftは本番反映済みです。再反映は不要です。'); return }
   const job=latestApplyJob()?.status==='succeeded'?latestApplyJob():latestSuccessfulApplyJob()
   const artifact=artifactForJob(job)
+  const alreadyPublished=latestSuccessfulPublishJobForDraft(job,artifact)
+  if(alreadyPublished){ notice('このdraftは本番反映済みです。再反映は不要です。'); return }
   const version=versionForJob(job,artifact)
   const approved=Boolean(version?.change_summary&&String(version.change_summary).startsWith('[承認済みdraft]'))
   if(!job||job.status!=='succeeded'||!artifact){ notice('本番反映できるdraftがありません。'); return }
@@ -1906,10 +1923,10 @@ function enhancedExecution(){
   const executionRecommendations=Array.isArray(recommendationSourceJob?.payload?.override_recommendations)&&recommendationSourceJob.payload.override_recommendations.length?analysisListItems(recommendationSourceJob.payload.override_recommendations):recommendations
   const sourceAnalysisId=recommendationSourceJob?.payload?.ai_analysis_result_id||analysis?.id||''
   const approved=Boolean(draftVersion?.change_summary&&String(draftVersion.change_summary).startsWith('[承認済みdraft]'))
-  const latestPublish=latestPublishJob()
+  const latestPublish=latestPublishJobForDraft(displayDraftJob,draftArtifact)
   const activeApply=hasActiveJobType('apply_to_draft')
-  const activePublish=hasActiveJobType('publish_version')
-  const productionPublished=Boolean(latestSuccessfulPublishJob())
+  const activePublish=Boolean(latestPublish&&isActiveJob(latestPublish))||hasActiveJobType('publish_version')
+  const productionPublished=Boolean(latestSuccessfulPublishJobForDraft(displayDraftJob,draftArtifact))
   const productionStatusLabel=productionPublished?'本番反映済み':activePublish?'本番反映中':approved?'承認済み / 未反映':'未反映'
   const publishButtonLabel=productionPublished?'本番反映済み':activePublish?'本番反映中':'本番へ反映'
   const revisionButtonLabel=activeApply?'draft生成中':activePublish?'本番反映中':'修正指示でdraftを再生成'
