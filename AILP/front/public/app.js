@@ -1527,6 +1527,10 @@ function proposalDraftRecommendations(route='all'){
       review_note:item.review_note||'管理画面で確認・編集したAI提案をdraft生成に使用',
     }))
 }
+function draftVersionStamp(prefix='ui'){
+  const now=new Date()
+  return `${prefix}-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`
+}
 async function startDraftFromSavedProposals(route='macro'){
   saveAllProposalDrafts()
   const analysis=latestAnalysisResult()
@@ -1539,13 +1543,11 @@ async function startDraftFromSavedProposals(route='macro'){
     notice('この分類でdraft生成できるAI提案がありません。')
     return
   }
-  const now=new Date()
-  const stamp=`ui-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`
   const job=await enqueueLpJob('apply_to_draft',{
     push:true,
     publish_preview_folder:true,
     html_executor:'codex',
-    version_slug:stamp,
+    version_slug:draftVersionStamp('ui'),
     ai_analysis_result_id:analysis.id,
     draft_source:'ai_analysis_recommendations',
     route,
@@ -1553,6 +1555,34 @@ async function startDraftFromSavedProposals(route='macro'){
   })
   if(job){
     notice('AI提案からdraft生成ジョブを投入しました。')
+    go('execution')
+  }
+}
+async function submitDraftRevisionInstruction(){
+  const input=document.querySelector('[data-draft-revision-instruction]')
+  const instruction=(input?.value||'').trim()
+  if(!instruction){ notice('修正内容を入力してください。'); return }
+  const analysis=latestAnalysisResult()
+  const latest=latestApplyJob()
+  if(!analysis){ notice('元になるAI提案がありません。先にAI提案を作成してください。'); return }
+  const recommendations=proposalDraftRecommendations('all')
+  const job=await enqueueLpJob('apply_to_draft',{
+    push:true,
+    publish_preview_folder:true,
+    html_executor:'codex',
+    version_slug:draftVersionStamp('revise'),
+    ai_analysis_result_id:analysis.id,
+    draft_source:'manual_revision_instruction',
+    route:'manual_revision',
+    source_draft_job_id:latest?.id||null,
+    source_draft_commit_sha:latest?.commit_sha||artifactForJob(latest)?.commit_sha||null,
+    manual_instruction:instruction,
+    override_recommendations:recommendations,
+  })
+  if(job){
+    if(input) input.value=''
+    notice('修正指示をdraft再生成ジョブとして投入しました。ステータスで進行状況を確認できます。')
+    await loadDetailData(true)
     go('execution')
   }
 }
@@ -1739,7 +1769,7 @@ function enhancedExecution(){
   const previewBody=draftUrl
     ? `<div class="summary-preview execution-preview-live"><iframe class="summary-preview-frame" src="${escapeHtml(draftUrl)}" title="draft preview" loading="lazy"></iframe></div>`
     : `<div class="ga4-empty">preview URLがまだありません。draft生成が完了するとここに表示されます。</div>`
-  return enhancedDetailContext('execution')+`${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="heading-row"><div><div class="eyebrow">IMPLEMENTATION</div><h1>修正実行</h1><p class="page-sub">改善案をdraftへ反映したあと、プレビューを確認して本番反映するか、修正内容を指示します。</p></div><div class="ga4-actions"><button class="secondary" data-action="detail-refresh">状態を更新</button></div></div><div class="dashboard-grid"><section class="panel section-card"><h2>draft生成ステータス</h2><div class="ga4-field-list"><span>状態 <b>${statusBadge(status.label,status.tone)}</b></span><span>詳細 <b>${escapeHtml(status.detail)}</b></span><span>最新job <b>${latestApply?escapeHtml(latestApply.id.slice(0,8)):'--'}</b></span><span>作成 <b>${escapeHtml(formatDisplayDate(latestApply?.created_at))}</b></span><span>AIコスト <b>${escapeHtml(costLabel(usage))}</b></span></div>${latestApply?.status==='failed'?`<div class="ga4-empty">失敗理由：${escapeHtml(latestApply.error_message||'不明')}</div>`:''}${jobProgressHtml(latestApply)}</section><section class="panel section-card"><h2>次の操作</h2><div class="ga4-field-list compact"><span>preview URL <b>${draftUrl?`<a href="${escapeHtml(draftUrl)}" target="_blank" rel="noopener">別タブで開く</a>`:'未発行'}</b></span><span>GitHub branch <b>${githubUrl?`<a href="${escapeHtml(githubUrl)}" target="_blank" rel="noopener">開く</a>`:'未作成'}</b></span><span>commit <b>${escapeHtml(draftArtifact?.commit_sha||latestApply?.commit_sha||'--')}</b></span><span>本番反映 <b>${approved?'承認済み':'未反映'}</b></span></div><div class="ga4-actions stack"><button class="primary" data-action="publish-approved-draft" ${canPublish?'':'disabled'}>本番へ反映</button><button class="secondary" data-action="revise-draft-instructions">修正内容を指示</button></div><p class="page-sub">プレビューで問題なければ本番へ反映します。直したい場合は改善提案画面に戻って文言を調整します。</p></section><section class="panel section-card"><h2>反映された改善内容</h2>${edits.length?`<ul class="mini-list">${edits.map(item=>`<li><span>${escapeHtml(item.target_area||item.type||'edit')}<br><small>${escapeHtml(item.type||'')}</small></span><b>${escapeHtml(item.title||item.label||item.after||'変更内容未記録')}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">まだ反映ログがありません。</div>`}</section></div><section class="panel section-card"><div class="summary-preview-head"><div><span>DRAFT PREVIEW</span><h2>プレビュー表示</h2></div>${draftUrl?`<a href="${escapeHtml(draftUrl)}" target="_blank" rel="noopener">別タブで開く ↗</a>`:''}</div>${previewBody}</section><section class="panel section-card"><h2>draftへ渡した修正対象</h2>${sourceAnalysisId?`<div class="version-commit"><small>AI分析: ${escapeHtml(String(sourceAnalysisId).slice(0,8))}</small></div>`:''}${executionRecommendations.length?`<ul class="mini-list">${executionRecommendations.map(item=>`<li><span>${escapeHtml(item.title)}</span><b>${escapeHtml(item.body||item.detail||item.expected_effect||'')}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">先に「改善点の洗い出し」から「現LP改善へ進める」を実行してください。</div>`}</section><section class="panel table-panel"><div class="heading-row"><div><h2>VPSジョブ</h2><p class="page-sub">処理中、成功、失敗理由、commitを確認できます。</p></div></div>${jobs.length?`<table><thead><tr><th>種別</th><th>状態</th><th>結果 / 失敗理由</th><th>Preview</th><th>作成</th></tr></thead><tbody>${jobs.slice(0,10).map(job=>`<tr><td><div class="lp-name">${escapeHtml(job.job_type)}</div></td><td>${statusBadge(jobStatusLabel(job.status),jobStatusTone(job.status))}</td><td>${escapeHtml(job.result_summary||job.error_message||'処理待ち')}</td><td>${job.preview_url?`<a href="${escapeHtml(job.preview_url)}" target="_blank" rel="noopener">開く</a>`:'--'}<div class="ga4-field-list compact"><span>${escapeHtml(job.git_branch||'--')}</span><span>${escapeHtml(job.commit_sha||'--')}</span></div></td><td>${escapeHtml(formatDisplayDate(job.created_at))}</td></tr>`).join('')}</tbody></table>`:`<div class="ga4-empty">VPSジョブはまだありません。</div>`}</section>`
+  return enhancedDetailContext('execution')+`${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="heading-row"><div><div class="eyebrow">IMPLEMENTATION</div><h1>修正実行</h1><p class="page-sub">改善案をdraftへ反映したあと、プレビューを確認して本番反映するか、修正内容を指示します。</p></div><div class="ga4-actions"><button class="secondary" data-action="detail-refresh">状態を更新</button></div></div><div class="dashboard-grid"><section class="panel section-card"><h2>draft生成ステータス</h2><div class="ga4-field-list"><span>状態 <b>${statusBadge(status.label,status.tone)}</b></span><span>詳細 <b>${escapeHtml(status.detail)}</b></span><span>最新job <b>${latestApply?escapeHtml(latestApply.id.slice(0,8)):'--'}</b></span><span>作成 <b>${escapeHtml(formatDisplayDate(latestApply?.created_at))}</b></span><span>AIコスト <b>${escapeHtml(costLabel(usage))}</b></span></div>${latestApply?.status==='failed'?`<div class="ga4-empty">失敗理由：${escapeHtml(latestApply.error_message||'不明')}</div>`:''}${jobProgressHtml(latestApply)}</section><section class="panel section-card"><h2>次の操作</h2><div class="ga4-field-list compact"><span>preview URL <b>${draftUrl?`<a href="${escapeHtml(draftUrl)}" target="_blank" rel="noopener">別タブで開く</a>`:'未発行'}</b></span><span>GitHub branch <b>${githubUrl?`<a href="${escapeHtml(githubUrl)}" target="_blank" rel="noopener">開く</a>`:'未作成'}</b></span><span>commit <b>${escapeHtml(draftArtifact?.commit_sha||latestApply?.commit_sha||'--')}</b></span><span>本番反映 <b>${approved?'承認済み':'未反映'}</b></span></div><div class="ga4-actions stack"><button class="primary" data-action="publish-approved-draft" ${canPublish?'':'disabled'}>本番へ反映</button></div><label class="proposal-editor"><span>修正内容を指示</span><textarea data-draft-revision-instruction placeholder="例：ヒーロー見出しを強くしすぎず、40代向けの安心感を前に出す。LINE CTAの前にHot Pepper予約との違いを短く説明する。"></textarea></label><button class="secondary" data-action="submit-draft-revision">修正指示でdraftを再生成</button><p class="page-sub">プレビューで問題なければ本番へ反映します。直したい場合はこの欄に指示を書き、API経由でdraft再生成ジョブを投入します。</p></section><section class="panel section-card"><h2>反映された改善内容</h2>${edits.length?`<ul class="mini-list">${edits.map(item=>`<li><span>${escapeHtml(item.target_area||item.type||'edit')}<br><small>${escapeHtml(item.type||'')}</small></span><b>${escapeHtml(item.title||item.label||item.after||'変更内容未記録')}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">まだ反映ログがありません。</div>`}</section></div><section class="panel section-card"><div class="summary-preview-head"><div><span>DRAFT PREVIEW</span><h2>プレビュー表示</h2></div>${draftUrl?`<a href="${escapeHtml(draftUrl)}" target="_blank" rel="noopener">別タブで開く ↗</a>`:''}</div>${previewBody}</section><section class="panel section-card"><h2>draftへ渡した修正対象</h2>${sourceAnalysisId?`<div class="version-commit"><small>AI分析: ${escapeHtml(String(sourceAnalysisId).slice(0,8))}</small></div>`:''}${executionRecommendations.length?`<ul class="mini-list">${executionRecommendations.map(item=>`<li><span>${escapeHtml(item.title)}</span><b>${escapeHtml(item.body||item.detail||item.expected_effect||'')}</b></li>`).join('')}</ul>`:`<div class="ga4-empty">先に「改善点の洗い出し」から「現LP改善へ進める」を実行してください。</div>`}</section><section class="panel table-panel"><div class="heading-row"><div><h2>VPSジョブ</h2><p class="page-sub">処理中、成功、失敗理由、commitを確認できます。</p></div></div>${jobs.length?`<table><thead><tr><th>種別</th><th>状態</th><th>結果 / 失敗理由</th><th>Preview</th><th>作成</th></tr></thead><tbody>${jobs.slice(0,10).map(job=>`<tr><td><div class="lp-name">${escapeHtml(job.job_type)}</div></td><td>${statusBadge(jobStatusLabel(job.status),jobStatusTone(job.status))}</td><td>${escapeHtml(job.result_summary||job.error_message||'処理待ち')}</td><td>${job.preview_url?`<a href="${escapeHtml(job.preview_url)}" target="_blank" rel="noopener">開く</a>`:'--'}<div class="ga4-field-list compact"><span>${escapeHtml(job.git_branch||'--')}</span><span>${escapeHtml(job.commit_sha||'--')}</span></div></td><td>${escapeHtml(formatDisplayDate(job.created_at))}</td></tr>`).join('')}</tbody></table>`:`<div class="ga4-empty">VPSジョブはまだありません。</div>`}</section>`
 }
 function enhancedButtons(){
   document.querySelectorAll('[data-action]').forEach(button=>{
@@ -1775,7 +1805,7 @@ function enhancedButtons(){
       else if(action==='draft-from-proposal'){ startDraftFromSavedProposals(button.dataset.route||'macro') }
       else if(action==='approve-draft'){ approveLatestDraft() }
       else if(action==='publish-approved-draft'){ publishApprovedDraft() }
-      else if(action==='revise-draft-instructions'){ go('proposals') }
+      else if(action==='submit-draft-revision'){ submitDraftRevisionInstruction() }
       else if(action==='preview-version'){
         selectedVersionPreview={
           url:button.dataset.previewUrl,

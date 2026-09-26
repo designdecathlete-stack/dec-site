@@ -1330,13 +1330,45 @@ export async function runJob({ config, supabase, job }) {
     const overrideRecommendations = Array.isArray(job.payload?.override_recommendations)
       ? job.payload.override_recommendations
       : null
-    const draftAnalysis = overrideRecommendations
+    const manualInstruction = String(job.payload?.manual_instruction || '').trim()
+    const baseRecommendations = overrideRecommendations || (Array.isArray(analysis.recommendations) ? analysis.recommendations : [])
+    const draftRecommendations = manualInstruction
+      ? [
+          ...baseRecommendations,
+          {
+            title: '管理者からの追加修正指示',
+            body: manualInstruction,
+            evidence: ['draft preview確認後の手動修正指示'],
+            hypothesis: manualInstruction,
+            priority: 'high',
+            route: 'manual_revision',
+            target_area: 'manual_revision',
+            target_selector_or_text: '',
+            expected_effect: 'preview確認後の違和感を修正し、公開前の精度を上げる',
+            implementation_scope: 'small',
+            approved_for_draft: true,
+            review_note: '管理画面の修正指示として追加',
+          },
+        ]
+      : baseRecommendations
+    const draftAnalysis = (overrideRecommendations || manualInstruction)
       ? {
           ...analysis,
-          recommendations: overrideRecommendations,
-          summary: `${analysis.summary || 'AI analysis'} / 管理画面で保存された改善案をdraftに反映`,
+          recommendations: draftRecommendations,
+          summary: manualInstruction
+            ? `${analysis.summary || 'AI analysis'} / 手動修正指示を反映: ${manualInstruction.slice(0, 120)}`
+            : `${analysis.summary || 'AI analysis'} / 管理画面で保存された改善案をdraftに反映`,
         }
       : analysis
+    if (manualInstruction) {
+      await writeJobStep(supabase, job.id, 'draft_manual_instruction_ready', {
+        summary: 'Manual revision instruction is ready for draft regeneration',
+        lp_project_id: job.lp_project_id,
+        manual_instruction: manualInstruction,
+        source_draft_job_id: job.payload?.source_draft_job_id || null,
+        source_draft_commit_sha: job.payload?.source_draft_commit_sha || null,
+      })
+    }
 
     const versionSlug = job.payload?.version_slug || `draft-${job.id.slice(0, 8)}`
     const branchName = `ailp/${context.overview.folder_path}/${versionSlug}`.replace(/[^A-Za-z0-9/_-]/g, '-')
@@ -1435,9 +1467,9 @@ export async function runJob({ config, supabase, job }) {
         lp_project_id: job.lp_project_id,
         model: planResponse.model,
         action_type: job.job_type,
-        prompt_summary: 'Latest LP-scoped AI analysis was converted into a draft-only LP update plan.',
+        prompt_summary: manualInstruction ? 'Manual draft revision instruction was converted into a draft-only LP update plan.' : 'Latest LP-scoped AI analysis was converted into a draft-only LP update plan.',
         response_summary: planResponse.parsed?.headline || analysis.summary,
-        input_refs: [{ table: 'ai_analysis_results', id: analysis.id, draft_source: job.payload?.draft_source || 'latest_ai_analysis' }],
+        input_refs: [{ table: 'ai_analysis_results', id: analysis.id, draft_source: job.payload?.draft_source || 'latest_ai_analysis', manual_instruction: manualInstruction || null }],
         output_refs: [{ git_branch: draft.branchName, commit_sha: draft.commitSha, file_path: draft.previewPath }],
         input_tokens: cost.inputTokens,
         output_tokens: cost.outputTokens,
@@ -1507,6 +1539,9 @@ export async function runJob({ config, supabase, job }) {
         direct_html_edit_enabled: true,
         draft_source: job.payload?.draft_source || 'latest_ai_analysis',
         route: job.payload?.route || null,
+        manual_instruction: manualInstruction || null,
+        source_draft_job_id: job.payload?.source_draft_job_id || null,
+        source_draft_commit_sha: job.payload?.source_draft_commit_sha || null,
         preview_folder_published_to_main: Boolean(mainPreviewPublish?.published),
         preview_folder_main_commit_sha: mainPreviewPublish?.commitSha || null,
       },
@@ -1514,7 +1549,7 @@ export async function runJob({ config, supabase, job }) {
     if (artifactError) throw new Error(artifactError.message)
 
     const { error: jobUpdateError } = await supabase.from('lp_jobs').update({
-      result_summary: `Draft ${draft.previewPath} updated from AI proposal. Production folder and main were not changed.${pushed ? ' Branch was pushed.' : ' Branch was not pushed.'}`,
+      result_summary: `Draft ${draft.previewPath} updated from ${manualInstruction ? 'manual revision instruction' : 'AI proposal'}. Production folder and main were not changed.${pushed ? ' Branch was pushed.' : ' Branch was not pushed.'}`,
       git_branch: draft.branchName,
       commit_sha: draft.commitSha,
       preview_url: draft.previewUrl,
