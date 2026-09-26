@@ -423,7 +423,7 @@ export async function createLpVariantFolder({ config, workspace, sourceFolderPat
 }
 
 export async function pushBranch({ config, workspace, branchName }) {
-  await git(['push', '--force-with-lease', repoUrl(config), `HEAD:${branchName}`], {
+  await git(['push', '--force', repoUrl(config), `HEAD:${branchName}`], {
     cwd: workspace.repo,
     config,
     timeoutMs: 120000,
