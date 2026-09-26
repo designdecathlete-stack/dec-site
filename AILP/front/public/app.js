@@ -757,7 +757,7 @@ function jobProgressLabel(step){
 function jobProgressHtml(job){
   const steps=stepsForJob(job).slice(-8)
   if(!steps.length) return ''
-  return `<div class="job-progress"><div class="version-history-heading"><div><span>PROCESS</span><h3>途中経過</h3></div><small>最終更新 ${escapeHtml(formatDisplayDate(steps[steps.length-1]?.created_at))}</small></div><ol>${steps.map(step=>`<li><span>${statusBadge(step.status||'done',(step.status==='failed'||step.status==='error')?'error':step.status==='running'?'warn':'ok')}</span><b>${escapeHtml(jobProgressLabel(step))}</b><small>${escapeHtml(formatDisplayDate(step.created_at))}</small></li>`).join('')}</ol></div>`
+  return `<div class="job-progress"><div class="version-history-heading"><div><span>PROCESS</span><h3>途中経過</h3></div><small>最終更新 ${escapeHtml(formatDisplayDate(steps[steps.length-1]?.created_at))}</small></div><ol>${steps.map((step,index)=>{const isLatest=index===steps.length-1;const effectiveStatus=step.status==='running'&&(!isLatest||!isActiveJob(job))?'succeeded':step.status;return `<li><span>${statusBadge(effectiveStatus||'done',(effectiveStatus==='failed'||effectiveStatus==='error')?'error':effectiveStatus==='running'?'warn':'ok')}</span><b>${escapeHtml(jobProgressLabel(step))}</b><small>${escapeHtml(formatDisplayDate(step.created_at))}</small></li>`}).join('')}</ol></div>`
 }
 function versionForJob(job,artifact){
   const commit=artifact?.commit_sha||job?.commit_sha
