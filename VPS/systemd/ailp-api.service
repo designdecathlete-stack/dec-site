@@ -7,6 +7,7 @@ Wants=network-online.target
 Type=simple
 WorkingDirectory=/srv/ailp/worker
 EnvironmentFile=/srv/ailp/worker/.env
+Environment=VPS_API_PORT=18787
 ExecStart=/usr/bin/node src/api/server.js
 Restart=always
 RestartSec=5
