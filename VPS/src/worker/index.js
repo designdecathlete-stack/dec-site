@@ -22,15 +22,33 @@ async function recoverStaleRunningJobs(supabase, staleMinutes) {
 }
 
 async function claimJobs(supabase, limit) {
-  const { data, error } = await supabase
+  const { data: candidates, error } = await supabase
     .from('lp_jobs')
     .select('*')
     .eq('status', 'queued')
     .order('created_at', { ascending: true })
-    .limit(limit)
+    .limit(limit * 3)
 
   if (error) throw new Error(error.message)
-  return data ?? []
+  const claimed = []
+  for (const job of candidates ?? []) {
+    if (claimed.length >= limit) break
+    const { data, error: claimError } = await supabase
+      .from('lp_jobs')
+      .update({
+        status: 'running',
+        error_message: null,
+        started_at: new Date().toISOString(),
+        finished_at: null,
+      })
+      .eq('id', job.id)
+      .eq('status', 'queued')
+      .select('*')
+      .maybeSingle()
+    if (claimError) throw new Error(claimError.message)
+    if (data) claimed.push(data)
+  }
+  return claimed
 }
 
 async function tick(config, supabase) {
