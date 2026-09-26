@@ -667,7 +667,12 @@ async function enqueueLpJob(jobType,payload={}){
   const selectedRow=getSelectedDashboardRow()
   if(!auth.supabase||!selectedRow?.lp_project_id){notice('LPが選択されていません。');return}
   try{
-    const vpsJob=await enqueueLpJobViaVps(jobType,payload,selectedRow.lp_project_id)
+    let vpsJob=null
+    try{
+      vpsJob=await enqueueLpJobViaVps(jobType,payload,selectedRow.lp_project_id)
+    }catch(vpsError){
+      console.warn('VPS API job enqueue failed; falling back to Supabase queue',vpsError)
+    }
     if(vpsJob){
       notice(`VPS APIへジョブを投入しました: ${jobType}`)
       await loadDetailData(true)
