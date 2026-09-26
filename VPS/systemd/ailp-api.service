@@ -1,0 +1,17 @@
+[Unit]
+Description=AILP VPS HTTPS API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/ailp/worker
+EnvironmentFile=/srv/ailp/worker/.env
+ExecStart=/usr/bin/node src/api/server.js
+Restart=always
+RestartSec=5
+StandardOutput=append:/srv/ailp/worker/api.log
+StandardError=append:/srv/ailp/worker/api.log
+
+[Install]
+WantedBy=default.target

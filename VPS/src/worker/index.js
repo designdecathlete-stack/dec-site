@@ -1,7 +1,7 @@
 import { setTimeout as wait } from 'node:timers/promises'
 import { loadConfig } from '../config.js'
 import { createSupabase } from './supabase.js'
-import { runJob } from './job-runner.js'
+import { executeJob } from './job-executor.js'
 
 const once = process.argv.includes('--once')
 
@@ -33,45 +33,11 @@ async function claimJobs(supabase, limit) {
   return data ?? []
 }
 
-function withTimeout(promise, timeoutMs, label) {
-  let timeout
-  const timeoutPromise = new Promise((_, reject) => {
-    timeout = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs)
-  })
-  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeout))
-}
-
-async function setJobStatus(supabase, jobId, status, errorMessage = null) {
-  const patch = {
-    status,
-    error_message: errorMessage,
-    finished_at: ['succeeded', 'failed'].includes(status) ? new Date().toISOString() : null,
-  }
-  if (status === 'running') {
-    patch.started_at = new Date().toISOString()
-    patch.finished_at = null
-  }
-
-  const { error } = await supabase.from('lp_jobs').update(patch).eq('id', jobId)
-  if (error) throw new Error(error.message)
-}
-
 async function tick(config, supabase) {
   await recoverStaleRunningJobs(supabase, config.staleRunningJobMinutes)
   const jobs = await claimJobs(supabase, config.maxJobsPerTick)
   for (const job of jobs) {
-    try {
-      await setJobStatus(supabase, job.id, 'running')
-      await withTimeout(runJob({ config, supabase, job }), config.jobTimeoutMs, `Job ${job.id}`)
-      await setJobStatus(supabase, job.id, 'succeeded')
-    } catch (error) {
-      await setJobStatus(
-        supabase,
-        job.id,
-        'failed',
-        error instanceof Error ? error.message : 'Unknown worker error'
-      )
-    }
+    await executeJob({ config, supabase, job })
   }
 }
 
@@ -91,4 +57,3 @@ main().catch((error) => {
   console.error(error)
   process.exitCode = 1
 })
-

@@ -621,11 +621,45 @@ async function runLpAnalysis(){
   }
 }
 
+function vpsApiConfig(){
+  const url=String(window.AILP_VPS_API_URL||'').replace(/\/$/,'')
+  const token=String(window.AILP_VPS_API_TOKEN||'')
+  return {url,token}
+}
+
+function vpsEndpointForJob(jobType){
+  if(jobType==='propose_improvements') return '/api/jobs/propose'
+  if(jobType==='apply_to_draft') return '/api/jobs/apply-draft'
+  return ''
+}
+
+async function enqueueLpJobViaVps(jobType,payload,lpProjectId){
+  const config=vpsApiConfig()
+  const endpoint=vpsEndpointForJob(jobType)
+  if(!config.url||!endpoint) return null
+  const headers={'content-type':'application/json'}
+  if(config.token) headers['x-ailp-vps-token']=config.token
+  const response=await fetch(`${config.url}${endpoint}`,{
+    method:'POST',
+    headers,
+    body:JSON.stringify({lp_project_id:lpProjectId,payload})
+  })
+  const body=await response.json().catch(()=>({}))
+  if(!response.ok||body.ok===false) throw new Error(body.error||body.message||`VPS API error: ${response.status}`)
+  return {id:body.job_id,status:body.status||'running',source:'vps-api'}
+}
+
 async function enqueueLpJob(jobType,payload={}){
   const auth=currentAuth()
   const selectedRow=getSelectedDashboardRow()
   if(!auth.supabase||!selectedRow?.lp_project_id){notice('LPが選択されていません。');return}
   try{
+    const vpsJob=await enqueueLpJobViaVps(jobType,payload,selectedRow.lp_project_id)
+    if(vpsJob){
+      notice(`VPS APIへジョブを投入しました: ${jobType}`)
+      await loadDetailData(true)
+      return vpsJob
+    }
     const {data,error}=await auth.supabase.from('lp_jobs').insert({
       lp_project_id:selectedRow.lp_project_id,
       job_type:jobType,
