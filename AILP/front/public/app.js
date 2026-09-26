@@ -793,10 +793,44 @@ function jobProgressLabel(step){
   }
   return labels[step?.step]||step?.summary||step?.step||'処理中'
 }
+function jobElapsedSeconds(job){
+  const base=job?.updated_at||job?.created_at
+  if(!base) return 0
+  const started=new Date(job.created_at||base).getTime()
+  if(!Number.isFinite(started)) return 0
+  const end=isActiveJob(job)?Date.now():new Date(job.updated_at||job.finished_at||base).getTime()
+  return Math.max(0,Math.round((end-started)/1000))
+}
+function activeJobPhaseSteps(job){
+  if(!job) return []
+  const elapsed=jobElapsedSeconds(job)
+  const type=job.job_type
+  const isQueued=job.status==='queued'
+  const currentIndex=isQueued?0:elapsed<10?1:elapsed<25?2:elapsed<45?3:4
+  const templates=type==='propose_improvements'
+    ? ['VPS/APIがjobを拾う準備中','GA4・HTML/CSS・ノウハウmdを読み込み中','Codexで改善案を整理中','提案をSupabaseへ保存中','画面反映を確認中']
+    : type==='apply_to_draft'
+      ? ['VPS/APIがjobを拾う準備中','改善案と現在HTML/CSSを読み込み中','CodexでHTMLを自然に書き換え中','previewフォルダとGit branchを作成中','preview URLと履歴を保存中']
+      : type==='publish_version'
+        ? ['VPS/APIがjobを拾う準備中','承認済みdraftを確認中','main用ファイルへ反映中','Git commit / push 実行中','本番URLと履歴を保存中']
+        : ['VPS/APIがjobを拾う準備中','LP情報を読み込み中','処理を実行中','結果を保存中','画面反映を確認中']
+  return templates.map((label,index)=>({
+    step:`phase_${index+1}`,
+    summary:label,
+    status:index<currentIndex?'succeeded':index===currentIndex?'running':'queued',
+    created_at:job.updated_at||job.created_at,
+    estimated:true,
+  }))
+}
 function jobProgressHtml(job){
-  const steps=stepsForJob(job).slice(-8)
+  if(!job) return ''
+  const recorded=stepsForJob(job).slice(-8)
+  const steps=recorded.length?recorded:(isActiveJob(job)?activeJobPhaseSteps(job):[])
   if(!steps.length) return ''
-  return `<div class="job-progress"><div class="version-history-heading"><div><span>PROCESS</span><h3>途中経過</h3></div><small>最終更新 ${escapeHtml(formatDisplayDate(steps[steps.length-1]?.created_at))}</small></div><ol>${steps.map((step,index)=>{const isLatest=index===steps.length-1;const effectiveStatus=step.status==='running'&&(!isLatest||!isActiveJob(job))?'succeeded':step.status;return `<li><span>${statusBadge(effectiveStatus||'done',(effectiveStatus==='failed'||effectiveStatus==='error')?'error':effectiveStatus==='running'?'warn':'ok')}</span><b>${escapeHtml(jobProgressLabel(step))}</b><small>${escapeHtml(formatDisplayDate(step.created_at))}</small></li>`}).join('')}</ol></div>`
+  const elapsed=jobElapsedSeconds(job)
+  const latestStep=steps[steps.length-1]
+  const isEstimated=!recorded.length
+  return `<div class="job-progress ${isEstimated?'estimated':''}"><div class="version-history-heading"><div><span>PROCESS</span><h3>途中経過</h3></div><small>${isActiveJob(job)?`自動更新中 / 経過 ${elapsed}秒`:`最終更新 ${escapeHtml(formatDisplayDate(latestStep?.created_at))}`}</small></div>${isEstimated?'<p class="job-progress-note">workerから詳細stepが返るまで、状態と経過時間から現在の処理を表示しています。</p>':''}<ol>${steps.map((step,index)=>{const isLatest=index===steps.length-1;const effectiveStatus=step.status==='running'&&(!isLatest||!isActiveJob(job))?'succeeded':step.status;return `<li class="${effectiveStatus==='running'?'current':''}"><span>${statusBadge(effectiveStatus||'done',(effectiveStatus==='failed'||effectiveStatus==='error')?'error':effectiveStatus==='running'?'warn':effectiveStatus==='queued'?'warn':'ok')}</span><b>${escapeHtml(jobProgressLabel(step))}</b><small>${step.estimated?`${elapsed}秒経過`:escapeHtml(formatDisplayDate(step.created_at))}</small></li>`}).join('')}</ol></div>`
 }
 function versionForJob(job,artifact){
   const commit=artifact?.commit_sha||job?.commit_sha
@@ -900,10 +934,10 @@ function syncDetailAutoRefresh(){
   if(detailAutoRefreshTimer) return
   detailAutoRefreshTimer=setInterval(()=>{
     const now=Date.now()
-    if(detailState.loading||now-detailAutoRefreshLastAt<4500) return
+    if(detailState.loading||now-detailAutoRefreshLastAt<2500) return
     detailAutoRefreshLastAt=now
     loadDetailData(true)
-  },5000)
+  },3000)
 }
 function appliedEditsList(artifact){
   const edits=artifact?.metadata?.applied_edits
