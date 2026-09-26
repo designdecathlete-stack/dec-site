@@ -285,6 +285,7 @@ async function git(args, options = {}) {
     const result = await execFileAsync('git', args, {
       cwd: options.cwd,
       maxBuffer: 10 * 1024 * 1024,
+      timeout: options.timeoutMs || 120000,
     })
     return result.stdout.trim()
   } catch (error) {
@@ -422,9 +423,10 @@ export async function createLpVariantFolder({ config, workspace, sourceFolderPat
 }
 
 export async function pushBranch({ config, workspace, branchName }) {
-  await git(['push', repoUrl(config), `HEAD:${branchName}`], {
+  await git(['push', '--force-with-lease', repoUrl(config), `HEAD:${branchName}`], {
     cwd: workspace.repo,
     config,
+    timeoutMs: 120000,
   })
 }
 
@@ -436,11 +438,11 @@ export async function publishPreviewFolderToMain({ config, branchName, previewPa
 
   const tempRoot = await mkdtemp(join(tmpdir(), 'ailp-preview-main-'))
   try {
-    await git(['clone', repoUrl(config), tempRoot], { config })
+    await git(['clone', repoUrl(config), tempRoot], { config, timeoutMs: 120000 })
     await git(['config', 'user.name', config.gitAuthorName], { cwd: tempRoot, config })
     await git(['config', 'user.email', config.gitAuthorEmail], { cwd: tempRoot, config })
     await git(['fetch', 'origin', branchName], { cwd: tempRoot, config })
-    await git(['checkout', 'origin/main', '--', '.'], { cwd: tempRoot, config })
+    await git(['checkout', '-B', 'main', 'origin/main'], { cwd: tempRoot, config })
     await git(['checkout', 'FETCH_HEAD', '--', normalizedPreviewPath], { cwd: tempRoot, config })
     await git(['add', normalizedPreviewPath], { cwd: tempRoot, config })
     const diffSummary = await git(['diff', '--cached', '--stat'], { cwd: tempRoot, config })
@@ -450,7 +452,8 @@ export async function publishPreviewFolderToMain({ config, branchName, previewPa
     }
     await git(['commit', '-m', `Publish AILP preview ${normalizedPreviewPath}`], { cwd: tempRoot, config })
     const commitSha = await git(['rev-parse', 'HEAD'], { cwd: tempRoot, config })
-    await git(['push', repoUrl(config), 'HEAD:main'], { cwd: tempRoot, config })
+    await git(['pull', '--rebase', repoUrl(config), 'main'], { cwd: tempRoot, config, timeoutMs: 120000 })
+    await git(['push', repoUrl(config), 'HEAD:main'], { cwd: tempRoot, config, timeoutMs: 120000 })
     return { published: true, commitSha, diffSummary }
   } finally {
     await rm(tempRoot, { recursive: true, force: true })
