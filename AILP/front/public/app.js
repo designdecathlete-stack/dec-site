@@ -31,7 +31,7 @@ function currentAuth(){return window.AILP_AUTH_CONTEXT||{user:null,roles:[],isAd
 const dashboardState={loading:false,loaded:false,error:'',rows:[]}
 const ga4AdminState={loading:false,loaded:false,error:'',rows:[],busy:{},configs:{}}
 const apiLogState={loading:false,loaded:false,error:'',rows:[]}
-const detailState={loading:false,loadedFor:null,error:'',overview:null,metrics:[],analysisResults:[],versions:[],deployments:[],jobs:[],artifacts:[],usageLogs:[]}
+const detailState={loading:false,loadedFor:null,error:'',overview:null,metrics:[],analysisResults:[],versions:[],deployments:[],jobs:[],artifacts:[],usageLogs:[],jobSteps:[]}
 let detailAutoRefreshTimer=null
 let detailAutoRefreshLastAt=0
 const userSettingsState={loading:false,loaded:false,error:'',users:[],projects:[],memberships:[]}
@@ -596,6 +596,14 @@ async function loadDetailData(force=false){
     detailState.jobs=jobResult.data||[]
     detailState.artifacts=artifactResult.data||[]
     detailState.usageLogs=usageResult.data||[]
+    const jobIds=detailState.jobs.map(job=>job.id).filter(Boolean)
+    if(jobIds.length){
+      const stepResult=await auth.supabase.from('lp_job_steps').select('*').in('job_id',jobIds).order('created_at',{ascending:false}).limit(120)
+      if(stepResult.error) throw stepResult.error
+      detailState.jobSteps=stepResult.data||[]
+    }else{
+      detailState.jobSteps=[]
+    }
     detailState.loadedFor=lpProjectId
     setSelectedFromRow(detailState.overview)
   }catch(error){
@@ -720,6 +728,36 @@ function artifactForJob(job){
 function usageForJob(job){
   if(!job) return null
   return (detailState.usageLogs||[]).find(item=>item.job_id===job.id)||null
+}
+function stepsForJob(job){
+  if(!job) return []
+  return (detailState.jobSteps||[])
+    .filter(item=>item.job_id===job.id)
+    .sort((a,b)=>String(a.created_at||'').localeCompare(String(b.created_at||'')))
+}
+function jobProgressLabel(step){
+  const labels={
+    codex_context_load:'LPデータ・HTML/CSSを読み込み中',
+    codex_proposal_linked:'保存済みCodex提案を反映',
+    codex_task_ready:'Codex用タスク作成完了',
+    workspace_prepare:'作業領域を準備中',
+    workspace_ready:'作業領域の準備完了',
+    lp_context_load:'GA4・LP情報を読み込み中',
+    lp_context_ready:'GA4・LP情報の読み込み完了',
+    source_context_load:'現在HTML/CSSを読み込み中',
+    ai_proposal_start:'AI提案を作成中',
+    ai_proposal_attempt:'AI提案をリクエスト中',
+    ai_proposal_attempt_failed:'AI提案リクエストを再試行中',
+    ai_proposal_heuristic_fallback:'フォールバック提案を作成',
+    ai_proposal_saved:'AI提案を保存完了',
+    measurement_fallback:'計測不足向け提案を保存',
+  }
+  return labels[step?.step]||step?.summary||step?.step||'処理中'
+}
+function jobProgressHtml(job){
+  const steps=stepsForJob(job).slice(-8)
+  if(!steps.length) return ''
+  return `<div class="job-progress"><div class="version-history-heading"><div><span>PROCESS</span><h3>途中経過</h3></div><small>最終更新 ${escapeHtml(formatDisplayDate(steps[steps.length-1]?.created_at))}</small></div><ol>${steps.map(step=>`<li><span>${statusBadge(step.status||'done',(step.status==='failed'||step.status==='error')?'error':step.status==='running'?'warn':'ok')}</span><b>${escapeHtml(jobProgressLabel(step))}</b><small>${escapeHtml(formatDisplayDate(step.created_at))}</small></li>`).join('')}</ol></div>`
 }
 function versionForJob(job,artifact){
   const commit=artifact?.commit_sha||job?.commit_sha
@@ -1531,7 +1569,7 @@ function enhancedRoutedProposals(){
   const proposeStatus=proposeStatusSummary(proposeJob)
   const proposing=isActiveJob(proposeJob)
   const proposeLabel=proposing?'Codex用タスク作成中…':analysis?'Codex提案を再作成':'Codex提案を作成'
-  return enhancedDetailContext('proposals')+`<div class="improvement-page">${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="heading-row"><div><div class="eyebrow">IMPROVEMENT DISCOVERY</div><h1>改善点の洗い出し</h1><p class="page-sub">GA4実データ・現在のHTML/CSS・ノウハウmdをCodexに渡し、提案を作成してdraft生成へ渡します。</p></div><div class="ga4-actions"><button class="secondary" onclick="go('analysis')">GA,分析を確認</button><button class="secondary" data-action="detail-refresh">状態を更新</button><button class="primary" data-action="vps-propose" ${proposing?'disabled':''}>${proposeLabel}</button></div></div><section class="panel section-card"><h2>AI提案作成ステータス</h2><div class="ga4-field-list"><span>対象LP <b>${escapeHtml(row?.lp_name||selected.name)}</b></span><span>folder <b>${escapeHtml(row?.folder_path||'--')}</b></span><span>状態 <b>${statusBadge(proposeStatus.label,proposeStatus.tone)}</b></span><span>詳細 <b>${escapeHtml(proposeStatus.detail)}</b></span><span>最新job <b>${proposeJob?escapeHtml(proposeJob.id.slice(0,8)):'--'}</b></span><span>作成 <b>${escapeHtml(formatDisplayDate(proposeJob?.created_at))}</b></span></div>${proposeJob?.status==='failed'?`<div class="ga4-empty">失敗理由：${escapeHtml(proposeJob.error_message||'不明')}</div>`:''}</section>${!analysis?`<div class="panel ga4-empty">まだAI提案がありません。先に「AI提案を作成」を押してください。</div>`:''}${analysis?`<section class="improvement-summary"><div><span>今回の診断</span><h2>${escapeHtml(summaryTitle)}</h2><p>${escapeHtml(analysis.summary||'AI分析結果から改善案を作成しました。')}</p><small>提案作成: ${escapeHtml(created)} / GA4期間: ${escapeHtml(metricRange)} / model: ${escapeHtml(analysis.model||'heuristic')}</small></div><div><span>今回の目的</span><b>AI提案を<br>draftへ反映</b></div></section>`:''}<div class="route-guide"><div class="route-guide-card ${macroCount?'active':''}"><b>マクロ課題</b><span>別LPを新規制作</span><small>${macroCount}件 / 訴求・コンセプト・差別化・オファー</small></div><i>→</i><div class="route-guide-card ${microCount?'active':''}"><b>ミクロ課題</b><span>現LPを細かく改善</span><small>${microCount}件 / 構成・情報順・CTA・読みやすさ</small></div></div>${proposals.length?`<div class="improvement-proposals">${proposals.map((item,index)=>`<section class="improvement-proposal ${item.tone}" data-proposal-id="${escapeHtml(item.id)}"><div class="improvement-proposal-top"><span class="improvement-priority">${escapeHtml(item.priorityLabel)}</span><span>改善 ${String(index+1).padStart(2,'0')} / 編集可</span></div><span class="proposal-route ${item.route}">${item.route==='macro'?'マクロ：別LPを制作':'ミクロ：現LPを改善'}</span><label class="proposal-editor"><span>改善内容</span><textarea data-proposal-field="title">${escapeHtml(item.title)}</textarea></label><label class="proposal-editor"><span>数値・HTMLから見える事実</span><textarea data-proposal-field="evidence">${escapeHtml(item.evidence)}</textarea></label><label class="proposal-editor"><span>改善仮説</span><textarea data-proposal-field="hypothesis">${escapeHtml(item.hypothesis)}</textarea></label><div class="improvement-footer"><span>${escapeHtml(item.impact)}</span><div class="proposal-actions"><button class="secondary" data-action="save-proposal" data-proposal-id="${escapeHtml(item.id)}">保存</button>${item.route==='macro'?`<button class="primary" data-action="draft-from-proposal" data-route="macro">別LP制作へ進める</button>`:`<button class="primary" data-action="draft-from-proposal" data-route="micro">現LP改善へ進める</button>`}</div></div></section>`).join('')}</div>`:`<div class="panel ga4-empty">AI提案の recommendations がありません。AI提案を再生成してください。</div>`}</div>`
+  return enhancedDetailContext('proposals')+`<div class="improvement-page">${detailState.error?`<div class="ga4-empty">${escapeHtml(detailState.error)}</div>`:''}<div class="heading-row"><div><div class="eyebrow">IMPROVEMENT DISCOVERY</div><h1>改善点の洗い出し</h1><p class="page-sub">GA4実データ・現在のHTML/CSS・ノウハウmdをCodexに渡し、提案を作成してdraft生成へ渡します。</p></div><div class="ga4-actions"><button class="secondary" onclick="go('analysis')">GA,分析を確認</button><button class="secondary" data-action="detail-refresh">状態を更新</button><button class="primary" data-action="vps-propose" ${proposing?'disabled':''}>${proposeLabel}</button></div></div><section class="panel section-card"><h2>AI提案作成ステータス</h2><div class="ga4-field-list"><span>対象LP <b>${escapeHtml(row?.lp_name||selected.name)}</b></span><span>folder <b>${escapeHtml(row?.folder_path||'--')}</b></span><span>状態 <b>${statusBadge(proposeStatus.label,proposeStatus.tone)}</b></span><span>詳細 <b>${escapeHtml(proposeStatus.detail)}</b></span><span>最新job <b>${proposeJob?escapeHtml(proposeJob.id.slice(0,8)):'--'}</b></span><span>作成 <b>${escapeHtml(formatDisplayDate(proposeJob?.created_at))}</b></span></div>${proposeJob?.status==='failed'?`<div class="ga4-empty">失敗理由：${escapeHtml(proposeJob.error_message||'不明')}</div>`:''}${jobProgressHtml(proposeJob)}</section>${!analysis?`<div class="panel ga4-empty">まだAI提案がありません。先に「AI提案を作成」を押してください。</div>`:''}${analysis?`<section class="improvement-summary"><div><span>今回の診断</span><h2>${escapeHtml(summaryTitle)}</h2><p>${escapeHtml(analysis.summary||'AI分析結果から改善案を作成しました。')}</p><small>提案作成: ${escapeHtml(created)} / GA4期間: ${escapeHtml(metricRange)} / model: ${escapeHtml(analysis.model||'heuristic')}</small></div><div><span>今回の目的</span><b>AI提案を<br>draftへ反映</b></div></section>`:''}<div class="route-guide"><div class="route-guide-card ${macroCount?'active':''}"><b>マクロ課題</b><span>別LPを新規制作</span><small>${macroCount}件 / 訴求・コンセプト・差別化・オファー</small></div><i>→</i><div class="route-guide-card ${microCount?'active':''}"><b>ミクロ課題</b><span>現LPを細かく改善</span><small>${microCount}件 / 構成・情報順・CTA・読みやすさ</small></div></div>${proposals.length?`<div class="improvement-proposals">${proposals.map((item,index)=>`<section class="improvement-proposal ${item.tone}" data-proposal-id="${escapeHtml(item.id)}"><div class="improvement-proposal-top"><span class="improvement-priority">${escapeHtml(item.priorityLabel)}</span><span>改善 ${String(index+1).padStart(2,'0')} / 編集可</span></div><span class="proposal-route ${item.route}">${item.route==='macro'?'マクロ：別LPを制作':'ミクロ：現LPを改善'}</span><label class="proposal-editor"><span>改善内容</span><textarea data-proposal-field="title">${escapeHtml(item.title)}</textarea></label><label class="proposal-editor"><span>数値・HTMLから見える事実</span><textarea data-proposal-field="evidence">${escapeHtml(item.evidence)}</textarea></label><label class="proposal-editor"><span>改善仮説</span><textarea data-proposal-field="hypothesis">${escapeHtml(item.hypothesis)}</textarea></label><div class="improvement-footer"><span>${escapeHtml(item.impact)}</span><div class="proposal-actions"><button class="secondary" data-action="save-proposal" data-proposal-id="${escapeHtml(item.id)}">保存</button>${item.route==='macro'?`<button class="primary" data-action="draft-from-proposal" data-route="macro">別LP制作へ進める</button>`:`<button class="primary" data-action="draft-from-proposal" data-route="micro">現LP改善へ進める</button>`}</div></div></section>`).join('')}</div>`:`<div class="panel ga4-empty">AI提案の recommendations がありません。AI提案を再生成してください。</div>`}</div>`
 }
 
 function enhancedVersionHistory(){
