@@ -630,14 +630,15 @@ async function runLpAnalysis(){
 }
 
 function vpsApiConfig(){
-  const url=String(window.AILP_VPS_API_URL||'').replace(/\/$/,'')
+  const url=String(window.AILP_VPS_API_URL||'/.netlify/functions/ailp-job').replace(/\/$/,'')
   const token=String(window.AILP_VPS_API_TOKEN||'')
-  return {url,token}
+  return {url,token,usesProxy:url.includes('/.netlify/functions/ailp-job')}
 }
 
 function vpsEndpointForJob(jobType){
   if(jobType==='propose_improvements') return '/api/jobs/propose'
   if(jobType==='apply_to_draft') return '/api/jobs/apply-draft'
+  if(jobType==='publish_version') return '/api/jobs/publish'
   return ''
 }
 
@@ -647,10 +648,14 @@ async function enqueueLpJobViaVps(jobType,payload,lpProjectId){
   if(!config.url||!endpoint) return null
   const headers={'content-type':'application/json'}
   if(config.token) headers['x-ailp-vps-token']=config.token
-  const response=await fetch(`${config.url}${endpoint}`,{
+  const url=config.usesProxy?config.url:`${config.url}${endpoint}`
+  const requestBody=config.usesProxy
+    ? {job_type:jobType,lp_project_id:lpProjectId,payload}
+    : {lp_project_id:lpProjectId,payload}
+  const response=await fetch(url,{
     method:'POST',
     headers,
-    body:JSON.stringify({lp_project_id:lpProjectId,payload})
+    body:JSON.stringify(requestBody)
   })
   const body=await response.json().catch(()=>({}))
   if(!response.ok||body.ok===false) throw new Error(body.error||body.message||`VPS API error: ${response.status}`)

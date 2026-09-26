@@ -12,6 +12,7 @@ const allowedOrigins = env('VPS_API_ALLOWED_ORIGINS', '*')
   .map((item) => item.trim())
   .filter(Boolean)
 const runningJobs = new Set()
+let queuePollerRunning = false
 
 function corsOrigin(origin) {
   if (!origin) return '*'
@@ -105,6 +106,66 @@ async function startJob(job) {
   })
 }
 
+async function claimQueuedJobs(limit = 1) {
+  const { data: candidates, error } = await supabase
+    .from('lp_jobs')
+    .select('*')
+    .eq('status', 'queued')
+    .order('created_at', { ascending: true })
+    .limit(limit * 3)
+
+  if (error) throw new Error(error.message)
+  const claimed = []
+  for (const job of candidates ?? []) {
+    if (claimed.length >= limit) break
+    if (runningJobs.has(job.id)) continue
+    const { data, error: claimError } = await supabase
+      .from('lp_jobs')
+      .update({
+        status: 'running',
+        error_message: null,
+        started_at: new Date().toISOString(),
+        finished_at: null,
+      })
+      .eq('id', job.id)
+      .eq('status', 'queued')
+      .select('*')
+      .maybeSingle()
+    if (claimError) throw new Error(claimError.message)
+    if (data) claimed.push(data)
+  }
+  return claimed
+}
+
+async function recoverStaleRunningJobs() {
+  const cutoff = new Date(Date.now() - config.staleRunningJobMinutes * 60 * 1000).toISOString()
+  const { error } = await supabase
+    .from('lp_jobs')
+    .update({
+      status: 'queued',
+      error_message: `Recovered stale running job by API poller after ${config.staleRunningJobMinutes} minutes`,
+      started_at: null,
+      finished_at: null,
+    })
+    .eq('status', 'running')
+    .lt('updated_at', cutoff)
+  if (error) throw new Error(error.message)
+}
+
+async function pollQueueOnce() {
+  if (queuePollerRunning) return
+  queuePollerRunning = true
+  try {
+    await recoverStaleRunningJobs()
+    const jobs = await claimQueuedJobs(1)
+    for (const job of jobs) startJob(job)
+  } catch (error) {
+    console.error('AILP API queue poll failed:', error.message || error)
+  } finally {
+    queuePollerRunning = false
+  }
+}
+
 async function handlePost(pathname, req, res, origin) {
   requireApiToken(req)
   const body = await readJson(req)
@@ -124,6 +185,17 @@ async function handlePost(pathname, req, res, origin) {
     const job = await createJob({
       lpProjectId: body.lp_project_id,
       jobType: 'apply_to_draft',
+      payload: body.payload || {},
+      priority: Number(body.priority || 50),
+    })
+    await startJob(job)
+    return sendJson(res, 202, { ok: true, job_id: job.id, status: 'running', lp_project_id: job.lp_project_id }, origin)
+  }
+
+  if (pathname === '/api/jobs/publish') {
+    const job = await createJob({
+      lpProjectId: body.lp_project_id,
+      jobType: 'publish_version',
       payload: body.payload || {},
       priority: Number(body.priority || 50),
     })
@@ -163,4 +235,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, '0.0.0.0', () => {
   console.log(`AILP VPS API listening on ${port}`)
+  pollQueueOnce()
+  setInterval(pollQueueOnce, Math.max(5000, config.pollIntervalMs))
 })
