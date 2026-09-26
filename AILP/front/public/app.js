@@ -1,3 +1,4 @@
+const AILP_UI_BUILD_STAMP='2026-09-26T10:11:05Z'
 const lps = [
   { name:'eyebee 岡山黒石店｜まつげパーマ', client:'株式会社eyebee', score:86, state:'公開中', phase:'改善・検証', owner:'山田', update:'今日 10:15', cv:'4.8%' },
   { name:'eyebee 岡山黒石店｜眉毛スタイリング', client:'株式会社eyebee', score:78, state:'公開中', phase:'分析・改善', owner:'山田', update:'昨日 15:40', cv:'3.9%' },
