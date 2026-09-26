@@ -126,6 +126,34 @@ function codexProposalPrompt({ context, sourceContext, knowledgeFiles }) {
 }
 
 async function createCodexProposalTask({ supabase, job, context, sourceContext, repoPath }) {
+  const existingAnalysis = await latestAnalysis(supabase, job.lp_project_id)
+  if (existingAnalysis) {
+    const recommendations = Array.isArray(existingAnalysis.recommendations) ? existingAnalysis.recommendations : []
+    const { error: jobUpdateError } = await supabase
+      .from('lp_jobs')
+      .update({
+        result_summary: `Codex提案を保存済みです。改善案 ${recommendations.length}件`,
+        payload: {
+          ...(job.payload ?? {}),
+          executor: 'codex',
+          codex_task_status: 'completed_by_codex',
+          ai_analysis_result_id: existingAnalysis.id,
+          recommendation_count: recommendations.length,
+          codex_note: 'Linked latest LP-scoped Codex proposal so the UI does not remain in a waiting state.',
+        },
+      })
+      .eq('id', job.id)
+    if (jobUpdateError) throw new Error(jobUpdateError.message)
+
+    await writeJobStep(supabase, job.id, 'codex_proposal_linked', {
+      summary: 'Linked the latest LP-scoped Codex proposal to this job.',
+      lp_project_id: job.lp_project_id,
+      ai_analysis_result_id: existingAnalysis.id,
+      recommendation_count: recommendations.length,
+    })
+    return
+  }
+
   const knowledgeFiles = await loadCodexKnowledgeFiles(repoPath)
   const prompt = codexProposalPrompt({ context, sourceContext, knowledgeFiles })
   const metadata = {
