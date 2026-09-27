@@ -41,6 +41,37 @@ function extractHtmlSignals(html) {
   return { headings, links, sections, text_sample: stripHtmlForAi(source).slice(0, 5000) }
 }
 
+
+async function waitForPreviewUrlReady({ supabase, job, url, timeoutMs = 180000, intervalMs = 5000 }) {
+  if (!url) return { ready: false, status: null, attempts: 0 }
+  const startedAt = Date.now()
+  let attempts = 0
+  let lastStatus = null
+  while (Date.now() - startedAt < timeoutMs) {
+    attempts += 1
+    try {
+      const response = await fetch(url, { method: 'GET', redirect: 'follow' })
+      lastStatus = response.status
+      const text = await response.text().catch(() => '')
+      if (response.ok && !/Page not found/i.test(text.slice(0, 2000))) {
+        return { ready: true, status: response.status, attempts }
+      }
+    } catch (error) {
+      lastStatus = error?.message || 'fetch_failed'
+    }
+    await writeJobStep(supabase, job.id, 'netlify_preview_wait', {
+      status: 'running',
+      summary: `Waiting for Netlify to serve draft preview (${attempts})`,
+      lp_project_id: job.lp_project_id,
+      preview_url: url,
+      last_status: lastStatus,
+      elapsed_seconds: Math.round((Date.now() - startedAt) / 1000),
+    })
+    await wait(intervalMs)
+  }
+  return { ready: false, status: lastStatus, attempts }
+}
+
 async function loadLpSourceContext(workspace, folderPath) {
   const normalizedFolder = String(folderPath || '').replace(/^\/+|\/+$/g, '')
   const htmlPath = join(workspace.repo, normalizedFolder, 'index.html')
@@ -1458,6 +1489,19 @@ export async function runJob({ config, supabase, job }) {
         branchName,
         previewPath: draft.previewPath,
       })
+      if (mainPreviewPublish?.published) {
+        const previewReady = await waitForPreviewUrlReady({ supabase, job, url: draft.previewUrl })
+        if (!previewReady.ready) {
+          throw new Error(`Netlify preview did not become ready before timeout: ${draft.previewUrl} (last status: ${previewReady.status})`)
+        }
+        await writeJobStep(supabase, job.id, 'netlify_preview_ready', {
+          summary: 'Netlify draft preview is ready',
+          lp_project_id: job.lp_project_id,
+          preview_url: draft.previewUrl,
+          http_status: previewReady.status,
+          attempts: previewReady.attempts,
+        })
+      }
     }
 
     const { data: interaction, error: interactionError } = await supabase
