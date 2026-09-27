@@ -1,4 +1,4 @@
-const AILP_UI_BUILD_STAMP='2026-09-26T10:11:05Z'
+const AILP_UI_BUILD_STAMP='2026-09-27T11:25:00Z'
 const lps = [
   { name:'eyebee 岡山黒石店｜まつげパーマ', client:'株式会社eyebee', score:86, state:'公開中', phase:'改善・検証', owner:'山田', update:'今日 10:15', cv:'4.8%' },
   { name:'eyebee 岡山黒石店｜眉毛スタイリング', client:'株式会社eyebee', score:78, state:'公開中', phase:'分析・改善', owner:'山田', update:'昨日 15:40', cv:'3.9%' },
@@ -29,7 +29,7 @@ const pageEl=document.querySelector('#page'), crumb=document.querySelector('#cru
 const scoreClass=s=>s>=80?'good':s>=60?'warn':'danger'; const statusClass=s=>s==='公開中'?'live':s==='レビュー中'?'review':'draft';
 function notice(text){toast.textContent=text;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2600)}
 function currentAuth(){return window.AILP_AUTH_CONTEXT||{user:null,roles:[],isAdmin:false,supabase:null}}
-const dashboardState={loading:false,loaded:false,error:'',rows:[]}
+const dashboardState={loading:false,loaded:false,error:'',rows:[],lpCreationJobs:[]}
 const ga4AdminState={loading:false,loaded:false,error:'',rows:[],busy:{},configs:{}}
 const apiLogState={loading:false,loaded:false,error:'',rows:[]}
 const detailState={loading:false,loadedFor:null,error:'',overview:null,metrics:[],analysisResults:[],versions:[],deployments:[],jobs:[],artifacts:[],usageLogs:[],jobSteps:[]}
@@ -346,11 +346,16 @@ async function loadDashboardData(force=false){
   if(dashboardState.loaded&&!force) return
   dashboardState.loading=true
   dashboardState.error=''
-  if(page==='dashboard') renderWithDetailMenu()
+  if(['dashboard','lp-variants','client'].includes(page)) renderWithDetailMenu()
   try{
-    const {data,error}=await auth.supabase.from('lp_dashboard_overview').select('*').order('client_name').order('lp_name')
-    if(error) throw error
-    dashboardState.rows=data||[]
+    const [overviewResult,creationJobResult]=await Promise.all([
+      auth.supabase.from('lp_dashboard_overview').select('*').order('client_name').order('lp_name'),
+      auth.supabase.from('lp_jobs').select('*').eq('job_type','create_preview_folder').order('created_at',{ascending:false}).limit(80),
+    ])
+    if(overviewResult.error) throw overviewResult.error
+    if(creationJobResult.error) throw creationJobResult.error
+    dashboardState.rows=(overviewResult.data||[]).filter(row=>row.status!=='archived'&&row.project_status!=='archived')
+    dashboardState.lpCreationJobs=creationJobResult.data||[]
     if(dashboardState.rows.length&&!dashboardState.rows.some(row=>row.lp_project_id===selectedLpProjectId)){
       setSelectedFromRow(dashboardState.rows[0])
     }
@@ -712,6 +717,11 @@ async function createLpVariant(source='copy_current_lp'){
   const auth=currentAuth()
   const selectedRow=getSelectedDashboardRow()
   if(!auth.supabase||!selectedRow?.lp_project_id){notice('コピー元LPが選択されていません。');return}
+  if(hasActiveLpCreationJob()){
+    notice('LP作成ジョブが実行中です。完了まで再作成はできません。')
+    await loadDashboardData(true)
+    return
+  }
   const sameClientRows=getSelectedClientRows()
   const nextNumber=sameClientRows.length+1
   const lpName=`${selectedRow.client_name||selectedRow.lp_name} LP${Math.max(2,nextNumber)}`
@@ -736,6 +746,29 @@ async function createLpVariant(source='copy_current_lp'){
     notice(error?.message||'LP追加ジョブの投入に失敗しました。')
   }
 }
+
+async function archiveLpVariant(lpProjectId){
+  const auth=currentAuth()
+  if(!auth.supabase||!lpProjectId) return
+  const row=(dashboardState.rows||[]).find(item=>item.lp_project_id===lpProjectId)
+  const isPrimary=row?.is_primary===true||Number(row?.lp_number||0)===1||String(row?.folder_path||'').endsWith('/lp1')
+  if(isPrimary){notice('mainLPは削除できません。');return}
+  try{
+    const {error}=await auth.supabase.from('lp_projects').update({status:'archived'}).eq('id',lpProjectId)
+    if(error) throw error
+    await auth.supabase.from('lp_analytics_settings').update({is_active:false}).eq('lp_project_id',lpProjectId)
+    notice('LPを一覧から削除しました。履歴とファイルは保持しています。')
+    if(selectedLpProjectId===lpProjectId){
+      const fallback=getSelectedClientRows().find(item=>item.lp_project_id!==lpProjectId)
+      if(fallback) setSelectedFromRow(fallback)
+    }
+    await Promise.all([loadDashboardData(true),loadDetailData(true)])
+  }catch(error){
+    console.error(error)
+    notice(error?.message||'LP削除に失敗しました。')
+  }
+}
+
 function latestDraftArtifact(){
   return (detailState.artifacts||[]).find(item=>['draft_lp_update','preview_folder'].includes(item.artifact_type))
 }
@@ -949,6 +982,30 @@ function isActiveJob(job){
 function hasActiveDetailJob(){
   return (detailState.jobs||[]).some(job=>isActiveJob(job))
 }
+function lpCreationJobsForClient(){
+  const rows=getSelectedClientRows()
+  const ids=new Set(rows.map(item=>item.lp_project_id).filter(Boolean))
+  const selectedRow=getSelectedDashboardRow()
+  if(selectedRow?.lp_project_id) ids.add(selectedRow.lp_project_id)
+  return (dashboardState.lpCreationJobs||[]).filter(job=>{
+    const payload=job.payload||{}
+    return ids.has(job.lp_project_id)||ids.has(payload.source_lp_project_id)||ids.has(payload.created_lp_project_id)
+  }).sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')))
+}
+function latestLpCreationJob(){
+  const jobs=lpCreationJobsForClient()
+  return jobs.find(job=>isActiveJob(job))||jobs[0]||null
+}
+function hasActiveLpCreationJob(){
+  return lpCreationJobsForClient().some(job=>isActiveJob(job))
+}
+function lpCreationStatusSummary(job){
+  if(!job) return {label:'待機なし',tone:'ok',detail:'LP作成ジョブはありません。'}
+  if(job.status==='succeeded') return {label:'作成完了',tone:'ok',detail:job.result_summary||'LP作成が完了しています。'}
+  if(job.status==='failed') return {label:'作成失敗',tone:'error',detail:job.error_message||'LP作成に失敗しました。'}
+  if(job.status==='running') return {label:'作成中',tone:'warn',detail:'VPS workerがLPフォルダを作成しています。'}
+  return {label:'作成待機中',tone:'warn',detail:queuedWaitDetail(job,'VPS workerの実行待ちです。')}
+}
 function stopDetailAutoRefresh(){
   if(detailAutoRefreshTimer){
     clearInterval(detailAutoRefreshTimer)
@@ -956,7 +1013,17 @@ function stopDetailAutoRefresh(){
   }
 }
 function syncDetailAutoRefresh(){
-  const detailPages=['detail','analysis','proposals','execution','versions','history']
+  const detailPages=['detail','analysis','proposals','execution','versions','history','lp-variants']
+  if(page==='lp-variants'&&hasActiveLpCreationJob()){
+    if(detailAutoRefreshTimer) return
+    detailAutoRefreshTimer=setInterval(()=>{
+      const now=Date.now()
+      if(dashboardState.loading||now-detailAutoRefreshLastAt<2500) return
+      detailAutoRefreshLastAt=now
+      loadDashboardData(true)
+    },3000)
+    return
+  }
   if(!detailPages.includes(page)||!hasActiveDetailJob()){
     stopDetailAutoRefresh()
     return
@@ -1554,7 +1621,11 @@ function enhancedLpVariants(){
   const rows=getSelectedClientRows()
   const row=getSelectedDashboardRow()
   const clientName=row?.client_name||selected.client
-  return `<div class="client-page-label">個別クライアント画面 / ${escapeHtml(clientName)}</div><div class="heading-row"><div><div class="eyebrow">LP VARIATIONS</div><h1>LP一覧</h1><p class="page-sub">クライアント配下のLPを一覧し、公開状態と直近30日成果を確認します。mainLPは既存URLを維持し、追加LPは client/lp2 形式で作成します。</p></div><div class="ga4-actions"><span class="tag">${rows.length} LP</span><button class="secondary" data-action="lp-add-template">テンプレートからLP追加</button><button class="primary" data-action="lp-add-copy">既存LPをコピーして追加</button></div></div><section class="panel table-panel">${rows.length?`<table><thead><tr><th>LP名 / 内容</th><th>公開状態</th><th>Sessions</th><th>CV</th><th>CVR</th><th>最終同期</th><th></th></tr></thead><tbody>${rows.map(item=>{const publish=publishState(item);return `<tr><td><div class="lp-name">${escapeHtml(item.lp_name)}</div><div class="lp-description">${escapeHtml(lpDescription(item))}</div><div class="client">${escapeHtml(item.folder_path)}</div></td><td><div class="ga4-field-list compact">${statusBadge(publish.label,publish.tone)}<span>${escapeHtml(publish.detail)}</span></div></td><td>${formatCount(item.sessions_30d)}</td><td>${formatCount(item.conversions_30d)}</td><td>${item.conversion_rate_30d===null?'--':`${Number(item.conversion_rate_30d).toFixed(2)}%`}</td><td>${escapeHtml(formatDisplayDate(item.latest_sync_finished_at))}</td><td><button class="secondary" data-action="detail" data-lp-id="${item.lp_project_id}">詳細</button></td></tr>`}).join('')}</tbody></table>`:`<div class="ga4-empty">対象 LP がありません。</div>`}</section>`
+  const creationJob=latestLpCreationJob()
+  const creationStatus=lpCreationStatusSummary(creationJob)
+  const creating=hasActiveLpCreationJob()
+  const creationPanel=creationJob?`<section class="panel section-card"><div class="version-history-heading"><div><span>LP CREATE STATUS</span><h2>LP作成ステータス</h2></div><small>${creating?'自動更新中':'最終更新 '+escapeHtml(formatDisplayDate(creationJob.updated_at||creationJob.finished_at||creationJob.created_at))}</small></div><div class="ga4-field-list"><span>状態 <b>${statusBadge(creationStatus.label,creationStatus.tone)}</b></span><span>詳細 <b>${activeDetailText(creationStatus.detail,creating)}</b></span><span>job <b>${escapeHtml(creationJob.id.slice(0,8))}</b></span><span>作成 <b>${escapeHtml(formatDisplayDate(creationJob.created_at))}</b></span></div>${creationJob.status==='failed'?`<div class="ga4-empty">失敗理由：${escapeHtml(creationJob.error_message||'不明')}</div>`:''}${jobProgressHtml(creationJob)}</section>`:''
+  return `<div class="client-page-label">個別クライアント画面 / ${escapeHtml(clientName)}</div><div class="heading-row"><div><div class="eyebrow">LP VARIATIONS</div><h1>LP一覧</h1><p class="page-sub">クライアント配下のLPを一覧し、公開状態と直近30日成果を確認します。mainLPは既存URLを維持し、追加LPは client/lp2 形式で作成します。</p></div><div class="ga4-actions"><span class="tag">${rows.length} LP</span><button class="secondary" data-action="lp-add-template" ${creating?'disabled':''}>${creating?'LP作成中':'テンプレートからLP追加'}</button><button class="primary" data-action="lp-add-copy" ${creating?'disabled':''}>${creating?'LP作成中':'既存LPをコピーして追加'}</button></div></div>${creationPanel}<section class="panel table-panel">${rows.length?`<table><thead><tr><th>LP名 / 内容</th><th>公開状態</th><th>Sessions</th><th>CV</th><th>CVR</th><th>最終同期</th><th></th></tr></thead><tbody>${rows.map(item=>{const publish=publishState(item);const isPrimary=item.is_primary===true||Number(item.lp_number||0)===1||String(item.folder_path||'').endsWith('/lp1');return `<tr><td><div class="lp-name">${escapeHtml(item.lp_name)}</div><div class="lp-description">${escapeHtml(lpDescription(item))}</div><div class="client">${escapeHtml(item.folder_path)}</div></td><td><div class="ga4-field-list compact">${statusBadge(publish.label,publish.tone)}<span>${escapeHtml(publish.detail)}</span></div></td><td>${formatCount(item.sessions_30d)}</td><td>${formatCount(item.conversions_30d)}</td><td>${item.conversion_rate_30d===null?'--':`${Number(item.conversion_rate_30d).toFixed(2)}%`}</td><td>${escapeHtml(formatDisplayDate(item.latest_sync_finished_at))}</td><td><div class="ga4-actions stack"><button class="secondary" data-action="detail" data-lp-id="${item.lp_project_id}">詳細</button>${isPrimary?'':`<button class="secondary danger" data-action="lp-archive" data-lp-id="${item.lp_project_id}">削除</button>`}</div></td></tr>`}).join('')}</tbody></table>`:`<div class="ga4-empty">対象 LP がありません。</div>`}</section>`
 }
 function enhancedDetailContext(active){
   const row=detailState.overview||getSelectedDashboardRow()
@@ -1971,6 +2042,7 @@ function enhancedButtons(){
       else if(action==='vps-apply-draft'){ enqueueLpJob('apply_to_draft',{push:true,html_executor:'codex'}) }
       else if(action==='lp-add-copy'){ createLpVariant('copy_current_lp') }
       else if(action==='lp-add-template'){ createLpVariant('template') }
+      else if(action==='lp-archive'){ archiveLpVariant(button.dataset.lpId) }
       else if(action==='detail-refresh'){ loadDetailData(true) }
       else if(action==='dashboard-refresh'){ loadDashboardData(true) }
       else if(action==='api-log-refresh'){ loadApiLogData(true) }

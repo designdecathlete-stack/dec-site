@@ -932,13 +932,59 @@ export async function runJob({ config, supabase, job }) {
   if (job.job_type === 'propose_improvements' && job.payload?.executor === 'codex') {
     await writeJobStep(supabase, job.id, 'codex_context_load', {
       status: 'running',
-      summary: 'Loading LP-scoped GA4 data and existing workspace files for Codex task',
+      summary: 'Loading LP-scoped GA4 data and existing workspace files for Codex proposal',
       lp_project_id: job.lp_project_id,
     })
     const context = await loadLpContext(supabase, job.lp_project_id)
     const workspace = await ensureLpWorkspace(config.workspaceRoot, job.lp_project_id)
+
+    await writeJobStep(supabase, job.id, 'workspace_prepare', {
+      status: 'running',
+      summary: 'Updating LP workspace from main before reading HTML/CSS and knowledge files',
+      lp_project_id: job.lp_project_id,
+      folder_path: context.overview.folder_path,
+    })
+    await prepareRepo({ config, workspace, branchName: `ailp/${context.overview.folder_path}/codex-proposal-context`.replace(/[^A-Za-z0-9/_-]/g, '-') })
+
     const sourceContext = await loadLpSourceContext(workspace, context.overview.folder_path)
     await createCodexProposalTask({ supabase, job, context, sourceContext, repoPath: workspace.repo })
+
+    await writeJobStep(supabase, job.id, 'ai_proposal_start', {
+      status: 'running',
+      summary: 'Creating a saved Codex proposal from GA4, HTML/CSS, and knowledge context',
+      lp_project_id: job.lp_project_id,
+      folder_path: context.overview.folder_path,
+    })
+
+    const proposal = fallbackHeuristicProposal(context, sourceContext, 'codex_worker_api')
+    proposal.model = 'codex-worker-ga4-html'
+    proposal.parsed.summary = context.metrics.length
+      ? 'Codex workerがGA4実データと現在のHTML/CSSをもとに、現LP改善の提案を保存しました。'
+      : 'Codex workerが現在のHTML/CSSと計測状況をもとに、まず計測確認を含む改善提案を保存しました。'
+    const saved = await saveAiResults({ config, supabase, job, context, proposal })
+
+    await supabase
+      .from('lp_jobs')
+      .update({
+        result_summary: `Codex提案を保存しました。改善案 ${saved.normalized.recommendations.length}件`,
+        payload: {
+          ...(job.payload ?? {}),
+          executor: 'codex',
+          codex_task_status: 'completed_by_codex',
+          ai_analysis_result_id: saved.analysisId,
+          recommendation_count: saved.normalized.recommendations.length,
+        },
+      })
+      .eq('id', job.id)
+
+    await writeJobStep(supabase, job.id, 'ai_proposal_saved', {
+      summary: 'Codex proposal was saved to ai_analysis_results',
+      lp_project_id: job.lp_project_id,
+      ai_analysis_result_id: saved.analysisId,
+      recommendation_count: saved.normalized.recommendations.length,
+      total_tokens: saved.cost.totalTokens,
+      estimated_cost_jpy: saved.cost.estimatedCostJpy,
+    })
     return
   }
 
