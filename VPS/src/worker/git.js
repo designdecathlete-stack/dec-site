@@ -385,7 +385,12 @@ export async function createLpVariantFolder({ config, workspace, sourceFolderPat
 
   const sourceDir = assertInside(repoRoot, join(repoRoot, normalizedSource))
   const targetDir = assertInside(repoRoot, join(repoRoot, normalizedTarget))
-  await rm(targetDir, { recursive: true, force: true })
+  try {
+    await stat(targetDir)
+    throw new Error(`Target LP folder already exists: ${normalizedTarget}`)
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error
+  }
   await mkdir(targetDir, { recursive: true })
   await cp(sourceDir, targetDir, {
     recursive: true,

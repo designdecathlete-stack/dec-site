@@ -1,5 +1,5 @@
 import { setTimeout as wait } from 'node:timers/promises'
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { ensureLpWorkspace } from '../guards/path-guard.js'
 import { writeJobStep } from '../logging/job-log.js'
@@ -847,16 +847,28 @@ function rootClientFolder(folderPath) {
   return String(folderPath || '').replace(/^\/+|\/+$/g, '').split('/').filter(Boolean)[0] || ''
 }
 
-async function nextLpVariantInfo(supabase, clientId, sourceFolderPath) {
+async function nextLpVariantInfo(supabase, clientId, sourceFolderPath, repoPath = '') {
   const root = rootClientFolder(sourceFolderPath)
   if (!root) throw new Error(`Invalid source folder_path: ${sourceFolderPath}`)
   const { data, error } = await supabase
     .from('lp_projects')
-    .select('name,slug,folder_path')
+    .select('name,slug,folder_path,status,lp_number')
     .eq('client_id', clientId)
   if (error) throw new Error(error.message)
   const rows = data || []
-  const used = new Set(rows.map(row => String(row.folder_path || '').replace(/^\/+|\/+$/g, '')))
+  const used = new Set(rows.map(row => String(row.folder_path || '').replace(/^\/+|\/+$/g, '')).filter(Boolean))
+  for (const row of rows) {
+    const n = Number(row.lp_number || 0)
+    if (n >= 2) used.add(`${root}/lp${n}`)
+  }
+  if (repoPath) {
+    try {
+      const entries = await readdir(join(repoPath, root), { withFileTypes: true })
+      for (const entry of entries) {
+        if (entry.isDirectory() && /^lp\d+$/i.test(entry.name)) used.add(`${root}/${entry.name.toLowerCase()}`)
+      }
+    } catch {}
+  }
   let number = 2
   while (used.has(`${root}/lp${number}`)) number += 1
   return {
@@ -1166,7 +1178,7 @@ export async function runJob({ config, supabase, job }) {
     const context = await loadLpContext(supabase, job.lp_project_id)
 
     if (job.payload?.action === 'create_lp_variant') {
-      const variant = await nextLpVariantInfo(supabase, context.overview.client_id, context.overview.folder_path)
+      const variant = await nextLpVariantInfo(supabase, context.overview.client_id, context.overview.folder_path, workspace.repo)
       const lpName = String(job.payload?.lp_name || `${context.overview.client_name} ${variant.nameSuffix}`).trim()
       const sourceMode = job.payload?.source || 'copy_current_lp'
       const sourceFolderPath = sourceMode === 'template' && job.payload?.template_folder_path
