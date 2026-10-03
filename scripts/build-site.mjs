@@ -21,6 +21,7 @@ const legacyPublicDirs = [
   'resole',
   'site-map',
   'splender',
+  'tete',
 ];
 
 const appFrontRoot = join(root, 'AILP', 'front');
