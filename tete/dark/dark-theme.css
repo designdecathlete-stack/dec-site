@@ -10,3 +10,6 @@ body{font-family:var(--font-body);font-size:16px;-webkit-font-smoothing:antialia
 /* Final typography pass: avoid isolated endings and a hard photo edge. */
 .main p{text-wrap:pretty}.hero-shade{background:linear-gradient(180deg,#171615aa 0%,#17161555 20%,transparent 35%,transparent 56%,#1716159c 72%,#171615 98%)}
 @media(min-width:1024px){.side-offer h2{font-size:18px}}
+
+/* Generated offer and CTA */
+.offer-art{display:block;width:calc(100% + 32px);max-width:none;height:auto;margin:0 -16px 25px}.button.image-cta{display:block;background:none;border:0;padding:0;min-height:0;box-shadow:none;line-height:0;margin-top:24px}.image-cta img{display:block;width:100%;height:auto}.image-cta:hover{filter:brightness(1.12);transform:translateY(-2px)}.float-cta .button.image-cta{margin:0}.side-offer .button.image-cta{margin-top:15px}.offer-terms{font-size:13px}.float-cta p{font-size:10px}@media(max-width:1023px){.footer{padding-bottom:170px}}
