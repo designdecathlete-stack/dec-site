@@ -2,7 +2,7 @@
 const LP_SETTINGS = {
   googleMapsEmbedUrl: "", // Googleマップ「共有」→「地図を埋め込む」の iframe src のURL
   googleMapsUrl: "", // Googleマップ「共有」→「リンクを送信」の店舗URL
-  reservationUrl: "https://lin.ee/x8xUv9j", // 例: https://line.me/... または https://予約ページのURL
+  reservationUrl: "https://s.lmes.jp/landing-qr/2011844316-cTWotGbU?uLand=a7QRh6", // 例: https://line.me/... または https://予約ページのURL
 };
 
 if (LP_SETTINGS.reservationUrl.trim()) {
