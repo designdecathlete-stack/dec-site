@@ -1,0 +1,12 @@
+Bi..Nail 日本語版LP / 2026-10-04
+
+LP: lp/index.html
+リンク設定: lp/config.js の reservationUrl / instagramUrl
+日本語原稿はHTMLテキストとして保持。韓国語版作成時は翻訳とlang属性、改行・文字量の再確認を行う。
+現段階はローカル制作。公開・commit・pushは行っていない。noindex,nofollow設定。
+NAVER予約URL・Instagram URLは未提供のため、ボタン無効・準備中表記。
+実際のオーナー・ネイル・施術事例写真は未提供。架空の写真は使用していない。
+添付デザインシートの色・書体・花の雰囲気を参考にした。画像内のキャンペーン原稿は採用せず、依頼本文の10％OFFを採用。
+375×812 / 1366×900のブラウザ表示、横はみ出し、FAQ開閉、未設定ボタン、JSエラーを確認。
+デザイン資料: design/design-sheet.png / design-sheet.html / design-tokens.json
+WebフォントはGoogle Fonts利用。取得できない環境ではシステム書体にフォールバック。

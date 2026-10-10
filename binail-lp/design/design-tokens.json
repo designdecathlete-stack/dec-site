@@ -1,0 +1,67 @@
+{
+  "colors": {
+    "brand": "#925e63",
+    "cta": "#925e63",
+    "on-cta": "#fffaf6",
+    "text": "#554b48",
+    "muted": "#7e726c",
+    "page": "#fffaf6",
+    "soft": "#f6e8e5",
+    "sage": "#e9ece1",
+    "canvas": "#f5efe8",
+    "line": "#dfcbc5"
+  },
+  "typography": {
+    "heading": {
+      "fontFamily": "\"Noto Serif JP\", \"Yu Mincho\", serif",
+      "fontSize": "22px",
+      "fontWeight": "500",
+      "lineHeight": "39.6px"
+    },
+    "body": {
+      "fontFamily": "\"Noto Sans JP\", sans-serif",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "30.1px"
+    },
+    "price": {
+      "fontFamily": "\"Noto Sans JP\", sans-serif",
+      "fontSize": "11px",
+      "fontWeight": "400",
+      "lineHeight": "18.7px"
+    },
+    "button": {
+      "fontFamily": "\"Noto Sans JP\", sans-serif",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "22.4px"
+    }
+  },
+  "components": {
+    "cta": {
+      "padding": "17px 23px",
+      "borderRadius": "3px",
+      "borderWidth": "1px"
+    }
+  },
+  "project": "Bi..Nail 日本語LP",
+  "source": "../lp/index.html",
+  "createdAt": "2026-10-04",
+  "viewport": {
+    "width": 375
+  },
+  "visualRules": [
+    "水彩風の花を余白に配置",
+    "見出しは明朝体、本文はゴシック体",
+    "CTAはダスティローズ",
+    "原稿は画像化せずHTMLで管理"
+  ],
+  "imagery": {
+    "status": "写真未確定。オリジナルSVGの花装飾を使用"
+  },
+  "pending": [
+    "NAVER予約URL",
+    "Instagram URL",
+    "実際の施術・オーナー写真"
+  ]
+}
