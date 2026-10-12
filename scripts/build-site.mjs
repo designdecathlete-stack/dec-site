@@ -68,6 +68,9 @@ for (const dir of legacyPublicDirs) {
   }
 }
 
+// Publish only the Bi..Nail LP; keep design documents and local helper scripts private.
+await cp(join(root, 'binail-lp', 'lp'), join(dist, 'binail-lp', 'lp'), { recursive: true, force: true });
+
 const maintenanceDir = join(dist, 'ailp-management');
 await mkdir(maintenanceDir, { recursive: true });
 
