@@ -71,6 +71,16 @@ for (const dir of legacyPublicDirs) {
 // Publish only the Bi..Nail LP; keep design documents and local helper scripts private.
 await cp(join(root, 'binail-lp', 'lp'), join(dist, 'binail-lp', 'lp'), { recursive: true, force: true });
 
+// Publish only the opt-in LP assets; keep local QA files private.
+const optinDir = join(dist, 'salon-backoffice-optin');
+await mkdir(join(optinDir, 'assets'), { recursive: true });
+for (const file of ['index.html', 'style.css', 'script.js']) {
+  await cp(join(root, 'salon-backoffice-optin', file), join(optinDir, file));
+}
+for (const file of ['page-1.png', 'page-6.png']) {
+  await cp(join(root, 'salon-backoffice-optin', 'assets', file), join(optinDir, 'assets', file));
+}
+
 const maintenanceDir = join(dist, 'ailp-management');
 await mkdir(maintenanceDir, { recursive: true });
 
