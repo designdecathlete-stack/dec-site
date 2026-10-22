@@ -68,6 +68,9 @@ for (const dir of legacyPublicDirs) {
   }
 }
 
+// Publish only AQUA LP files; keep design documents and QA files private.
+await cp(join(root, 'aqua-lp', 'lp'), join(dist, 'aqua-lp'), { recursive: true, force: true });
+
 // Publish only the Bi..Nail LP; keep design documents and local helper scripts private.
 await cp(join(root, 'binail-lp', 'lp'), join(dist, 'binail-lp', 'lp'), { recursive: true, force: true });
 
