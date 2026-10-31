@@ -264,6 +264,9 @@ body::before{
 .cta-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(6,199,85,0.5)}
 .cta-btn svg{display:inline;vertical-align:middle;margin-right:6px}
 .cta-note{font-size:10.5px;color:var(--text-muted);margin-top:14px;letter-spacing:0.5px;line-height:1.7}
+.campaign-offer{max-width:420px;margin:0 auto 22px}
+.offer-img{display:block;width:100%;height:auto;border-radius:10px;box-shadow:0 12px 34px rgba(45,40,38,0.10)}
+.price-card .offer-img,.m-card.rec .offer-img{border-radius:8px;box-shadow:none}
 
 /* ── 悩み共感（ソフト・ベージュ背景） ── */
 .pain-intro{
@@ -346,6 +349,8 @@ body::before{
 }
 .ba-photos{display:flex;gap:8px;margin-bottom:16px;position:relative}
 .ba-photo{flex:1;position:relative;border-radius:10px;overflow:hidden}
+.ba-photo img{display:block;width:100%;height:auto}
+.ba-disclaimer{font-size:12px;line-height:1.8;color:var(--text-light);margin-top:20px}
 .ba-photo .img{
   width:100%;height:180px;
   background:linear-gradient(135deg, #F0E8DC, #E0D2BC);
@@ -610,13 +615,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- 右サイドバー -->
 <aside class="sb-right">
   <div class="price-card">
-    <span class="tag">初回無料体験</span>
-    <div class="amount">体験0円</div>
-    <div class="campaign-text"><span data-campaign-deadline></span><br>初回体験料 &yen;10,000 → &yen;0</div>
+    <img class="offer-img" src="images/kanda-trial-campaign.webp" alt="初回体験キャンペーン 20名限定 0円体験">
   </div>
-  <a href="https://lin.ee/zU39HFP" class="sb-cta" target="_blank" rel="noopener">
+  <a href="https://s.lmes.jp/landing-qr/2011885360-dbFiaZj4?uLand=XgMtxf" class="sb-cta" target="_blank" rel="noopener">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
-    初回無料体験を予約する
+    LINE登録で優先予約
   </a>
 </aside>
 
@@ -627,14 +630,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
        [1] ファーストビュー
        ============================================ -->
   <section class="hero" id="top">
-    <div class="hero-visual fv-bg" style="--fv-image:url('images/fv2.webp')" role="img" aria-label="Resoleピラティスのファーストビュー"></div>
+    <div class="hero-visual fv-bg" style="--fv-image:url('images/fv-kanda-pilates-area.webp')" role="img" aria-label="Resoleピラティスのファーストビュー"></div>
   </section>
 
   <div class="cta-block">
-    <div class="cta-original">通常 初回体験 &yen;10,000</div>
-    <div class="cta-price">体験0円</div>
-    <a href="https://lin.ee/zU39HFP" class="cta-btn" target="_blank" rel="noopener">初回無料体験を予約する</a>
-    <p class="cta-note"><span data-campaign-deadline></span><br>初回体験料 &yen;10,000 → &yen;0</p>
+    <div class="campaign-offer">
+      <img class="offer-img" src="images/kanda-trial-campaign.webp" alt="初回体験キャンペーン 20名限定 0円体験">
+    </div>
+    <a href="https://s.lmes.jp/landing-qr/2011885360-dbFiaZj4?uLand=XgMtxf" class="cta-btn" target="_blank" rel="noopener">LINE登録で優先予約</a>
+    <p class="cta-note">初回体験のLINE登録受付中</p>
   </div>
 
   <section class="sec sec--soft reveal" id="pain">
@@ -687,37 +691,38 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="ba-card">
       <div class="ba-num">01</div>
       <div class="ba-photos">
-        <div class="ba-photo"><div class="img">Before</div><span class="label">Before</span></div>
+        <div class="ba-photo"><img src="images/ba-tamachi-01-before.webp" alt="30代女性 ウェディングフォトに向けたボディメイク Before" width="990" height="2400" loading="lazy"><span class="label">Before</span></div>
         <div class="ba-arrow">→</div>
-        <div class="ba-photo"><div class="img after">After</div><span class="label">After</span></div>
+        <div class="ba-photo"><img src="images/ba-tamachi-01-after.webp" alt="30代女性 ウェディングフォトに向けたボディメイク After" width="990" height="2400" loading="lazy"><span class="label">After</span></div>
       </div>
-      <p class="ba-comment"><strong>下半身スッキリ</strong> 前ももの張り・反り腰・ウエストラインの変化を実感。</p>
-      <p class="ba-meta">30代女性 / デスクワーク</p>
+      <p class="ba-comment"><strong>-13kg</strong> 達成。ウェディングフォトに向けて、悔いのないシルエットへ。</p>
+      <p class="ba-meta">30代女性 / ウェディングフォト / パーソナル開始時 → 10ヶ月後</p>
     </div>
     <div class="ba-card">
       <div class="ba-num">02</div>
       <div class="ba-photos">
-        <div class="ba-photo"><div class="img">Before</div><span class="label">Before</span></div>
+        <div class="ba-photo"><img src="images/ba-tamachi-02-before.webp" alt="30代女性 ボディメイク Before" width="551" height="979" loading="lazy"><span class="label">Before</span></div>
         <div class="ba-arrow">→</div>
-        <div class="ba-photo"><div class="img after">After</div><span class="label">After</span></div>
+        <div class="ba-photo"><img src="images/ba-tamachi-02-after.webp" alt="30代女性 ボディメイク After" width="541" height="961" loading="lazy"><span class="label">After</span></div>
       </div>
-      <p class="ba-comment"><strong>疲れにくい身体へ</strong> 呼吸・睡眠・日中の活動量が整いやすく。</p>
-      <p class="ba-meta">40代女性 / 会社員</p>
+      <p class="ba-comment"><strong>4ヶ月で変化を実感</strong>。ウェアを楽しめる身体づくりへ。</p>
+      <p class="ba-meta">30代女性 / ブラトップでトレーニングできる体型へ / パーソナル開始時 → 4ヶ月後</p>
     </div>
     <div class="ba-card">
       <div class="ba-num">03</div>
       <div class="ba-photos">
-        <div class="ba-photo"><div class="img">Before</div><span class="label">Before</span></div>
+        <div class="ba-photo"><img src="images/ba-tamachi-03-before.webp" alt="30代女性 理想の身体を目指したボディメイク Before" width="747" height="1326" loading="lazy"><span class="label">Before</span></div>
         <div class="ba-arrow">→</div>
-        <div class="ba-photo"><div class="img after">After</div><span class="label">After</span></div>
+        <div class="ba-photo"><img src="images/ba-tamachi-03-after.webp" alt="30代女性 理想の身体を目指したボディメイク After" width="398" height="706" loading="lazy"><span class="label">After</span></div>
       </div>
-      <p class="ba-comment"><strong>姿勢改善</strong> 猫背・巻き肩・ストレートネックの印象がすっきり。</p>
-      <p class="ba-meta">30代女性 / 美容・ボディメイク目的</p>
+      <p class="ba-comment"><strong>コンプレックスから前向きなボディメイクへ</strong>。自信を持てるパーツづくりを継続。</p>
+      <p class="ba-meta">30代女性 / 自分の理想とする身体を見つけたい</p>
     </div>
+    <p class="ba-disclaimer">※Resoleのパーソナル指導によるボディメイク事例です。ピラティス単独の効果を示すものではありません。結果には個人差があります。</p>
   </section>
 
   <div class="cta-block">
-    <a href="https://lin.ee/zU39HFP" class="cta-btn" target="_blank" rel="noopener">初回無料体験を予約する</a>
+    <a href="https://s.lmes.jp/landing-qr/2011885360-dbFiaZj4?uLand=XgMtxf" class="cta-btn" target="_blank" rel="noopener">LINE登録で優先予約</a>
   </div>
 
   <section class="sec reveal" id="voice">
@@ -761,14 +766,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <section class="sec reveal" id="menu">
     <div class="sec-label">Menu</div><h2 class="sec-title">メニュー・料金</h2>
-    <div class="m-card rec"><div class="m-name">初回体験コース</div><div class="m-desc">カウンセリング / 自律神経測定 / 身体評価 / 姿勢チェック / ピラティス体験 / 改善ポイント説明</div><div class="m-price">体験0円</div><div class="m-price-sub"><span data-campaign-deadline></span>／通常 初回体験 &yen;10,000 → &yen;0</div></div>
+    <div class="m-card rec"><img class="offer-img" src="images/kanda-trial-campaign.webp" alt="初回体験キャンペーン 20名限定 0円体験"></div>
     <div class="menu-group-title">Monthly Plan</div>
-    <div class="m-card std"><div class="m-name">月4回コース</div><div class="m-desc">週1ペースで身体を整え、習慣化したい方へ</div><div class="m-price"><span class="yen">&yen;</span>44,800</div><div class="m-price-sub">税込・月額</div></div>
+    <div class="m-card std"><div class="m-name">月4回コース</div><div class="m-desc">週1ペースで身体を整え、習慣化したい方へ</div><div class="m-price"><span class="yen">&yen;</span>48,800</div><div class="m-price-sub">税込・月額</div></div>
     <div class="m-card std"><div class="m-name">月6回コース</div><div class="m-desc">不調改善とボディラインをしっかり進めたい方へ</div><div class="m-price"><span class="yen">&yen;</span>73,200</div><div class="m-price-sub">税込・月額</div></div>
     <div class="m-card std"><div class="m-name">月8回コース</div><div class="m-desc">短期集中で変化を出したい方へ</div><div class="m-price"><span class="yen">&yen;</span>97,600</div><div class="m-price-sub">税込・月額</div></div>
   </section>
 
-  <div class="cta-block"><a href="https://lin.ee/zU39HFP" class="cta-btn" target="_blank" rel="noopener">初回無料体験を予約する</a></div>
+  <div class="cta-block"><a href="https://s.lmes.jp/landing-qr/2011885360-dbFiaZj4?uLand=XgMtxf" class="cta-btn" target="_blank" rel="noopener">LINE登録で優先予約</a></div>
 
   <section class="sec sec--light reveal" id="faq">
     <div class="sec-label">FAQ</div><h2 class="sec-title">よくある質問</h2>
@@ -780,16 +785,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </section>
 
   <section class="sec reveal" id="shop">
-    <div class="sec-label">Access</div><h2 class="sec-title">店舗情報</h2>
-    <div class="shop-info"><dl><dt>サロン名</dt><dd>Resole（リソーレ）</dd><dt>エリア</dt><dd>東京都千代田区 神田エリア</dd><dt>最寄駅</dt><dd>神田駅 / 秋葉原駅 / 小川町駅 徒歩圏内</dd><dt>予約</dt><dd>LINE公式より受付</dd></dl></div>
+    <div class="sec-label">Information</div><h2 class="sec-title">店舗情報・アクセス</h2>
+    <table class="shop-tbl">
+      <tr><th>店名</th><td>Resole（リソーレ）</td></tr>
+      <tr><th>住所</th><td>〒101-0041<br>東京都千代田区神田須田町1-12-9<br>富士第一ビル4階</td></tr>
+      <tr><th>電話番号</th><td><a href="tel:08020907719" data-link-type="tel">080-2090-7719</a></td></tr>
+      <tr><th>営業時間</th><td>平日 9:00〜22:00<br>土日祝 8:00〜20:00</td></tr>
+      <tr><th>定休日</th><td>なし</td></tr>
+      <tr><th>アクセス</th><td>小川町駅 徒歩1分<br>淡路町駅 徒歩1分<br>神田駅 徒歩3〜5分<br>秋葉原駅 徒歩8分</td></tr>
+    </table>
     <div class="map-box"><iframe src="https://www.google.com/maps?q=%E6%9D%B1%E4%BA%AC%E9%83%BD%E5%8D%83%E4%BB%A3%E7%94%B0%E5%8C%BA%E7%A5%9E%E7%94%B0%E9%A0%88%E7%94%B0%E7%94%BA1-12-9&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
+    <a href="https://www.google.com/maps/search/?api=1&query=%E6%9D%B1%E4%BA%AC%E9%83%BD%E5%8D%83%E4%BB%A3%E7%94%B0%E5%8C%BA%E7%A5%9E%E7%94%B0%E9%A0%88%E7%94%B0%E7%94%BA1-12-9+%E5%AF%8C%E5%A3%AB%E7%AC%AC%E4%B8%80%E3%83%93%E3%83%AB4%E9%9A%8E" class="map-link" target="_blank" rel="noopener" data-link-type="map">Googlemapで見る ↗</a>
   </section>
 
   <section class="sec closing reveal" id="closing">
     <div class="sec-label">Message</div>
     <h2 class="closing-title">もう自己流で<br>悩み続けなくて大丈夫です。</h2>
     <p class="closing-text">まずは今の身体の状態を知ること。そして、あなたに合った順番で進めること。それだけで、身体は大きく変わることがあります。</p>
-    <a href="https://lin.ee/zU39HFP" class="cta-btn" target="_blank" rel="noopener">初回無料体験を予約する</a>
+    <a href="https://s.lmes.jp/landing-qr/2011885360-dbFiaZj4?uLand=XgMtxf" class="cta-btn" target="_blank" rel="noopener">LINE登録で優先予約</a>
   </section>
 
 </main>
@@ -797,9 +810,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <!-- フローティングCTA（スマホ用） -->
 <div class="float-cta">
-  <a href="https://lin.ee/zU39HFP" target="_blank" rel="noopener">
+  <a href="https://s.lmes.jp/landing-qr/2011885360-dbFiaZj4?uLand=XgMtxf" target="_blank" rel="noopener">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:6px"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
-    初回無料体験を予約する
+    LINE登録で優先予約
   </a>
 </div>
 
