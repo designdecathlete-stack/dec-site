@@ -3,3 +3,6 @@
 
 /* Supplied AQUA photographs / 2026-10-31. Preserve hair and skin texture. */
 .salon-photo{display:block;width:100%;height:auto;object-fit:contain;background:var(--soft)}.hero .salon-photo.hero-photo{width:calc(100% - 30px);min-height:0;max-height:none;border:0;border-radius:90px 0 0 0;margin-left:30px}.menu-card .menu-photo{width:calc(100% + 44px);max-width:none;margin:0 -22px 26px;max-height:none}.care-photo{margin:18px 0 0}.care-photo figcaption{font-size:11px;color:var(--muted);margin-top:8px}.case .salon-photo{max-height:600px}.case p{margin-top:12px}.interior-secondary{margin-top:14px}.staff-card .salon-photo.portrait{width:200px;max-width:100%;margin:0 0 22px;border-radius:3px}@media(max-width:360px){.menu-card .menu-photo{width:calc(100% + 36px);margin-left:-18px;margin-right:-18px}}
+
+/* Audit: prevent orphan characters without changing the supplied copy. */
+.phrase{display:inline-block;white-space:nowrap}.menu-card h3,.menu-card h4{font-size:clamp(16px,4.8vw,20px)}.closing h2{font-size:clamp(16px,5.3vw,22px)}.cta>.cta-label{font:inherit;flex-shrink:1}.cta{font-size:13px}.menu-card .cta{padding-left:12px;padding-right:12px;gap:10px}.cta>span[aria-hidden]{font-size:19px;flex-shrink:0}@media(max-width:360px){.menu-card .cta{font-size:11px}}
