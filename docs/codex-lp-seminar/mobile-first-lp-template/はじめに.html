@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LPテンプレート｜使い方</title><style>
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f2f3f0;color:#2b302e;font:15px/1.9 -apple-system,BlinkMacSystemFont,"Yu Gothic",Meiryo,sans-serif}main{max-width:760px;margin:auto;padding:48px 25px 70px}h1{font-size:30px;line-height:1.5}h2{font-size:22px;margin:0 0 18px}h3{font-size:16px}section{margin-top:26px;padding:28px;background:#fff;border:1px solid #dce1d9;border-radius:8px}p{margin:12px 0}a{color:#343b3a}code{font:13px/1.8 Consolas,monospace;overflow-wrap:anywhere}pre{background:#f2f3f0;padding:18px;white-space:pre-wrap;overflow-wrap:anywhere}.button{display:inline-block;padding:12px 20px;background:#343b3a;color:#fff;text-decoration:none;border-radius:4px}.label{font-size:11px;letter-spacing:.15em}ul,ol{padding-left:22px}li{margin:10px 0}.sub{font-size:13px;color:#636b66}.swatches{display:flex;gap:12px;flex-wrap:wrap}.swatches span{padding:9px 13px;border:1px solid #dce1d9} @media(max-width:480px){section{padding:23px 20px}h1{font-size:26px}}
+</style></head><body><main>
+<p class="label">MOBILE FIRST LP / STARTER KIT</p><h1>原稿と画像を入れて、<br>自分のLPをつくる。</h1><p>スマートフォンを基準にした、最大幅480pxのLPテンプレートです。白とグレーをベースに、業種に合わせて色を変更できます。</p><a class="button" href="lp/index.html">LPテンプレートを見る →</a>
+<section><h2>01　まず、このフォルダを複製</h2><p>ZIPを展開して、<code>lp</code>フォルダを制作する店舗・サービス用にコピーしてください。<code>lp/index.html</code>をブラウザで開くと表示できます。</p><pre>はじめに.html … この使い方ガイド
+lp/ … 制作・公開するフォルダ
+  index.html … 原稿・構成・画像の差し替え
+  style.css … 色・文字・レイアウト
+  script.js … 予約先URLの共通設定
+  assets/ … 写真・生成画像の保存先
+    hero-placeholder.svg … 仮画像</pre><p class="sub">外部フォント・ライブラリは使っていません。ビルド作業は不要です。</p></section>
+<section><h2>02　Codexに原稿を流し込んでもらう</h2><p>ヒアリング結果や確認済みの原稿を渡し、次のように依頼します。</p><pre>このlpフォルダのテンプレートに、下記の原稿を流し込んでください。
+スマートフォンファーストのレイアウトを保ってください。
+不明な情報は補わず、未確認として知らせてください。
+不要なセクションと対応するPC目次は削除してください。
+店名・料金・オファーは、ページ内のすべての表示箇所で統一してください。</pre><p>仮の原稿、○表記、写真枠は差し替えて使います。実績・口コミ・比較は実際の情報がある場合だけ掲載してください。</p></section>
+<section><h2>03　色をまとめて変更する</h2><p><code>style.css</code>冒頭の<code>:root</code>に色を集約しています。まずは<code>--brand</code>を変更すると、ボタン・強調文字・見出しラベルがまとめて変わります。</p><pre>--brand: #343b3a;       /* メインの色 */
+--on-brand: #ffffff;    /* ボタンの文字 */
+--text: #292e2d;        /* 本文 */
+--muted: #666e6b;       /* 補足文字 */
+--page: #ffffff;        /* LP本体の背景 */
+--soft: #f4f5f2;        /* 淡い背景 */
+--canvas: #eceeeb;      /* PCの外側背景 */
+--line: #dadeda;        /* 罫線 */
+--placeholder: #e7eae5; /* HTMLの仮写真枠 */</pre><div class="swatches"><span style="background:#343b3a;color:#fff">チャコール</span><span style="background:#405d4e;color:#fff">深いグリーン</span><span style="background:#74545e;color:#fff">くすみローズ</span></div><pre>このLPのメインカラーを #405d4e に変更してください。
+白いボタン文字が読みやすい配色にし、スマートフォン表示を確認してください。</pre><p class="sub">画像に描かれた文字や背景色はCSSでは変わりません。画像側の編集・再生成が必要です。仮のSVG画像も同様です。</p></section>
+<section><h2>04　生成画像を差し込む</h2><h3>ファーストビュー</h3><p>写真だけを入れる場合は、<code>assets</code>に画像を保存し、<code>hero-placeholder.svg</code>の参照先を変更します。画像の比率に合わせてHTMLの幅・高さも調整します。</p><p>キャッチコピー入りの画像を使う場合は、冒頭の文章と写真を画像1枚に置き換えます。見出しは画面読み上げ用に残し、同じ文字が画面に二重に出ないようにします。</p><pre>assets/hero.webpを、文字入りのファーストビュー全体として差し込んでください。
+画像を切り取らず、横幅いっぱい・高さ自動で表示してください。
+既存のキャッチコピー表示は重複させず、h1はsr-onlyにして残してください。
+画像の内容が伝わるaltを付けてください。</pre><h3>オファー・CTA</h3><p>オファーは<code>offer-text</code>の内容を画像に置き換えます。CTAは<code>data-reservation</code>が付いたリンクの内側に画像を入れると、予約先の共通設定をそのまま使えます。コード内に差し替え例があります。</p><p class="sub">この配布物には完成した広告画像や実写真は含まれていません。見本枠を、ご自身の画像に差し替えてください。</p></section>
+<section><h2>05　予約先を1か所で設定する</h2><p><code>script.js</code>の<code>reservationUrl</code>に、実際のLINE・予約フォームなどのURLを入れます。ページ内・PC右側・スマートフォン下部のボタンに反映されます。</p><pre>const LP_SETTINGS = {
+  reservationUrl: "https://実際の予約先URL",
+};</pre><p>空欄のときはページ内の予約案内に移動し、「予約先は未設定」と表示します。実在する別店舗やサンプル宛先には送信しません。</p><p class="sub">設定するURLはhttps://またはhttp://から始まるものを使います。電話のリンクはtel:形式にも対応しています。</p></section>
+<section><h2>06　Googleマップを設定する</h2><p>店舗情報の下に、Googleマップの埋め込み枠があります。初期状態は未設定のため、地図の差し替え枠を表示します。</p><ol><li>Googleマップで店舗を開き、「共有」から「地図を埋め込む」を選びます。</li><li>コピーしたHTMLの中にある <code>src="…"</code> のURLだけを、<code>script.js</code>の<code>googleMapsEmbedUrl</code>に入れます。</li><li>「リンクを送信」で取得した店舗URLを<code>googleMapsUrl</code>に入れると、「Googleマップで開く」ボタンも表示されます。</li></ol><p>Codexには、取得した埋め込みHTMLと共有リンクを渡して「この店舗のGoogleマップを設定して」と依頼できます。</p><p class="sub">埋め込みURLと通常の共有リンクは別のものです。地図の表示にはインターネット接続が必要です。公開前に店舗名と所在地が正しいか確認してください。</p></section>
+<section><h2>07　確認して、公開する</h2><ol><li>店名・料金・条件・口コミなどを確認し、仮の文言や不要なセクションを取り除きます。</li><li>スマートフォンで画像・文章・固定ボタンを確認します。PC（画面幅1024px以上）は中央にLP、左側に追従メニュー、右側に初回オファー・料金・CTAを固定表示します。本文と右側のオファー内容・価格・適用条件はそろえてください。</li><li>予約ボタンを押し、設定した申込み先に移動するか確認します。</li><li>本番公開時に検索掲載を希望する場合は、<code>index.html</code>の<code>noindex, nofollow</code>行を削除します。初期状態は練習用の検索除外指定です。非公開・アクセス制限ではありません。</li><li><strong>index.htmlが直下にある「lp」フォルダ</strong>をNetlify Dropにアップロードします。このガイドを含む外側のフォルダではありません。</li><li>公開URLをスマートフォンで開き、画像・FAQ・予約先を最終確認します。</li></ol></section>
+<section><h2>応用　複製して、別の訴求を試す</h2><p><code>lp</code>を別名でコピーし、「手軽さ」「安心感」など訴求の違う原稿・画像に差し替えます。料金・提供条件などの商品情報は共通にします。</p></section>
+<p class="sub">LP制作講座 配布用テンプレート / 2026年10月</p>
+</main></body></html>
