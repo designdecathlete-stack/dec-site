@@ -37,7 +37,7 @@ npm run build
         ↓ scripts/build-site.mjs が実行される
 dist/ に公開するファイルを用意
         ↓ ビルド・デプロイ成功
-Netlifyの公開URLで表示</pre><p><strong>今回のマニュアルは、確認したビルドスクリプトではコピー対象に含まれていません。</strong>本番ブランチへ取り込むだけでは、このマニュアルの公開URLは作られません。公開する場合は、マニュアルと必要なリンク先を <code>dist/</code> に含める設定も必要です。</p><p class="note">ここで確認したのはローカルの設定ファイルです。Netlify管理画面の接続先・本番ブランチ・稼働状況は未確認です。この追記では、公開設定の変更や本番デプロイは行っていません。</p></div><h3>公開まで進めるときの手順</h3><ol><li>対象リポジトリ・Netlifyプロジェクト・本番ブランチを確認する。</li><li>公開するLPと必要な画像・CSS・JSが、公開フォルダへ出力されるようにする。</li><li>作業ブランチへcommit・pushし、必要に応じてPRとプレビューで確認する。</li><li>公開する変更を本番ブランチへ取り込む。</li><li>Netlifyのデプロイ結果と公開URLを確認し、画像・予約リンク・スマホ表示を確かめる。</li></ol><div class="prompt-title"><span>公開まで依頼するときの例</span><button type="button" class="copy">コピー</button></div><pre>対象LP：［フォルダ］
+Netlifyの公開URLで表示</pre><p><strong>今回のマニュアルと同梱資料は、ビルドスクリプトのコピー対象に追加しています。</strong>ビルド時に <code>dist/docs/codex-lp-seminar/</code> へ出力します。公開URLはデプロイ成功後に確認します。</p><p class="note">ここで確認したのはローカルの設定ファイルです。Netlify管理画面の接続先・本番ブランチ・稼働状況は未確認です。本番公開の成否は、GitHubへの反映とは別に公開URLで確認します。</p></div><h3>公開まで進めるときの手順</h3><ol><li>対象リポジトリ・Netlifyプロジェクト・本番ブランチを確認する。</li><li>公開するLPと必要な画像・CSS・JSが、公開フォルダへ出力されるようにする。</li><li>作業ブランチへcommit・pushし、必要に応じてPRとプレビューで確認する。</li><li>公開する変更を本番ブランチへ取り込む。</li><li>Netlifyのデプロイ結果と公開URLを確認し、画像・予約リンク・スマホ表示を確かめる。</li></ol><div class="prompt-title"><span>公開まで依頼するときの例</span><button type="button" class="copy">コピー</button></div><pre>対象LP：［フォルダ］
 GitHubリポジトリ：［URL］
 Netlifyプロジェクト：［名前または管理画面URL］
 このLPをNetlifyで公開してください。

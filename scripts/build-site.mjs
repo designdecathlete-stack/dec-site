@@ -92,3 +92,6 @@ for (const file of appFrontFiles) {
 }
 
 await cp(join(appFrontRoot, 'public'), join(maintenanceDir, 'public'), { recursive: true, force: true });
+
+// Publish the LP skill manual and its linked sample materials.
+await cp(join(root, "docs", "codex-lp-seminar"), join(dist, "docs", "codex-lp-seminar"), { recursive: true, force: true });
