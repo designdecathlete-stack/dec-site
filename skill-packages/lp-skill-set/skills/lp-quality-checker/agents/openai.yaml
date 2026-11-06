@@ -1,0 +1,7 @@
+interface:
+  display_name: "LP Quality Checker"
+  short_description: "LP公開前の導線・文言・画像品質チェック"
+  default_prompt: "Use $lp-quality-checker to audit this landing page before publishing."
+
+policy:
+  allow_implicit_invocation: true

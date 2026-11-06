@@ -1,0 +1,4 @@
+interface:
+  display_name: "LP制作・デザインシート画像出力"
+  short_description: "原稿をスマホLPに反映し、配色・書体・UIのトンマナ共有用画像まで作成"
+  default_prompt: "$lp-template-copy-design を使い、原稿をテンプレートに流し込んでデザインを整え、完成したLPからトンマナ共有用のデザインシート画像も作成してください。"

@@ -1,0 +1,4 @@
+interface:
+  display_name: "LPデザインの仕上げ・最終チェック"
+  short_description: "制作済みLPの原稿と料金を守り、デザイン改善からスマホ・PCの最終確認まで実施"
+  default_prompt: "$lp-design-final-polish を使って、このLPをプロのデザイナーの視点でブラッシュアップし、スマートフォンとPCで最終チェックしてください。原稿・料金・配色・リンク先を維持し、公開はしないでください。"

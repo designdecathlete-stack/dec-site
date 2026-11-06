@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 公開前：店名・ページ説明を変更し、下の noindex 行を削除 -->
+  <meta name="robots" content="noindex, nofollow">
+  <title>サロン名｜サービス名</title>
+  <meta name="description" content="サロン名のサービスについて、特徴・料金・ご利用の流れをご案内します。">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">本文へ移動</a>
+  <aside class="sb-left" aria-label="ページ案内">
+    <a class="brand" href="#top">SALON NAME<span>サロン名</span></a>
+    <p class="nav-label">MENU</p>
+    <nav aria-label="追従メニュー"><a href="#top">トップ</a><a href="#offer">初回オファー</a><a href="#concept">私たちについて</a><a href="#reason">選ばれる理由</a><a href="#proof">施術事例</a><a href="#menu">メニュー・料金</a><a href="#faq">よくある質問</a><a href="#access">店舗情報</a></nav>
+    <p class="side-caption">あなたらしさを、大切に。</p>
+  </aside>
+  <aside class="sb-right" aria-label="初回オファーと予約のご案内">
+    <!-- 本文の初回オファーとメニュー名・価格・適用条件をそろえてください。 -->
+    <div class="side-offer">
+      <p class="eyebrow">FIRST VISIT</p><h2>はじめての方へ</h2>
+      <p class="side-menu">初回メニュー名・コース名</p>
+      <p class="price">○,○○○<span>円（税込）</span></p>
+      <p class="fine">施術時間：○分<br>対象・期間などの適用条件</p>
+      <a class="button" data-reservation href="#reservation">予約・相談する <span aria-hidden="true">→</span></a>
+      <p class="fine center">予約方法・受付についての補足を記載</p>
+    </div>
+    <p class="fine center">メニューのご相談もお気軽に。</p>
+  </aside>
+  <main class="main" id="main">
+    <header class="header" id="top"><a href="#top">SALON NAME</a><span>サロン名</span></header>
+    <!-- 01 ファーストビュー。文字入りの生成画像を全体に使う場合は、この section の中身を img 1枚に置換。h1 は sr-only にして残す。 -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy"><p class="eyebrow">あなたのための、サービス名</p><h1 id="hero-title">ここに、いちばん<br>伝えたい言葉を。</h1><p>誰の、どんな悩みに寄り添うサービスか。<br>得られる価値を短い言葉で伝えます。</p></div>
+      <img class="hero-image" src="assets/hero-placeholder.svg" width="960" height="720" alt="ファーストビューに使う写真・画像の差し替え枠">
+      <div class="hero-caption"><span>エリア名・最寄り駅</span><span>サービスの特徴</span></div>
+    </section>
+    <!-- 02 オファー。画像化する場合は offer-text を画像に置換し、その下のボタンは残す。 -->
+    <section class="offer" id="offer" aria-labelledby="offer-title">
+      <div class="offer-text"><p class="eyebrow">FIRST VISIT</p><h2 id="offer-title">はじめての方へ</h2><p>初回メニュー名・コース名</p><p class="price">○,○○○<span>円（税込）</span></p><p class="fine">施術時間：○分 ／ 対象・期間などの適用条件</p></div>
+      <!-- 画像版の例：<img class="section-image" src="assets/offer.webp" alt="初回メニュー名・料金・適用条件を記載"> -->
+      <a class="button" data-reservation href="#reservation">予約・相談する <span aria-hidden="true">→</span></a>
+      <p class="fine center">予約方法・受付についての補足を記載</p>
+    </section>
+    <!-- 03 お悩み：ヒアリング結果から5〜6項目まで追加可能 -->
+    <section class="section soft" id="problem"><p class="eyebrow">YOUR CONCERNS</p><h2>こんなお悩みは<br>ありませんか？</h2>
+      <ul class="concerns"><li>お客様が抱えるお悩みを記載します</li><li>日常の困りごとを具体的に記載します</li><li>理想の状態との違いを記載します</li><li>サービス選びで不安なことを記載します</li></ul>
+      <p class="closing-line">そのお悩みに、<br><strong>サービス名</strong>で寄り添います。</p>
+    </section>
+    <!-- 04 コンセプト・紹介 -->
+    <section class="section" id="concept"><p class="eyebrow">OUR CONCEPT</p><h2>私たちが<br>大切にしていること。</h2><p>サロンのコンセプトや、施術を通してお届けしたい価値を記載します。どんな方に、どんな時間を過ごしてほしいかを伝えます。</p>
+      <div class="photo-slot wide" role="img" aria-label="サロンの内観・施術写真の差し替え枠"><span>CONCEPT PHOTO<small>内観・施術の写真</small></span></div>
+      <h3>オーナーからのメッセージ</h3><p>サービスを始めたきっかけやこだわりを記載します。経歴・資格は確認できた情報を掲載します。</p><p class="signature">肩書き ／ オーナー名</p>
+    </section>
+    <!-- 05 強み：必要に応じて項目を追加 -->
+    <section class="section soft" id="reason"><p class="eyebrow">OUR STRENGTHS</p><h2>選ばれる理由</h2><div class="reasons">
+      <article><span class="number">01</span><h3>強みを短い見出しで</h3><p>その強みがお客様にどんな良さをもたらすか、具体的な内容や裏付けと一緒に伝えます。</p></article>
+      <article><span class="number">02</span><h3>施術や接客へのこだわり</h3><p>機器・技術・カウンセリングなど、自店ならではの特徴を記載します。</p></article>
+      <article><span class="number">03</span><h3>通いやすさ・安心への配慮</h3><p>空間やサポートなど、お客様にとっての選ぶ理由を記載します。</p></article>
+    </div></section>
+    <!-- 06 実績：事実と掲載許可を確認。事例がなければ section ごと削除 -->
+    <section class="section" id="proof"><p class="eyebrow">CASE STUDY</p><h2>施術事例</h2><div class="before-after"><div class="photo-slot"><span>BEFORE<small>施術前の写真</small></span></div><div class="photo-slot"><span>AFTER<small>施術後の写真</small></span></div></div><h3>コース名・施術回数</h3><p>実際の事例に基づく変化や経過を記載します。必要に応じて年齢・期間・撮影条件も添えます。</p><p class="fine">効果・感じ方には個人差があります。</p></section>
+    <!-- 07 口コミ：架空の口コミは作らず、許可を得た実際の声に差し替える -->
+    <section class="section soft" id="voice"><p class="eyebrow">CUSTOMER VOICE</p><h2>お客様の声</h2><article class="voice-card"><p class="voice-meta">年代 ／ イニシャルなど</p><h3>感想の要点を見出しに</h3><p>ここに実際のお客様のコメントを掲載します。利用したきっかけ、施術の感想、良かった点などを記載します。</p></article><p class="fine">個人の感想であり、効果を保証するものではありません。</p></section>
+    <!-- 08 比較：比較の根拠がない場合は削除。一般的な他店の値を推測しない -->
+    <section class="section" id="comparison"><p class="eyebrow">OUR DIFFERENCE</p><h2>サービスの違い</h2><table><caption class="sr-only">比較対象と当店のサービス比較</caption><thead><tr><th scope="col">比較項目</th><th scope="col">比較対象</th><th scope="col">当店</th></tr></thead><tbody><tr><th scope="row">施術担当</th><td>確認した情報</td><td>自店の情報</td></tr><tr><th scope="row">施術時間</th><td>確認した情報</td><td>自店の情報</td></tr><tr><th scope="row">サポート</th><td>確認した情報</td><td>自店の情報</td></tr></tbody></table><p class="fine">比較対象・出典・確認日を記載</p></section>
+    <!-- 09 サービスの流れ -->
+    <section class="section soft" id="flow"><p class="eyebrow">HOW IT WORKS</p><h2>ご利用の流れ</h2><ol class="steps"><li><h3>ご予約・お問い合わせ</h3><p>予約方法と事前に伝えていただきたい内容を記載します。</p></li><li><h3>ご来店・カウンセリング</h3><p>お悩みやご希望を確認する流れと所要時間を記載します。</p></li><li><h3>施術・サービスの提供</h3><p>当日の施術内容と所要時間を記載します。</p></li><li><h3>アフターケアのご案内</h3><p>施術後の過ごし方やサポート内容を記載します。</p></li></ol></section>
+    <!-- 10 メニュー：初回価格は冒頭オファーと一致させる -->
+    <section class="section" id="menu"><p class="eyebrow">MENU & PRICE</p><h2>メニュー・料金</h2><article class="menu-card"><p class="tag">初回メニュー</p><h3>メニュー名・コース名</h3><p>施術内容やコースに含まれる内容を記載します。</p><p class="price">○,○○○<span>円（税込）</span></p><p class="fine">所要時間：○分 ／ 通常価格：○,○○○円（税込）</p></article><article class="menu-card"><h3>通常メニュー名</h3><p>施術内容・対象となる方を記載します。</p><p class="price">○,○○○<span>円（税込）</span></p><p class="fine">所要時間：○分</p></article><p class="fine">オプション・追加料金・キャンセル条件などを記載</p></section>
+    <!-- 11 FAQ：details はJavaScriptなしで動作します -->
+    <section class="section soft" id="faq"><p class="eyebrow">QUESTIONS</p><h2>よくある質問</h2><details><summary>初めてでも利用できますか？</summary><p>初めてのお客様へのご案内を記載します。</p></details><details><summary>当日の持ち物はありますか？</summary><p>持ち物・服装・来店前の注意事項を記載します。</p></details><details><summary>所要時間はどのくらいですか？</summary><p>カウンセリング・施術・会計を含む時間を記載します。</p></details><details><summary>どのような支払い方法がありますか？</summary><p>実際に利用できる支払い方法を記載します。</p></details><details><summary>予約の変更・キャンセルはできますか？</summary><p>変更方法・受付期限・キャンセル規定を記載します。</p></details></section>
+    <!-- 12 店舗情報 -->
+    <section class="section" id="access"><p class="eyebrow">ACCESS</p><h2>店舗情報・アクセス</h2><dl class="info"><div><dt>店名</dt><dd>サロン名</dd></div><div><dt>住所</dt><dd>〒○○○-○○○○<br>都道府県・市区町村・番地・建物名</dd></div><div><dt>アクセス</dt><dd>○○駅 ○番出口より徒歩○分</dd></div><div><dt>電話番号</dt><dd>電話番号を記載</dd></div><div><dt>営業時間</dt><dd>○:○○〜○:○○<br>最終受付 ○:○○</dd></div><div><dt>定休日</dt><dd>定休日を記載</dd></div></dl>
+      <!-- script.js の googleMapsEmbedUrl に、Googleマップ「地図を埋め込む」の iframe src を設定 -->
+      <div class="access-map">
+        <div class="map-placeholder" id="map-placeholder">
+          <svg width="36" height="44" viewBox="0 0 36 44" fill="none" aria-hidden="true"><path d="M18 41S3 26 3 17a15 15 0 1 1 30 0c0 9-15 24-15 24Z" stroke="currentColor" stroke-width="1.5"/><circle cx="18" cy="17" r="5" stroke="currentColor" stroke-width="1.5"/></svg>
+          <strong>Google マップ</strong><span>ここに店舗の地図を表示します</span><small>店舗の地図を設定してください</small>
+        </div>
+        <iframe id="google-map" title="店舗の所在地（Googleマップ）" width="424" height="320" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen hidden></iframe>
+      </div>
+      <a id="google-map-link" class="map-link" target="_blank" rel="noopener noreferrer" hidden>Googleマップで開く <span aria-hidden="true">↗</span></a>
+      <p class="fine">駐車場・駐輪場・建物の入口など、来店時の補足を記載</p></section>
+    <!-- 13 クロージング・CTA -->
+    <section class="section closing" id="reservation"><p class="eyebrow">YOUR NEXT STEP</p><h2>あなたの一歩を、<br>ここから。</h2><p>最後にお客様の背中を押すメッセージを記載します。相談できることや予約方法を、分かりやすく伝えましょう。</p>
+      <!-- 画像CTAの例：下の a の中身を <img src="assets/cta.webp" alt="予約・相談する"> に置き換え、class="image-cta" に変更 -->
+      <a class="button" data-reservation href="#reservation">予約・相談する <span aria-hidden="true">→</span></a>
+      <p class="fine center">受付時間・返信の目安などを記載</p>
+      <p class="setup-note" id="reservation-note">テンプレートのため、予約先は未設定です。</p>
+    </section>
+    <footer class="footer"><p>SALON NAME</p><small>© サロン名</small></footer>
+  </main>
+  <div class="float-cta"><a class="button" data-reservation href="#reservation">予約・相談する <span aria-hidden="true">→</span></a></div>
+</body>
+</html>

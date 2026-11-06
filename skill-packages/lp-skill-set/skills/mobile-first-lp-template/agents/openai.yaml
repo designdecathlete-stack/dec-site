@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile First LP Template"
+  short_description: "中央スマホ幅LPとPC固定サイドバーで作成"
+  default_prompt: "Use $mobile-first-lp-template to create a landing page based on the central mobile-width LP layout with desktop sidebars."
