@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Resole ピラティスLP比較 | 田町・神田</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;font-family:system-ui,sans-serif;background:#eee;color:#222}
+    .version-bar{height:56px;min-width:680px;display:flex;align-items:center;gap:20px;padding:0 16px;background:#fff;border-bottom:1px solid #ddd;font-size:13px}
+    .version-bar label{display:flex;align-items:center;gap:8px}
+    .version-bar select{font:inherit;padding:6px;border:1px solid #ccc;border-radius:4px;background:#fff;max-width:300px}
+    main{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));height:calc(100dvh - 56px);min-width:680px;gap:1px;background:#ccc}
+    section{display:flex;flex-direction:column;min-width:0;background:#f5f5f5}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;height:48px;flex-shrink:0;padding:0 16px;border-bottom:1px solid #ddd;background:#fff}
+    h1{font-size:15px;margin:0;font-weight:600}
+    a{color:#236b52;font-size:12px;text-decoration:underline}
+    iframe{display:block;width:100%;max-width:480px;height:100%;min-height:0;flex:1;margin:0 auto;border:0;background:#fff}
+  </style>
+</head>
+<body>
+  <nav class="version-bar" aria-label="比較用LPのバージョン">
+    <label>比較版<select id="version-select" aria-label="表示するバージョン"><option value="compare.html" selected>V5 · 2026-11-14 神田の指定写真3枚反映</option><option value="../v4/compare.html">V4 · 2026-11-14 元写真・コンセプト更新</option><option value="../v3/compare.html">V3 · 2026-11-12 神田の埋め込み地図更新</option><option value="../v2/compare.html">V2 · 2026-11-10 写真・店名・地図更新</option><option value="../v1/compare.html">V1 · 2026-11-10 変更前</option></select></label>
+    <a href="../../history.html">変更履歴</a><a href="../../../compare_pilates.html">最新の比較</a>
+    <a href="../v4/compare.html">変更前を見る</a>
+  </nav>
+  <main>
+    <section>
+      <header><h1>田町店 / 確認用</h1><a href="index_pilates_tamachi.html" target="_blank" rel="noopener">単独で開く ↗</a></header>
+      <iframe src="index_pilates_tamachi.html?compare=scroll" title="田町店ピラティスLP確認用"></iframe>
+    </section>
+    <section>
+      <header><h1>神田店 / 確認用</h1><a href="index_pilates.html" target="_blank" rel="noopener">単独で開く ↗</a></header>
+      <iframe src="index_pilates.html?compare=scroll" title="神田店ピラティスLP確認用"></iframe>
+    </section>
+  </main>
+  <script>
+    document.querySelector('#version-select').addEventListener('change', (event) => { location.href = event.target.value; });
+    const frames = Array.from(document.querySelectorAll('iframe'));
+    window.addEventListener('message', (event) => {
+      if (event.data?.type !== 'resole-compare-scroll' || !Number.isFinite(event.data.ratio)) return;
+      const source = frames.find(frame => frame.contentWindow === event.source);
+      if (!source) return;
+      frames.forEach(frame => {
+        if (frame !== source) frame.contentWindow.postMessage({type: 'resole-compare-position', ratio: event.data.ratio}, '*');
+      });
+    });
+  </script>
+</body>
+</html>
