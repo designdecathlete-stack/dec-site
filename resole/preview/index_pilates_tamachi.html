@@ -7,7 +7,7 @@
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resole 田町店（リソーレ） | 自律神経×ピラティス×栄養で整えるパーソナルピラティス</title>
+<title>Resole 田町店（リソーレ） | 自律神経×ピラティス×筋トレで整えるパーソナルピラティス</title>
 <meta name="description" content="田町・三田エリアのResole 田町店。自律神経測定、ピラティス、栄養指導で、姿勢・不調・ボディラインを根本から整えるマンツーマンピラティス。初回無料体験。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -183,6 +183,20 @@ body::before{
 }
 .hero-visual.fv-bg::before,
 .hero-visual.fv-bg::after{display:none}
+/* The supplied photograph is a separate, unretouched JPEG layer. */
+.hero-visual.fv-original .hero-original-photo{
+  position:absolute;inset:0 0 auto;width:100%;height:46.65%;
+  display:block;object-fit:cover;object-position:center;
+  mask-image:linear-gradient(#000 0%,#000 94%,transparent 100%);
+}
+.hero-visual.fv-original .hero-original-brand{
+  position:absolute;top:0;left:0;width:43%;height:24%;
+  background-image:var(--fv-image);background-size:232.55814% auto;
+  background-position:left top;background-repeat:no-repeat;
+  transform:scale(0.86);transform-origin:left top;
+  mask-image:linear-gradient(to right,#000 90%,transparent),linear-gradient(to bottom,#000 90%,transparent);
+  mask-composite:intersect;
+}
 /* 朝のやわらかな光の差し込み */
 .hero-visual::before{
   content:'';position:absolute;inset:0;
@@ -661,7 +675,10 @@ body::before{
        [1] ファーストビュー
        ============================================ -->
   <section class="hero" id="top" data-section-id="fv" data-section-name="first_view" data-section-order="1">
-    <div class="hero-visual fv-bg" style="--fv-image:url('images/tamachi-v2-fv-055.webp')" role="img" aria-label="Resole 田町店ピラティスのファーストビュー。田町駅徒歩6分・三田駅徒歩4分"></div>
+    <div class="hero-visual fv-bg fv-original" style="--fv-image:url('images/tamachi-v2-fv-055.webp')" role="img" aria-label="Resole 田町店ピラティス。整えてから鍛える。田町駅徒歩6分・三田駅徒歩4分">
+      <img class="hero-original-photo" src="images/tamachi-v4-fv-original-055.jpg" alt="" aria-hidden="true" width="1800" height="1200" fetchpriority="high">
+      <span class="hero-original-brand" aria-hidden="true"></span>
+    </div>
   </section>
 
   <div class="cta-block">
@@ -691,8 +708,8 @@ body::before{
 
   <section class="sec reveal" id="solution" data-section-id="solution" data-section-name="solution" data-section-order="3">
     <div class="sec-label">Concept</div>
-    <h2 class="sec-title">自律神経×ピラティス×栄養で<br>疲れにくく、美しく動ける身体へ</h2>
-    <div class="owner-photo"><img src="images/tamachi-v2-concept-301.webp" alt="田町店で身体の悩みを相談するカウンセリングの様子"></div>
+    <h2 class="sec-title">自律神経×ピラティス×筋トレで<br>疲れにくく、美しく動ける身体へ</h2>
+    <div class="owner-photo"><img src="images/tamachi-v4-concept-cable-222.webp" alt="田町店で男性トレーナーがケーブルトレーニングを指導する様子"></div>
     <p class="owner-text">
       Resole 田町店は、単に痩せることだけを目的にした場所ではありません。<strong>姿勢・自律神経・身体の使い方・不調・ボディライン</strong>を根本から整え、日常が楽になる身体づくりを大切にしています。
     </p>
@@ -779,7 +796,7 @@ body::before{
     <div class="r-item"><div class="r-num">01</div><h3 class="r-heading">自律神経測定×栄養で<br>原因を客観的に見る</h3><img class="r-img" src="images/tamachi-v2-reason01-306.webp" alt="田町店で身体の状態や栄養について相談するカウンセリング"><p class="r-text">疲労状態・栄養状態・身体の状態を総合的に見ながら、無理に追い込まない進め方を提案します。</p></div>
     <div class="r-item"><div class="r-num">02</div><h3 class="r-heading">ピラティスで整えてから<br>必要に応じて鍛える</h3><img class="r-img" src="images/tamachi-v2-reason02-138.webp" alt="リフォーマーを使ったピラティス指導"><p class="r-text">使いすぎている筋肉を抑え、使えていない筋肉を活性化。脚が太くなりにくく、姿勢改善につながりやすい身体へ。</p></div>
     <div class="r-item"><div class="r-num">03</div><h3 class="r-heading">不調改善と美容を<br>同時に目指せる</h3><img class="r-img" src="images/tamachi-v2-reason03-158.webp" alt="身体の使い方と姿勢を確認するピラティス指導"><p class="r-text">姿勢、疲労感、呼吸、睡眠、ボディラインなどを総合的に見て、見た目だけでなく日常の楽さも大切にします。</p></div>
-    <div class="r-item"><div class="r-num">04</div><h3 class="r-heading">初心者でも続けやすい<br>やさしいマンツーマン</h3><img class="r-img" src="images/tamachi-v2-reason04-096.webp" alt="手を添えて動作をサポートするマンツーマン指導"><p class="r-text">運動が苦手な方、ジムが続かなかった方にも、今できることから無理なく進めます。</p></div>
+    <div class="r-item"><div class="r-num">04</div><h3 class="r-heading">初心者でも続けやすい<br>やさしいマンツーマン</h3><img class="r-img" src="images/tamachi-v4-reason04-bench-175.webp" alt="田町店で男性トレーナーがベンチプレスを補助するマンツーマン指導"><p class="r-text">運動が苦手な方、ジムが続かなかった方にも、今できることから無理なく進めます。</p></div>
     <div class="r-item"><div class="r-num">05</div><h3 class="r-heading">具体的に褒める<br>納得感のある指導</h3><img class="r-img" src="images/tamachi-v2-reason05-117.webp" alt="田町店で身体の動きを確認しながら声をかけるトレーナー"><p class="r-text">姿勢の改善、呼吸の変化、動作改善などを具体的に伝え、身体を理解しながら続けられるようサポートします。</p></div>
   </section>
 
