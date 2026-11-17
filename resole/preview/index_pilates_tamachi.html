@@ -186,7 +186,17 @@ body::before{
 /* Match Kanda's hero proportions without cropping the original photograph. */
 .hero-visual.fv-bg.fv-original{display:block;aspect-ratio:auto;height:auto;background:none}
 .fv-original .hero-original-scene{position:relative;width:100%;aspect-ratio:941 / 780;background:#fffaf4}
-.fv-original .hero-original-brand{position:absolute;z-index:1;top:3%;left:8%;width:38%;text-align:center;color:#a7782c}
+.fv-original .hero-original-scene::before{
+  content:"";position:absolute;z-index:1;top:19.57%;left:0;width:100%;height:8%;pointer-events:none;
+  background:linear-gradient(to bottom,#fffaf4,transparent);
+}
+.fv-original .hero-original-brand{position:absolute;isolation:isolate;z-index:1;top:3%;left:7%;width:40%;transform:scale(.78);transform-origin:left top;text-align:center;color:#a7782c}
+.fv-original .hero-original-brand::before{
+  content:"";position:absolute;z-index:-1;inset:-14% -12% 0 -36%;pointer-events:none;
+  background:#fffaf4;
+  mask-image:linear-gradient(to right,#000 0%,#000 75%,transparent 100%),linear-gradient(to bottom,#000 0%,#000 75%,transparent 100%);
+  mask-composite:intersect;
+}
 .fv-original .hero-brand-label{display:block;font-family:var(--font-serif);font-size:8px;line-height:1.6;letter-spacing:0;white-space:nowrap}
 .fv-original .hero-brand-row{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;margin:6px 0 3px}
 .fv-original .hero-brand-mark{
@@ -201,7 +211,7 @@ body::before{
   background-position:18.9873% 17.2739%;background-repeat:no-repeat;
   font-size:0;filter:url(#tamachi-hero-logo-gold);
 }
-.fv-original .hero-brand-tagline{display:block;font-family:var(--font-display);font-size:7px;line-height:1.6;letter-spacing:0;white-space:nowrap}
+.fv-original .hero-brand-tagline{display:block;font-family:var(--font-display);font-size:7px;line-height:1.6;letter-spacing:0;white-space:nowrap;color:#29251f}
 .hero-visual.fv-original .hero-original-photo{display:block;position:absolute;bottom:0;left:0;width:100%;height:auto;object-fit:contain}
 .fv-original .hero-original-copy{
   width:100%;aspect-ratio:941 / 892;background-image:var(--fv-image);
