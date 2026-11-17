@@ -183,19 +183,22 @@ body::before{
 }
 .hero-visual.fv-bg::before,
 .hero-visual.fv-bg::after{display:none}
-/* The supplied photograph is a separate, unretouched JPEG layer. */
-.hero-visual.fv-original .hero-original-photo{
-  position:absolute;inset:0 0 auto;width:100%;height:46.65%;
-  display:block;object-fit:cover;object-position:center;
-  mask-image:linear-gradient(#000 0%,#000 94%,transparent 100%);
+/* Keep the full source photo separate from the brand and existing copy. */
+.hero-visual.fv-bg.fv-original{display:block;aspect-ratio:auto;height:auto;background:none}
+.fv-original .hero-original-brand{padding:14px 16px 10px;background:#fffaf4;text-align:center;color:#a7782c}
+.fv-original .hero-brand-label{display:block;font-family:var(--font-serif);font-size:10px;line-height:1.6;letter-spacing:0}
+.fv-original .hero-brand-row{display:flex;align-items:center;justify-content:center;gap:12px;margin:4px 0}
+.fv-original .hero-brand-mark{
+  display:block;flex:0 0 72px;width:72px;height:66.49px;
+  background-image:var(--fv-image);background-size:400.426% auto;
+  background-position:18.4136% 4.46735%;background-repeat:no-repeat;
 }
-.hero-visual.fv-original .hero-original-brand{
-  position:absolute;top:0;left:0;width:43%;height:24%;
-  background-image:var(--fv-image);background-size:232.55814% auto;
-  background-position:left top;background-repeat:no-repeat;
-  transform:scale(0.86);transform-origin:left top;
-  mask-image:linear-gradient(to right,#000 90%,transparent),linear-gradient(to bottom,#000 90%,transparent);
-  mask-composite:intersect;
+.fv-original .hero-brand-name{font-family:var(--font-display);font-size:44px;font-weight:500;line-height:1.1;letter-spacing:0}
+.fv-original .hero-brand-tagline{display:block;font-family:var(--font-display);font-size:10px;line-height:1.6;letter-spacing:0}
+.hero-visual.fv-original .hero-original-photo{display:block;position:static;width:100%;height:auto;object-fit:contain}
+.fv-original .hero-original-copy{
+  width:100%;aspect-ratio:941 / 892;background-image:var(--fv-image);
+  background-size:100% auto;background-position:center bottom;background-repeat:no-repeat;
 }
 /* 朝のやわらかな光の差し込み */
 .hero-visual::before{
@@ -676,8 +679,13 @@ body::before{
        ============================================ -->
   <section class="hero" id="top" data-section-id="fv" data-section-name="first_view" data-section-order="1">
     <div class="hero-visual fv-bg fv-original" style="--fv-image:url('images/tamachi-v2-fv-055.webp')" role="img" aria-label="Resole 田町店ピラティス。整えてから鍛える。田町駅徒歩6分・三田駅徒歩4分">
+      <div class="hero-original-brand" aria-hidden="true">
+        <span class="hero-brand-label">PILATES &amp; CONDITIONING</span>
+        <div class="hero-brand-row"><span class="hero-brand-mark"></span><span class="hero-brand-name">Resole</span></div>
+        <span class="hero-brand-tagline">autonomic nerve × pilates × nutrition</span>
+      </div>
       <img class="hero-original-photo" src="images/tamachi-v4-fv-original-055.jpg" alt="" aria-hidden="true" width="1800" height="1200" fetchpriority="high">
-      <span class="hero-original-brand" aria-hidden="true"></span>
+      <div class="hero-original-copy" aria-hidden="true"></div>
     </div>
   </section>
 
