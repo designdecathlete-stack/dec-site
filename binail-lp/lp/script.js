@@ -53,9 +53,10 @@ window.addEventListener(
 );
 
 const config = window.BINAIL_CONFIG || {};
+const isKorean = document.documentElement.lang === 'ko';
 for (const [selector, url, note] of [['[data-reservation]', config.reservationUrl, '[data-reservation-note]'], ['[data-instagram]', config.instagramUrl, '[data-instagram-note]']]) {
   document.querySelectorAll(selector).forEach(button => {
-    if (!url) { button.disabled = true; button.title = 'URLは準備中です'; button.setAttribute('aria-label', button.textContent.trim() + '（URL準備中）'); }
+    if (!url) { button.disabled = true; button.title = isKorean ? '링크는 준비 중입니다' : 'URLは準備中です'; button.setAttribute('aria-label', button.textContent.trim() + (isKorean ? ' (링크 준비 중)' : '（URL準備中）')); }
     else button.addEventListener('click', () => { window.location.href = url; });
   });
   if (url) document.querySelectorAll(note).forEach(el => el.hidden = true);
