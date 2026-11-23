@@ -85,6 +85,11 @@ for (const file of ['page-1.png', 'page-6.png']) {
   await cp(join(root, 'salon-backoffice-optin', 'assets', file), join(optinDir, 'assets', file));
 }
 
+// Include the Salon de Noble review page only in Netlify Deploy Previews.
+if (process.env.CONTEXT === 'deploy-preview') {
+  await cp(join(root, 'salon-de-noble'), join(dist, 'salon-de-noble'), { recursive: true });
+}
+
 const maintenanceDir = join(dist, 'ailp-management');
 await mkdir(maintenanceDir, { recursive: true });
 
