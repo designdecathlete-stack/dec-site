@@ -205,6 +205,7 @@ a {
 
 .side-note {
   padding: 18px;
+  word-break: keep-all;
 }
 
 .side-note span {
@@ -301,7 +302,7 @@ a {
 .hero-cta-wrap {
   position: absolute;
   right: 0;
-  bottom: -28px;
+  bottom: 4%;
   left: 0;
   z-index: 3;
   padding: 0 28px;
@@ -391,6 +392,7 @@ p {
 
 .hero-cta {
   width: 100%;
+  white-space: nowrap;
 }
 
 .worry-list,
@@ -681,8 +683,10 @@ p {
   }
 
   .hero-cta-wrap {
-    bottom: -28px;
-    padding: 0 22px;
+    right: 5%;
+    bottom: 4%;
+    left: 5%;
+    padding: 0;
   }
 
   .float-cta {
