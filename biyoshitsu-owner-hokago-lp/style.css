@@ -414,6 +414,17 @@ p {
   font-weight: 700;
 }
 
+#empathy .worry-list p {
+  display: grid;
+  grid-template-columns: 1em minmax(0, 1fr);
+  column-gap: 10px;
+}
+
+#empathy .worry-check {
+  color: var(--amber);
+  font-weight: 900;
+}
+
 .story-card,
 .bonus-panel,
 .benefit-list article,
