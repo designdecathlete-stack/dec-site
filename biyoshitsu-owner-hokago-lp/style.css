@@ -562,7 +562,7 @@ p {
   padding: 17px;
 }
 
-.benefit-list span,
+.benefit-list article > span,
 .flow-list span {
   color: var(--amber);
   font-family: var(--font-display);
@@ -685,6 +685,11 @@ p {
 }
 
 @media (min-width: 961px) {
+  #empathy .desktop-keep,
+  #benefits .desktop-keep {
+    white-space: nowrap;
+  }
+
   #host .host-invitation span {
     white-space: nowrap;
   }
@@ -727,6 +732,19 @@ p {
 
   .float-cta {
     display: block;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(calc(100% + 2px));
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
+  }
+
+  .float-cta.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition-delay: 0s;
   }
 }
 
@@ -751,6 +769,10 @@ p {
   .reveal {
     opacity: 1;
     transform: none;
+    transition: none;
+  }
+
+  .float-cta {
     transition: none;
   }
 }

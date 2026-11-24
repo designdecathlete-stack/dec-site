@@ -65,3 +65,39 @@ window.addEventListener(
   },
   { passive: true }
 );
+
+
+// Keep the mobile fixed CTA hidden until the hero CTA has passed above the viewport.
+(() => {
+  const heroCta = document.querySelector(".hero-cta");
+  const fixedCta = document.querySelector(".float-cta");
+  if (!heroCta || !fixedCta) return;
+
+  const mobileViewport = window.matchMedia("(max-width: 960px)");
+  let isVisible;
+
+  const setVisibility = (visible) => {
+    if (visible === isVisible) return;
+    isVisible = visible;
+    fixedCta.classList.toggle("is-visible", visible);
+    fixedCta.setAttribute("aria-hidden", String(!visible));
+    fixedCta.inert = !visible;
+  };
+
+  const syncVisibility = () => {
+    setVisibility(mobileViewport.matches && heroCta.getBoundingClientRect().bottom < 0);
+  };
+
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(syncVisibility, { threshold: 0 });
+    observer.observe(heroCta);
+  }
+
+  // Also handle fast scroll jumps that skip the CTA in a single frame.
+  window.addEventListener("scroll", syncVisibility, { passive: true });
+
+  // Recheck restored scroll positions and changes between mobile and desktop.
+  window.addEventListener("pageshow", syncVisibility);
+  window.addEventListener("resize", syncVisibility);
+  syncVisibility();
+})();
