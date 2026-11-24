@@ -544,7 +544,7 @@ p {
   grid-template-columns: 46px 1fr;
   gap: 12px;
   align-items: center;
-  padding: 18px;
+  padding: 17px;
 }
 
 .benefit-list span,
