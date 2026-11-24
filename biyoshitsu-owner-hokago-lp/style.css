@@ -414,6 +414,21 @@ p {
   font-weight: 700;
 }
 
+#recommend .recommend-list p {
+  position: relative;
+  padding-left: 37px;
+}
+
+#recommend .recommend-list p::before {
+  content: "◆";
+  position: absolute;
+  top: 16px;
+  left: 17px;
+  color: var(--amber);
+  font-size: 11px;
+  line-height: 28.5px;
+}
+
 #empathy .worry-list p {
   display: grid;
   grid-template-columns: 1em minmax(0, 1fr);
@@ -671,6 +686,10 @@ p {
 
 @media (min-width: 961px) {
   #host .host-invitation span {
+    white-space: nowrap;
+  }
+
+  #recommend .recommend-keep {
     white-space: nowrap;
   }
 }
