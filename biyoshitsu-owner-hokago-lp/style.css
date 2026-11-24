@@ -669,6 +669,12 @@ p {
   transform: translateY(0);
 }
 
+@media (min-width: 961px) {
+  #host .host-invitation span {
+    white-space: nowrap;
+  }
+}
+
 @media (max-width: 960px) {
   body {
     background: var(--paper);
