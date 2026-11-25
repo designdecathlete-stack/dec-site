@@ -205,6 +205,7 @@ a {
 
 .side-note {
   padding: 18px;
+  word-break: keep-all;
 }
 
 .side-note span {
@@ -301,7 +302,7 @@ a {
 .hero-cta-wrap {
   position: absolute;
   right: 0;
-  bottom: -28px;
+  bottom: 4%;
   left: 0;
   z-index: 3;
   padding: 0 28px;
@@ -391,6 +392,7 @@ p {
 
 .hero-cta {
   width: 100%;
+  white-space: nowrap;
 }
 
 .worry-list,
@@ -410,6 +412,32 @@ p {
   background: rgba(255, 255, 255, 0.66);
   color: var(--ink);
   font-weight: 700;
+}
+
+#recommend .recommend-list p {
+  position: relative;
+  padding-left: 37px;
+}
+
+#recommend .recommend-list p::before {
+  content: "◆";
+  position: absolute;
+  top: 16px;
+  left: 17px;
+  color: var(--amber);
+  font-size: 11px;
+  line-height: 28.5px;
+}
+
+#empathy .worry-list p {
+  display: grid;
+  grid-template-columns: 1em minmax(0, 1fr);
+  column-gap: 10px;
+}
+
+#empathy .worry-check {
+  color: var(--amber);
+  font-weight: 900;
 }
 
 .story-card,
@@ -531,10 +559,10 @@ p {
   grid-template-columns: 46px 1fr;
   gap: 12px;
   align-items: center;
-  padding: 18px;
+  padding: 17px;
 }
 
-.benefit-list span,
+.benefit-list article > span,
 .flow-list span {
   color: var(--amber);
   font-family: var(--font-display);
@@ -656,6 +684,21 @@ p {
   transform: translateY(0);
 }
 
+@media (min-width: 961px) {
+  #empathy .desktop-keep,
+  #benefits .desktop-keep {
+    white-space: nowrap;
+  }
+
+  #host .host-invitation span {
+    white-space: nowrap;
+  }
+
+  #recommend .recommend-keep {
+    white-space: nowrap;
+  }
+}
+
 @media (max-width: 960px) {
   body {
     background: var(--paper);
@@ -681,12 +724,27 @@ p {
   }
 
   .hero-cta-wrap {
-    bottom: -28px;
-    padding: 0 22px;
+    right: 5%;
+    bottom: 4%;
+    left: 5%;
+    padding: 0;
   }
 
   .float-cta {
     display: block;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(calc(100% + 2px));
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
+  }
+
+  .float-cta.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition-delay: 0s;
   }
 }
 
@@ -711,6 +769,10 @@ p {
   .reveal {
     opacity: 1;
     transform: none;
+    transition: none;
+  }
+
+  .float-cta {
     transition: none;
   }
 }
