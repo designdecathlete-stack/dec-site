@@ -212,7 +212,7 @@ body::before{
   font-size:0;filter:url(#tamachi-hero-logo-gold);
 }
 .fv-original .hero-brand-tagline{display:block;font-family:var(--font-display);font-size:7px;line-height:1.6;letter-spacing:0;white-space:nowrap;color:#29251f}
-.hero-visual.fv-original .hero-original-photo{display:block;position:absolute;bottom:0;left:0;width:100%;height:auto;object-fit:contain}
+.hero-visual.fv-original .hero-original-photo{display:block;width:100%;height:auto;object-fit:contain}
 .fv-original .hero-original-copy{
   width:100%;aspect-ratio:941 / 892;background-image:var(--fv-image);
   background-size:100% auto;background-position:center bottom;background-repeat:no-repeat;
@@ -653,7 +653,19 @@ body::before{
   .sb-left,.sb-right{display:none}
   .float-cta{display:block}
   .main{max-width:100%;box-shadow:none}
+  .closing{padding-bottom:112px}
   .footer{padding-bottom:88px}
+}
+
+/* 田町店の人物写真：SPの表示を保ち、広い画面で頭部を収める */
+@media(min-width:600px){
+  #reason .r-img[src="images/tamachi-v2-reason01-306.webp"]{height:auto;min-height:210px;aspect-ratio:12 / 5;object-position:center 5%}
+  #reason .r-img[src="images/tamachi-v2-reason03-158.webp"]{height:auto;min-height:210px;aspect-ratio:3 / 1;object-position:center 5%}
+  #reason .r-img[src="images/tamachi-v4-reason04-bench-175.webp"]{height:auto;min-height:210px;aspect-ratio:8 / 5;object-position:center top}
+  #reason .r-img[src="images/tamachi-v2-reason05-117.webp"]{height:auto;min-height:210px;aspect-ratio:5 / 2;object-position:center 10%}
+}
+@media(min-width:600px) and (max-width:960px){
+  #solution .owner-photo img{object-position:center top}
 }
 </style>
 </head>
@@ -701,17 +713,8 @@ body::before{
        [1] ファーストビュー
        ============================================ -->
   <section class="hero" id="top" data-section-id="fv" data-section-name="first_view" data-section-order="1">
-    <div class="hero-visual fv-bg fv-original" style="--fv-image:url('images/tamachi-v2-fv-055.webp')" role="img" aria-label="Resole 田町店ピラティス。整えてから鍛える。田町駅徒歩6分・三田駅徒歩4分">
-      <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute"><defs><filter id="tamachi-hero-logo-gold" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 4 0 -4 0 -0.6"/></filter></defs></svg>
-      <div class="hero-original-scene">
-        <img class="hero-original-photo" src="images/tamachi-v4-fv-original-055.jpg" alt="" aria-hidden="true" width="1800" height="1200" fetchpriority="high">
-        <div class="hero-original-brand" aria-hidden="true">
-          <span class="hero-brand-label">PILATES &amp; CONDITIONING</span>
-          <div class="hero-brand-row"><span class="hero-brand-mark"></span><span class="hero-brand-name">Resole</span></div>
-          <span class="hero-brand-tagline">autonomic nerve × pilates × nutrition</span>
-        </div>
-      </div>
-      <div class="hero-original-copy" aria-hidden="true"></div>
+    <div class="hero-visual fv-bg fv-original">
+      <img class="hero-original-photo" src="images/tamachi-fv-man.webp" alt="Resole 田町店ピラティス。整えてから鍛える。田町駅徒歩6分・三田駅徒歩4分" width="941" height="1671" fetchpriority="high">
     </div>
   </section>
 
