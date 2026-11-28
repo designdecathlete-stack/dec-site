@@ -64,7 +64,11 @@ await mkdir(dist, { recursive: true });
 for (const dir of legacyPublicDirs) {
   const source = join(root, dir);
   if (existsSync(source)) {
-    await cp(source, join(dist, dir), { recursive: true, force: true });
+    await cp(source, join(dist, dir), {
+      recursive: true,
+      force: true,
+      filter: (entry) => dir !== 'resole' || entry !== join(source, 'old'),
+    });
   }
 }
 
